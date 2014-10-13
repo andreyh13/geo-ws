@@ -9,24 +9,44 @@
 <body>
     <div class="wrapper">
        <form id="form-ws">
-           <fieldset name="ws-version">
-               <legend>Select the version</legend>
-               <input type="radio" name="ws-version-val" id="ws-version-free" checked="checked" value="free" />
-               <label for="ws-version-free">Free</label>
-               <input type="radio" name="ws-version-val" id="ws-version-work" value="work" />
-               <label for="ws-version-work">For Work</label>
-           </fieldset>
-           <fieldset name="ws-construct">
-               <legend>Construct</legend>
-               <select id="ws-choose" name="ws-choose">
-                 <option value="">--Please select--</option>  
-               </select>
-           </fieldset>
+           <ul id="instances-container">
+           </ul>
+           <div class="actions">
+               <button name="add-instance" id="add-instance">
+                   Add new
+               </button>
+           </div>
        </form> 
     </div>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script src="http://documentcloud.github.com/underscore/underscore-min.js"></script>
     <script src="http://documentcloud.github.com/backbone/backbone-min.js"></script>
+    
+    <!-- external template -->
+    <script id="instanceTemplate" type="text/template">
+        <fieldset>
+               <legend>Select the version</legend>
+               <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-free-<%= id %>" checked="checked" value="free" />
+               <label for="ws-version-free-<%= id %>">Free</label>
+               <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-work-<%= id %>" value="work" />
+               <label for="ws-version-work-<%= id %>">For Work</label>
+        </fieldset>
+        <fieldset>
+               <legend>Construct</legend>
+               <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>">
+                 <option value="">--Please select--</option>  
+               </select>
+        </fieldset>
+        <div class="instance-action-<%= id %>">
+            <button name="exec-instance-<%= id %>" id="exec-instance-<%= id %>" class="exec">
+                Execute
+            </button>
+            <button name="remove-instance-<%= id %>" id="remove-instance-<%= id %>" class="delete">
+                Remove
+            </button>
+        </div>
+    </script>
+    
     <script src="js/geo-ws-model.js"></script>
     <script src="js/geo-ws.js"></script>
 </body>
