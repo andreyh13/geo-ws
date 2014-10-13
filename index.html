@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Web Services APIs</title>
+    <link rel="stylesheet" href="css/geo-ws.css">
+</head>
+
+<body>
+    <div class="wrapper">
+       <form id="form-ws">
+           <fieldset name="ws-version">
+               <legend>Select the version</legend>
+               <input type="radio" name="ws-version-val" id="ws-version-free" checked="checked" value="free" />
+               <label for="ws-version-free">Free</label>
+               <input type="radio" name="ws-version-val" id="ws-version-work" value="work" />
+               <label for="ws-version-work">For Work</label>
+           </fieldset>
+           <fieldset name="ws-construct">
+               <legend>Construct</legend>
+               <select id="ws-choose" name="ws-choose">
+                 <option value="">--Please select--</option>  
+               </select>
+           </fieldset>
+       </form> 
+    </div>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="http://documentcloud.github.com/underscore/underscore-min.js"></script>
+    <script src="http://documentcloud.github.com/backbone/backbone-min.js"></script>
+    <script src="js/geo-ws-model.js"></script>
+    <script src="js/geo-ws.js"></script>
+</body>
+</html>
