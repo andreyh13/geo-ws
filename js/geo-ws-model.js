@@ -51,9 +51,10 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
     defaults: {
         id: null,
         webservice: null,
-        version: null,
+        version: 'free',
         output: null,
-        parameters: null
+        parameters: null,
+        services: null
     },
     validate: function(attrs, options){
     }
@@ -93,9 +94,13 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     this.model.destroy(); // deletes the model when delete button clicked
     return false;  
   },    
+  chooseWebService: function(ev){
+      alert(ev.target.value);
+  },    
   events: {
     'click .exec':   'execInstance',
-    'click .delete': 'deleteInstance'
+    'click .delete': 'deleteInstance',
+    'change .ws-choose': 'chooseWebService'  
   },
   newTemplate: _.template($('#instanceTemplate').html()), // external template    
   initialize: function() {
@@ -123,72 +128,3 @@ com.xomena.geo.Views.InstancesView = Backbone.View.extend({
     });
   }
 });
-
-
-(function($){
-    var WS_DS_URI = "https://script.google.com/macros/s/AKfycbwPrEGcNZfsQEWmKm_XC-IXdEPdIQdIE1Na8pL4uBprm2YIT8E/exec?jsonp=?";
-    
-    function initParameterParts(par, parts_url){
-        $.ajax({
-            url: parts_url,
-            dataType: 'jsonp',
-            success: function(data) {
-                var partscol = new com.xomena.geo.Collections.ParameterPartCollection();
-                for (var i = 1; i < data.length; i++) {
-                    var part = new com.xomena.geo.Models.ParameterPart({
-                        name: data[i][0],
-                        type: data[i][1],
-                        description: data[i][2],
-                        required: data[i][3],
-                        options: data[i][4],
-                        multiple: data[i][5]
-                    });
-                    partscol.add(part);
-                }
-                par.set('parts', partscol);
-            }
-        });    
-    }
-    
-    function initParameters(wserv, params_url){
-        $.ajax({
-            url: params_url,
-            dataType: 'jsonp',
-            success: function(data) {
-                var parcol = new com.xomena.geo.Collections.ParameterCollection();
-                for (var i = 1; i < data.length; i++) {
-                    var par = new com.xomena.geo.Models.Parameter({
-                        name: data[i][0],
-                        type: data[i][1],
-                        description: data[i][2],
-                        required: data[i][3],
-                        options: data[i][5],
-                        multiple: data[i][6]
-                    });
-                    if(data[i][4]){
-                        //Init parameter parts
-                        initParameterParts(par, data[i][4]+'?jsonp=?');
-                    }
-                    parcol.add(par);
-                }
-                wserv.set('parameters', parcol);
-            }
-        });    
-    } 
-    
-    $.ajax({
-        url: WS_DS_URI,
-        dataType: 'jsonp',
-        success: function(data) {
-            for (var i = 1; i < data.length; i++) {
-                var wserv = new com.xomena.geo.Models.WebService({name: data[i][0], alias: data[i][1]});
-                if(data[i][2]){
-                    //Init parameters
-                    initParameters(wserv, data[i][2]+'?jsonp=?');
-                }
-                com.xomena.geo.services.add(wserv);
-            }
-        }
-    });
-
-})(jQuery);

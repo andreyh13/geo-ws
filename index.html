@@ -26,15 +26,19 @@
     <script id="instanceTemplate" type="text/template">
         <fieldset>
                <legend>Select the version</legend>
-               <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-free-<%= id %>" checked="checked" value="free" />
+               <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-free-<%= id %>" <% print(version==='free'?'checked="checked"':''); %> value="free" />
                <label for="ws-version-free-<%= id %>">Free</label>
-               <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-work-<%= id %>" value="work" />
+               <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-work-<%= id %>" <% print(version==='work'?'checked="checked"':''); %> value="work" />
                <label for="ws-version-work-<%= id %>">For Work</label>
         </fieldset>
         <fieldset>
                <legend>Construct</legend>
-               <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>">
+               <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>" class="ws-choose">
                  <option value="">--Please select--</option>  
+                 <% services.forEach(function(model){
+                        print('<option value="'+model.get('alias')+'">'+model.get('name')+'</option>');
+                    });
+                 %>
                </select>
         </fieldset>
         <div class="instance-action-<%= id %>">
