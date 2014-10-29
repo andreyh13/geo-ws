@@ -5,11 +5,6 @@
     
     var instance_col = new com.xomena.geo.Collections.InstanceCollection();
     
-    function getNewId(){
-        getNewId.count = ++getNewId.count || 1;
-        return getNewId.count;
-    }
-    
     function initParameterParts(par, parts_url){
         $.ajax({
             url: parts_url,
@@ -39,7 +34,7 @@
             dataType: 'jsonp',
             async: false,
             success: function(data) {
-                var parcol = new com.xomena.geo.Collections.ParameterCollection();
+                var parcol = [];
                 for (var i = 1; i < data.length; i++) {
                     var par = new com.xomena.geo.Models.Parameter({
                         name: data[i][0],
@@ -53,7 +48,7 @@
                         //Init parameter parts
                         initParameterParts(par, data[i][4]+'?jsonp=?');
                     }
-                    parcol.add(par);
+                    parcol.push(par);
                 }
                 wserv.set('parameters', parcol);
             }
@@ -68,7 +63,7 @@
             async: false,
             success: function(data) {
                 for (var i = 1; i < data.length; i++) {
-                    var wserv = new com.xomena.geo.Models.WebService({name: data[i][0], alias: data[i][1]});
+                    var wserv = new com.xomena.geo.Models.WebService({id: com.xomena.geo.getNewId(), name: data[i][0], alias: data[i][1]});
                     if(data[i][2]){
                         //Init parameters
                         initParameters(wserv, data[i][2]+'?jsonp=?');
@@ -77,7 +72,7 @@
                 }
                 
                 //add first instance
-                instance_col.add(new com.xomena.geo.Models.Instance({id: getNewId(), services: com.xomena.geo.services}));
+                instance_col.add(new com.xomena.geo.Models.Instance({id: com.xomena.geo.getNewId(), services: com.xomena.geo.services}));
 
                 // creates view for collection and renders collection
                 var instancesView = new com.xomena.geo.Views.InstancesView({collection: instance_col});
@@ -85,7 +80,7 @@
         
                 //adding new instance
                 $("#add-instance").click(function(){
-                    var m_instance = new com.xomena.geo.Models.Instance({id: getNewId(), services: com.xomena.geo.services});
+                    var m_instance = new com.xomena.geo.Models.Instance({id: com.xomena.geo.getNewId(), services: com.xomena.geo.services});
                     instance_col.add(m_instance);
                     var m_instanceView = new com.xomena.geo.Views.InstanceView({model: m_instance});
                     $("#instances-container").append(m_instanceView.el);

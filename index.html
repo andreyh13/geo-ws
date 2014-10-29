@@ -36,10 +36,11 @@
                <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>" class="ws-choose">
                  <option value="">--Please select--</option>  
                  <% services.forEach(function(model){
-                        print('<option value="'+model.get('alias')+'">'+model.get('name')+'</option>');
+                        print('<option value="'+model.get('id')+'">'+model.get('name')+'</option>');
                     });
                  %>
                </select>
+               <div class="ws-parameters" id="ws-parameters-<%= id %>"></div>
         </fieldset>
         <div class="instance-action-<%= id %>">
             <button name="exec-instance-<%= id %>" id="exec-instance-<%= id %>" class="exec">
@@ -49,6 +50,11 @@
                 Remove
             </button>
         </div>
+    </script>
+    
+    <!-- external template -->
+    <script id="paramTemplate" type="text/template">
+      <%= name %>
     </script>
     
     <script src="js/geo-ws-model.js"></script>
