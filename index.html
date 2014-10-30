@@ -54,7 +54,18 @@
     
     <!-- external template -->
     <script id="paramTemplate" type="text/template">
-      <%= name %>
+      <label for="parameter-<%= id %>"><%= name %></label>
+      <% var t = model.get("type");
+         var p = model.get("pattern");
+         var h = model.get("placeholder");
+         switch(t){
+            case 'string':
+              print('<input type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+'/>');   
+              break;
+            default:
+              print('<input type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+'/>');
+         }
+      %>
     </script>
     
     <script src="js/geo-ws-model.js"></script>

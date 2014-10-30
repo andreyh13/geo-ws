@@ -42,7 +42,9 @@
                         description: data[i][2],
                         required: data[i][3],
                         options: data[i][5],
-                        multiple: data[i][6]
+                        multiple: data[i][6],
+                        pattern: data[i][7],
+                        placeholder: data[i][8]
                     });
                     if(data[i][4]){
                         //Init parameter parts

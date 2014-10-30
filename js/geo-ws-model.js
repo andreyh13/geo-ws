@@ -37,7 +37,9 @@ com.xomena.geo.Models.Parameter = Backbone.Model.extend({
         parts: null,
         options: '',
         multiple: false,
-        separator: '|'
+        separator: '|',
+        pattern: '',
+        placeholder: ''
     }
 });
 
