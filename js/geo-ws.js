@@ -90,5 +90,12 @@
                 });
             }
         });
+        
+        $(document).delegate("button.add-parameter", "click", function(){
+            console.log("Add parameter clicked");
+            var m_id = $(this).attr("id").replace(/add-parameter-/ig,"");
+            $("<br/>").appendTo("#multiple-container-"+m_id);
+            $("#multiple-container-"+m_id+" > #parameter-"+m_id).clone().attr("id","parameter-"+m_id+"-"+com.xomena.geo.getNewId()).appendTo("#multiple-container-"+m_id);
+        });
     });
 })(jQuery);

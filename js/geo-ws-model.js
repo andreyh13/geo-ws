@@ -143,13 +143,18 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
           parinstance_col.add(new com.xomena.geo.Models.ParameterInstance({
               id: com.xomena.geo.getNewId(),
               name: p.get("name"),
-              model: p,
+              model: p
           }));
       });
       this.model.set("parameters", parinstance_col);
       var paramsView = new com.xomena.geo.Views.ParametersView({collection: parinstance_col});
       paramsView.render();
-      this.$(".ws-parameters").html(paramsView.el);
+      this.$(".ws-parameters").html(paramsView.el).tooltip({
+        position: {
+            my: "left top",
+            at: "right+5 top-5"
+        }
+      });
   },    
   events: {
     'click .exec':   'execInstance',
