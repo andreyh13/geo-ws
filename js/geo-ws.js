@@ -14,12 +14,15 @@
                 var partscol = new com.xomena.geo.Collections.ParameterPartCollection();
                 for (var i = 1; i < data.length; i++) {
                     var part = new com.xomena.geo.Models.ParameterPart({
+                        id: com.xomena.geo.getNewId(),
                         name: data[i][0],
                         type: data[i][1],
                         description: data[i][2],
                         required: data[i][3],
                         options: data[i][4],
-                        multiple: data[i][5]
+                        multiple: data[i][5],
+                        pattern: data[i][6],
+                        placeholder: data[i][7]
                     });
                     partscol.add(part);
                 }

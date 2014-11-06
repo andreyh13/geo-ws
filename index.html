@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Web Services APIs</title>
     <link rel="stylesheet" href="css/geo-ws.css">
+    <link rel="stylesheet" href="css/chosen.css">
     <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/themes/smoothness/jquery-ui.css" />
 </head>
 
@@ -23,6 +24,7 @@
     <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
     <script src="http://documentcloud.github.com/underscore/underscore-min.js"></script>
     <script src="http://documentcloud.github.com/backbone/backbone-min.js"></script>
+    <script src="js/chosen.jquery.min.js"></script>
     
     <!-- external template -->
     <script id="instanceTemplate" type="text/template">
@@ -33,6 +35,10 @@
                <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-work-<%= id %>" <% print(version==='work'?'checked="checked"':''); %> value="work" />
                <label for="ws-version-work-<%= id %>">For Work</label>
         </fieldset>
+        <fieldset>
+               <legend>Select the output format</legend>
+        </fieldset>
+        
         <fieldset>
                <legend>Construct</legend>
                <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>" class="ws-choose">
@@ -57,34 +63,7 @@
     <!-- external template -->
     <script id="paramTemplate" type="text/template">
       <label for="parameter-<%= id %>"><%= name %></label>
-      <% var t = model.get("type");
-         var p = model.get("pattern");
-         var h = model.get("placeholder");
-         var r = model.get("required");
-         var d = model.get("description");
-         var m = model.get("multiple");
-         if(m){
-            print('<div id="multiple-container-'+id+'">'); 
-         } else {
-            print('<div id="container-'+id+'">'); 
-         }
-         switch(t){
-            case 'string':
-              print('<input type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>');   
-              if(m){
-                print('<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>');
-              }
-              break;
-            default:
-              print('<input type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+'title="'+d+'"/>');
-              if(m){
-                print('<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>');
-              }
-         }
-         if(m){
-            print('</div>'); 
-         }
-      %>
+      <% print(com.xomena.geo.getFormElement(id, name, model)); %>
     </script>
     
     <script src="js/geo-ws-model.js"></script>

@@ -10,7 +10,81 @@ window.com.xomena.geo = {
   getNewId: function(){
     window.com.xomena.geo.getNewId.count = ++window.com.xomena.geo.getNewId.count || 1;
     return window.com.xomena.geo.getNewId.count;
-  }    
+  },
+  getFormElement: function(id,name,model){
+    var output = "";
+    var t = model.get("type");
+    var p = model.get("pattern");
+    var h = model.get("placeholder");
+    var r = model.get("required");
+    var d = model.get("description");
+    var m = model.get("multiple");
+    var o = model.get("options");  
+    if(m){
+        output += '<div id="multiple-container-'+id+'">'; 
+    } else {
+        output += '<div id="container-'+id+'">'; 
+    }
+    switch(t){
+        case 'string':
+            output += '<input type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
+            if(m){
+                output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
+            }
+            break;
+        case 'number':
+            output += '<input type="number" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
+            if(m){
+                output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
+            }
+            break;
+        case 'list':
+            var ao = o.split(";");
+            var m_options = ""; 
+            _.each(ao, function(opt){
+                var a1 = opt.split("|");
+                var v = a1[0];
+                var l = a1.length>1?a1[1]:a1[0];
+                m_options = [m_options, '<option value="', v, '">', l, '</option>'].join(""); 
+            });
+            output += '<select id="parameter-'+id+'" name="'+name+'" class="chosen-select"'+(m?' multiple':'')+(r?' required':'')+' title="'+d+'">'+m_options+'</select>';
+            break;
+        case 'checkboxes':
+            output += '<ul class="checkboxes">';
+            var ao = o.split(";");
+            _.each(ao, function(opt, ind){
+                var a1 = opt.split("|");
+                var v = a1[0];
+                var l = a1.length>1?a1[1]:a1[0];
+                output += '<li>';
+                output += '<input type="checkbox" id="parameter-'+id+'-'+ind+'" name="'+name+'" value="'+v+'"'+(r?' required':'')+'/>';
+                output += '<label for="parameter-'+id+'-'+ind+'" title="'+d+'">'+l+'</label>';
+                output += '</li>';
+            });
+            output += '</ul>';
+            break;
+        case 'parts':
+            var parts = model.get("parts");
+            output += '<ul class="parts-container">';
+            parts.forEach(function(p){
+                output += '<li>';
+                output += '<label for="parameter-'+id+'-'+p.get("id")+'">'+p.get('name')+'</label>';
+                output += com.xomena.geo.getFormElement(id+"-"+p.get("id"), name+":"+p.get("name"), p);
+                output += '</li>';
+            });
+            output += '</ul>';
+            break;
+        default:
+            output += '<input type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+'title="'+d+'"/>';
+            if(m){
+                output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
+            }
+    }
+    if(m){
+        output += '</div>'; 
+    }
+    return output;  
+  }
 };
 
 /*Define data models*/
@@ -54,13 +128,16 @@ com.xomena.geo.Models.ParameterInstance = Backbone.Model.extend({
     
 com.xomena.geo.Models.ParameterPart = Backbone.Model.extend({
     defaults: {
+        id: null,
         name: '',
         type: 'string',
         description: '',
         required: false,
         options: '',
         multiple: false,
-        separator: ':'
+        separator: ':',
+        pattern: '',
+        placeholder: ''
     }
 });  
 
@@ -69,7 +146,7 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
         id: null,
         webservice: null,
         version: 'free',
-        output: null,
+        output: "json",
         parameters: null,
         services: null
     },
@@ -155,6 +232,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
             at: "right+5 top-5"
         }
       });
+      this.$(".chosen-select").chosen();
   },    
   events: {
     'click .exec':   'execInstance',
