@@ -84,7 +84,7 @@ window.com.xomena.geo = {
         output += '</div>'; 
     }
     return output;  
-  }
+  }    
 };
 
 /*Define data models*/

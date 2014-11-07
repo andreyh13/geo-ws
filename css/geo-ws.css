@@ -1,0 +1,57 @@
+#instances-container {
+    list-style-type:decimal;
+    list-style-position:outside;
+}
+
+#instances-container li.ws-instance {
+    float: left;
+    width:100%;
+}
+
+.ws-two-columns {
+    width: 100%;
+    float: left;
+}
+
+.ws-two-columns .ws-first-column {
+    width: 37%;
+    float: left;
+}
+
+.ws-two-columns .ws-last-column {
+    width: 63%;
+    float: right;
+}
+
+.ws-two-columns .ws-first-column .ws-version-fs,
+.ws-two-columns .ws-first-column .ws-output-fs{
+    width: 46%;
+}
+
+.ws-two-columns .ws-first-column .ws-version-fs{
+    float: left;
+}
+
+.ws-two-columns .ws-first-column .ws-output-fs{
+    float: right;
+}
+
+.ws-two-columns .ws-first-column .ws-construct-fs {
+    float: left;
+    width: 96%;
+}
+
+.ws-two-columns .ws-last-column .ws-url-fs{
+    min-height: 36px;
+}
+
+.ws-two-columns .ws-last-column .ws-results-fs{
+    min-height: 38px;
+}
+
+.instance-action {
+    float: left;
+    width: 99%;
+}
+
+

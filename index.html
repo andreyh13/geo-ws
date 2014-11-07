@@ -11,8 +11,8 @@
 <body>
     <div class="wrapper">
        <form id="form-ws">
-           <ul id="instances-container">
-           </ul>
+           <ol id="instances-container">
+           </ol>
            <div class="actions">
                <button name="add-instance" id="add-instance">
                    Add new
@@ -28,29 +28,48 @@
     
     <!-- external template -->
     <script id="instanceTemplate" type="text/template">
-        <fieldset>
-               <legend>Select the version</legend>
-               <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-free-<%= id %>" <% print(version==='free'?'checked="checked"':''); %> value="free" />
-               <label for="ws-version-free-<%= id %>">Free</label>
-               <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-work-<%= id %>" <% print(version==='work'?'checked="checked"':''); %> value="work" />
-               <label for="ws-version-work-<%= id %>">For Work</label>
-        </fieldset>
-        <fieldset>
-               <legend>Select the output format</legend>
-        </fieldset>
+        <div class="ws-two-columns">
+            <div class="ws-first-column">
+                <fieldset class="ws-version-fs">
+                    <legend>Select the version</legend>
+                    <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-free-<%= id %>" <% print(version==='free'?'checked="checked"':''); %> value="free" />
+                    <label for="ws-version-free-<%= id %>">Free</label>
+                    <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-work-<%= id %>" <% print(version==='work'?'checked="checked"':''); %> value="work" />
+                    <label for="ws-version-work-<%= id %>">For Work</label>
+                </fieldset>
+                <fieldset class="ws-output-fs">
+                    <legend>Select the output format</legend>
+                    <input type="radio" name="output-<%= id %>" id="output-json-<%= id %>" <% print(output==='json'?'checked="checked"':''); %> value="json" />
+                    <label for="output-json-<%= id %>">JSON</label>
+                    <input type="radio" name="output-<%= id %>" id="output-xml-<%= id %>" <% print(output==='xml'?'checked="checked"':''); %> value="xml" />
+                    <label for="output-xml-<%= id %>">XML</label>
+                </fieldset>
         
-        <fieldset>
-               <legend>Construct</legend>
-               <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>" class="ws-choose">
-                 <option value="">--Please select--</option>  
-                 <% services.forEach(function(model){
-                        print('<option value="'+model.get('id')+'">'+model.get('name')+'</option>');
-                    });
-                 %>
-               </select>
-               <div class="ws-parameters" id="ws-parameters-<%= id %>"></div>
-        </fieldset>
-        <div class="instance-action-<%= id %>">
+                <fieldset class="ws-construct-fs">
+                    <legend>Construct</legend>
+                    <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>" class="ws-choose">
+                        <option value="">--Please select--</option>  
+                        <% services.forEach(function(model){
+                            print('<option value="'+model.get('id')+'">'+model.get('name')+'</option>');
+                        });
+                        %>
+                    </select>
+                    <div class="ws-parameters" id="ws-parameters-<%= id %>"></div>
+                </fieldset>
+            </div>
+            <div class="ws-last-column">
+                <fieldset class="ws-url-fs">
+                    <legend>URL</legend>
+                    <div id="ws-url-<%= id %>"  class="ws-url"></div>
+                </fieldset>
+                <fieldset class="ws-results-fs">
+                    <legend>Results</legend>
+                    <div id="ws-result-<%= id %>"  class="ws-result"></div>
+                </fieldset>
+                
+            </div>
+        </div>
+        <div id="instance-action-<%= id %>" class="instance-action">
             <button name="exec-instance-<%= id %>" id="exec-instance-<%= id %>" class="exec">
                 Execute
             </button>
