@@ -1,6 +1,4 @@
 (function($){
-    var API_KEY = "AIzaSyA67JIj41Ze0lbc2KidOgQMgqLOAZOcybE";
-    var CLIENT_ID = "gme-addictive";
     var WS_DS_URI = "https://script.google.com/macros/s/AKfycbwPrEGcNZfsQEWmKm_XC-IXdEPdIQdIE1Na8pL4uBprm2YIT8E/exec?jsonp=?";
     
     var instance_col = new com.xomena.geo.Collections.InstanceCollection();
