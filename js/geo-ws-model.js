@@ -303,7 +303,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     if(m_url){
         $.ajax({
             url: com.xomena.geo.SERVER_URL,
-            dataType: "text", //self.model.get("output"),
+            dataType: self.model.get("output")=="json"?"json":"text",
             type: "POST",
             crossDomain: true,
             async: true,
@@ -313,7 +313,11 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
                 output: self.model.get("output")
             },
             success: function(data) {
-                console.log(data)
+                if($.type(data)=="string"){
+                    self.$("#ws-result-"+self.model.get("id")).html(data);
+                } else {
+                    self.$("#ws-result-"+self.model.get("id")).html(JSON.stringify(data));
+                }
             },
             error: function(){
                 console.log("Server side error");
