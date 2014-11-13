@@ -9,7 +9,9 @@ window.com.xomena.geo = {
   services: null,
   API_KEY: "AIzaSyA67JIj41Ze0lbc2KidOgQMgqLOAZOcybE",
   CLIENT_ID: "gme-addictive",
-  SERVER_URL: "http://localhost/geows/geows.php",    
+  CRYPTO_KEY: "Ub9OeP0S9B13G-lnfrrO7PP3-Mo=",
+  SERVER_URL: "http://localhost/geows/geows.php", 
+  SIGN_URL: "http://localhost/geows/geowssign.php",       
   getNewId: function(){
     window.com.xomena.geo.getNewId.count = ++window.com.xomena.geo.getNewId.count || 1;
     return window.com.xomena.geo.getNewId.count;
@@ -158,6 +160,7 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
     getURL: function(){
         var res = [];
         var m_service = this.get("webservice");
+        var ver = this.get("version");
         if(m_service){
             var m_services = this.get("services");
             var service = m_services.filterById(parseInt(m_service));
@@ -186,7 +189,6 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                     });
                 }
                 
-                var ver = this.get("version");
                 if(ver === "free"){
                     res.push(aa);
                     res.push("key=");
@@ -198,10 +200,39 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                 }
             }
         }
-        return res.join("");
+        var m_join = res.join("");
+        if(m_join && ver=='work'){
+            $.ajax({
+                url: com.xomena.geo.SIGN_URL,
+                dataType: "text",
+                type: "POST",
+                crossDomain: true,
+                async: false,
+                data: {
+                    uri: m_join,
+                    cryptokey: com.xomena.geo.CRYPTO_KEY
+                },
+                success: function(data) {
+                    m_join = $.trim(data);
+                },
+                error: function(jqXHR, textStatus, errorThrown){
+                    console.log("Server side error: "+textStatus+" - "+ errorThrown);
+                }
+            });
+        }
+        return m_join;
     }
 });
 
+com.xomena.geo.Models.Config = Backbone.Model.extend({
+    defaults: {
+        API_KEY: null,
+        CLIENT_ID: null,
+        CRYPTO_KEY: null,
+        SERVER_URL: null, 
+        SIGN_URL: null
+    }
+}); 
 
 
 /*Define data collections*/
@@ -314,13 +345,14 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
             },
             success: function(data) {
                 if($.type(data)=="string"){
-                    self.$("#ws-result-"+self.model.get("id")).html(data);
+                    self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='xml'>"+$.trim(data).replace(/</ig,"&lt;").replace(/>/ig,"&gt;")+"</code></pre>");
                 } else {
-                    self.$("#ws-result-"+self.model.get("id")).html(JSON.stringify(data));
+                    self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='json'>"+JSON.stringify(data).replace(/\[/ig,"[\n").replace(/\{/ig,"{\n").replace(/\]/ig,"\n]").replace(/\}/ig,"\n}").replace(/,/ig,",\n")+"</code></pre>");
                 }
+                hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
             },
-            error: function(){
-                console.log("Server side error");
+            error: function(jqXHR, textStatus, errorThrown){
+                console.log("Server side error: "+textStatus+" - "+ errorThrown);
             }
         });
     }
@@ -427,4 +459,22 @@ com.xomena.geo.Views.ParametersView = Backbone.View.extend({
       self.$el.append(paramView.el);
     });
   }
+});
+
+com.xomena.geo.Views.ConfigView = Backbone.View.extend({
+  tagName: 'div', 
+  className: 'app-config',  
+  events: {
+  },
+  newTemplate: _.template($('#configTemplate').html()), // external template    
+  initialize: function() {
+    this.render(); // render is an optional function that defines the logic for rendering a template
+  },
+  render: function() {
+    this.$el.html(this.newTemplate(this.model.toJSON())); // calls the template
+  },
+  remove: function(){
+    this.$el.remove(); // removes the HTML element from view when delete button clicked/model deleted
+  }
+      
 });

@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="css/geo-ws.css">
     <link rel="stylesheet" href="css/chosen.css">
     <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/themes/smoothness/jquery-ui.css" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/styles/default.min.css">
 </head>
 
 <body>
@@ -20,11 +21,13 @@
            </div>
        </form> 
     </div>
+    <div class="#config"></div>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
     <script src="http://documentcloud.github.com/underscore/underscore-min.js"></script>
     <script src="http://documentcloud.github.com/backbone/backbone-min.js"></script>
     <script src="js/chosen.jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/highlight.min.js"></script>
     
     <!-- external template -->
     <script id="instanceTemplate" type="text/template">
@@ -83,6 +86,29 @@
     <script id="paramTemplate" type="text/template">
       <label for="parameter-<%= id %>"><%= name %></label>
       <% print(com.xomena.geo.getFormElement(id, name, model)); %>
+    </script>
+    
+    
+    <!-- external template -->
+    <script id="configTemplate" type="text/template">
+        <fieldset class="app-config-fs">
+            <legend>Settings</legend>
+            <label for="app-config-api-key">API key</label>
+            <input type="text" name="app-config-api-key" id="app-config-api-key" value="" placeholder="" />
+            <label for="app-config-client-id">Client ID</label>
+            <input type="text" name="app-config-client-id" id="app-config-client-id" value="" placeholder="" />
+            <label for="app-config-crypto-key">Crypto Key</label>
+            <input type="text" name="app-config-crypto-key" id="app-config-crypto-key" value="" placeholder="" />
+            <label for="app-config-server-url">Server URL</label>
+            <input type="text" name="app-config-server-url" id="app-config-server-url" value="" placeholder="" />
+            <label for="app-config-sign-url">Sign URL</label>
+            <input type="text" name="app-config-sign-url" id="app-config-sign-url" value="" placeholder="" />
+        </fieldset>
+        <div id="app-config-action" class="app-config-action">
+            <button name="save-config" id="save-config" class="save">
+                Save
+            </button>
+        </div>
     </script>
     
     <script src="js/geo-ws-model.js"></script>
