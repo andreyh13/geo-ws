@@ -1,26 +1,35 @@
 #instances-container {
     list-style-type:decimal;
-    list-style-position:inside;
+    list-style-position:outside;
+    float: left;
+    width: 98%;
 }
 
 #instances-container li.ws-instance {
     float: left;
-    width:100%;
+    width:99%;
+    margin-bottom: 16px;
+    padding: 8px;
+    background-color: #F6F3EF;
+    font-size: 0.85em;
 }
 
 .ws-two-columns {
     width: 100%;
     float: left;
+    background-color: #F6F3EF;
 }
 
 .ws-two-columns .ws-first-column {
     width: 37%;
     float: left;
+    background-color: #F6F3EF;
 }
 
 .ws-two-columns .ws-last-column {
     width: 63%;
     float: right;
+    background-color: #F6F3EF;
 }
 
 .ws-two-columns .ws-first-column .ws-version-fs,
@@ -42,20 +51,39 @@
 }
 
 .ws-two-columns .ws-last-column .ws-url-fs{
-    min-height: 36px;
+    min-height: 34px;
 }
 
 .ws-two-columns .ws-last-column .ws-results-fs{
-    min-height: 38px;
+    min-height: 48px;
 }
 
 .instance-action {
     float: left;
     width: 99%;
+    margin: 8px 0 0;
+    background-color: #F6F3EF;
 }
 
 .ws-result {
     max-height: 420px;
 }
 
+.ui-widget-header h1 {
+    margin: 8px 16px;
+    font-size: 0.9em;
+}
 
+.ui-button .ui-button-text .ui-icon {
+    margin:0;
+    padding:0;
+    display: inline-block;
+}
+
+.wrapper .actions{
+    margin: 16px;
+}
+
+.chosen-container-multi {
+    max-width: 800px;
+}

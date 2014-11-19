@@ -7,11 +7,7 @@ window.com.xomena.geo = {
   Views: {},
   Router: {},
   services: null,
-  API_KEY: "AIzaSyA67JIj41Ze0lbc2KidOgQMgqLOAZOcybE",
-  CLIENT_ID: "gme-addictive",
-  CRYPTO_KEY: "Ub9OeP0S9B13G-lnfrrO7PP3-Mo=",
-  SERVER_URL: "http://localhost/geows/geows.php", 
-  SIGN_URL: "http://localhost/geows/geowssign.php",       
+  config: {},    
   getNewId: function(){
     window.com.xomena.geo.getNewId.count = ++window.com.xomena.geo.getNewId.count || 1;
     return window.com.xomena.geo.getNewId.count;
@@ -89,7 +85,11 @@ window.com.xomena.geo = {
         output += '</div>'; 
     }
     return output;  
-  }    
+  },
+  formatJSON: function(data){
+      var m_res = JSON.stringify(data).replace(/\[/ig,"[\n").replace(/\{/ig,"{\n").replace(/\]/ig,"\n]").replace(/\}/ig,"\n}").replace(/(\"\w+\":\".+\",)/ig,"$1\n");
+      return m_res;
+  }
 };
 
 /*Define data models*/
@@ -190,27 +190,31 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                 }
                 
                 if(ver === "free"){
-                    res.push(aa);
-                    res.push("key=");
-                    res.push(com.xomena.geo.API_KEY);
+                    if(com.xomena.geo.config.get("API_KEY")){
+                        res.push(aa);
+                        res.push("key=");
+                        res.push(com.xomena.geo.config.get("API_KEY"));
+                    }
                 } else {
-                    res.push(aa);
-                    res.push("client=");
-                    res.push(com.xomena.geo.CLIENT_ID);
+                    if(com.xomena.geo.config.get("CLIENT_ID")){
+                        res.push(aa);
+                        res.push("client=");
+                        res.push(com.xomena.geo.config.get("CLIENT_ID"));
+                    }
                 }
             }
         }
         var m_join = res.join("");
-        if(m_join && ver=='work'){
+        if(m_join && ver=='work' && com.xomena.geo.config.get("SIGN_URL") && com.xomena.geo.config.get("CRYPTO_KEY")){
             $.ajax({
-                url: com.xomena.geo.SIGN_URL,
+                url: com.xomena.geo.config.get("SIGN_URL"),
                 dataType: "text",
                 type: "POST",
                 crossDomain: true,
                 async: false,
                 data: {
                     uri: m_join,
-                    cryptokey: com.xomena.geo.CRYPTO_KEY
+                    cryptokey: com.xomena.geo.config.get("CRYPTO_KEY")
                 },
                 success: function(data) {
                     m_join = $.trim(data);
@@ -278,8 +282,8 @@ com.xomena.geo.services = new com.xomena.geo.Collections.WebServiceCollection();
 
 /*Define views*/
 com.xomena.geo.Views.InstanceView = Backbone.View.extend({
-  tagName: 'li', // defaults to div if not specified
-  className: 'ws-instance', // optional, can also set multiple 
+  tagName: 'li', 
+  className: 'ws-instance ui-widget-content ui-corner-tl ui-corner-tr ui-corner-bl ui-corner-br', 
   execInstance: function(){
     console.log("Start execution for instance #"+this.model.get("id"));
     var self = this;  
@@ -331,9 +335,9 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     this.model.set("output", this.$("input[name='output-"+this.model.get("id")+"']:checked").val()); 
     var m_url = this.model.getURL();
     this.$("#ws-url-"+this.model.get("id")).html(m_url);
-    if(m_url){
+    if(m_url && com.xomena.geo.config.get("SERVER_URL")){
         $.ajax({
-            url: com.xomena.geo.SERVER_URL,
+            url: com.xomena.geo.config.get("SERVER_URL"),
             dataType: self.model.get("output")=="json"?"json":"text",
             type: "POST",
             crossDomain: true,
@@ -347,7 +351,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
                 if($.type(data)=="string"){
                     self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='xml'>"+$.trim(data).replace(/</ig,"&lt;").replace(/>/ig,"&gt;")+"</code></pre>");
                 } else {
-                    self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='json'>"+JSON.stringify(data).replace(/\[/ig,"[\n").replace(/\{/ig,"{\n").replace(/\]/ig,"\n]").replace(/\}/ig,"\n}").replace(/,/ig,",\n")+"</code></pre>");
+                    self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='json'>"+com.xomena.geo.formatJSON(data)+"</code></pre>");
                 }
                 hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
             },
@@ -387,10 +391,10 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
             }
         });
         this.$(".chosen-select").chosen();
-        this.$("#exec-instance-"+this.model.get("id")).removeAttr("disabled");
+        this.$("#exec-instance-"+this.model.get("id")).button("enable");
       } else {
         this.$(".ws-parameters").html("");  
-        this.$("#exec-instance-"+this.model.get("id")).attr("disabled","disabled");
+        this.$("#exec-instance-"+this.model.get("id")).button("disable");
       }
   },    
   events: {
@@ -420,8 +424,18 @@ com.xomena.geo.Views.InstancesView = Backbone.View.extend({
   },
   render: function(){
     this.collection.each(function(instance){
-      var instanceView = new com.xomena.geo.Views.InstanceView({model: instance});
-      $("#instances-container").append(instanceView.el);
+        var instanceView = new com.xomena.geo.Views.InstanceView({model: instance});
+        $("#instances-container").append(instanceView.el);
+        $("#exec-instance-"+instance.get("id")).button({
+            icons: {
+                primary: "ui-icon-play"
+            }
+        });
+        $("#remove-instance-"+instance.get("id")).button({
+            icons: {
+                primary: "ui-icon-trash"
+            }
+        });
     });
   }
 });
@@ -476,5 +490,4 @@ com.xomena.geo.Views.ConfigView = Backbone.View.extend({
   remove: function(){
     this.$el.remove(); // removes the HTML element from view when delete button clicked/model deleted
   }
-      
 });
