@@ -12,6 +12,14 @@
     padding: 8px;
     background-color: #F6F3EF;
     font-size: 0.85em;
+    position: relative;
+}
+
+#instances-container li.ws-instance span.ui-icon-carat-2-n-s {
+    position: absolute;
+    top: 0;
+    right: 4px;
+    cursor: pointer;
 }
 
 .ws-two-columns {
@@ -86,4 +94,7 @@
 
 .chosen-container-multi {
     max-width: 800px;
+}
+.hidden {
+    display: none;
 }
