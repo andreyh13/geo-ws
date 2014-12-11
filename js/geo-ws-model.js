@@ -64,6 +64,13 @@ window.com.xomena.geo = {
             });
             output += '</ul>';
             break;
+        case 'checkbox':
+            var a1 = o.split("|");
+            var v = a1[0];
+            var l = a1.length>1?a1[1]:a1[0];
+            output += '<input type="checkbox" id="parameter-'+id+'" name="'+name+'" value="'+v+'"'+(r?' required':'')+'/>';
+            output += '<label for="parameter-'+id+'" title="'+d+'">'+l+'</label>';
+            break;
         case 'parts':
             var parts = model.get("parts");
             output += '<ul class="parts-container">';
@@ -91,10 +98,11 @@ window.com.xomena.geo = {
 
       var m_res = JSON.stringify(data).replace(/\[/ig,"[\n").replace(/\{/ig,"{\n").replace(/\]/ig,"\n]").replace(/\}/ig,"\n}").replace(r,"$1\n")
         .replace(/\},\{/ig, "},\n{").replace(/,(\"\w+\":\[)/ig, ",\n$1").replace(/,\"formatted_address\"/ig, ",\n\"formatted_address\"").replace(/,(\"\w+\":\{)/ig, ",\n$1")
-        .replace(/\},(\"\w+\")/ig, "},\n$1").replace(/\],(\"\w+\")/ig, "],\n$1");
+        .replace(/\},(\"\w+\")/ig, "},\n$1").replace(/\],(\"\w+\")/ig, "],\n$1").replace(/,\"maneuver\":/ig, ",\n\"maneuver\":");
       
       
       var arr = m_res.split("\n");
+      var arr1 = [];
       var counter = 0;
       
       var m_tabs = function(count){
@@ -105,17 +113,33 @@ window.com.xomena.geo = {
           return a.join("");
       }
       
-      _.each(arr, function(elem,index){
-          if(elem.indexOf("}")!==-1 || elem.indexOf("]")!==-1){
+      var ispoints = false;
+      var points = "";
+      for(var i=0; i<arr.length; i++){
+          if(!ispoints && arr[i].indexOf("\"points\":\"")!==-1){
+              ispoints = true;
+              points = arr[i];
+              continue;
+          }
+          if(ispoints){
+              points += arr[i];
+              if(arr[i].indexOf("\"")!==-1){
+                arr1.push(m_tabs(counter) + points);
+                ispoints = false;  
+                points = "";  
+              } 
+              continue;
+          }
+          if(arr[i].indexOf("}")!==-1 || arr[i].indexOf("]")!==-1){
               counter--;
           }
-          arr[index] = m_tabs(counter) + elem;
-          if(elem.indexOf("{")!==-1 || elem.indexOf("[")!==-1){
+          arr1.push(m_tabs(counter) + arr[i]);
+          if(arr[i].indexOf("{")!==-1 || arr[i].indexOf("[")!==-1){
               counter++;
           }
-      });
+      }
       
-      return arr.join("\n");
+      return arr1.join("\n");
   }
 };
 
@@ -127,7 +151,8 @@ com.xomena.geo.Models.WebService = Backbone.Model.extend({
         alias: '',
         basepath: 'https://maps.googleapis.com/maps/api/',
         output: ["json", "xml"],
-        parameters: null
+        parameters: null,
+        isplace: false
     },
     validate: function(attrs, options){
     }
@@ -188,10 +213,12 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
         var res = [];
         var m_service = this.get("webservice");
         var ver = this.get("version");
+        var m_isplace = false; 
         if(m_service){
             var m_services = this.get("services");
             var service = m_services.filterById(parseInt(m_service));
             if($.isArray(service) && service.length){
+                m_isplace = service[0].get("isplace");
                 res.push(service[0].get("basepath"));
                 res.push(service[0].get("alias"));
                 res.push("/");
@@ -209,8 +236,11 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                         if(v && $.isArray(v) && v.length){
                             res.push(aa);
                             res.push(n);
-                            res.push("=");
-                            res.push(encodeURI(v.join(sep)));
+                            var m_encval = encodeURI(v.join(sep));
+                            if(m_encval){
+                                res.push("=");
+                                res.push(m_encval);
+                            }
                             aa = "&";
                         }
                     });
@@ -223,16 +253,24 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                         res.push(com.xomena.geo.config.get("API_KEY"));
                     }
                 } else {
-                    if(com.xomena.geo.config.get("CLIENT_ID")){
-                        res.push(aa);
-                        res.push("client=");
-                        res.push(com.xomena.geo.config.get("CLIENT_ID"));
+                    if(m_isplace){
+                        if(com.xomena.geo.config.get("PLACES_API_KEY")){
+                            res.push(aa);
+                            res.push("key=");
+                            res.push(com.xomena.geo.config.get("PLACES_API_KEY"));
+                        }
+                    } else {
+                        if(com.xomena.geo.config.get("CLIENT_ID")){
+                            res.push(aa);
+                            res.push("client=");
+                            res.push(com.xomena.geo.config.get("CLIENT_ID"));
+                        }
                     }
                 }
             }
         }
         var m_join = res.join("");
-        if(m_join && ver=='work' && com.xomena.geo.config.get("SIGN_URL") && com.xomena.geo.config.get("CRYPTO_KEY")){
+        if(!m_isplace && m_join && ver=='work' && com.xomena.geo.config.get("SIGN_URL") && com.xomena.geo.config.get("CRYPTO_KEY")){
             $.ajax({
                 url: com.xomena.geo.config.get("SIGN_URL"),
                 dataType: "text",
@@ -261,7 +299,8 @@ com.xomena.geo.Models.Config = Backbone.Model.extend({
         CLIENT_ID: null,
         CRYPTO_KEY: null,
         SERVER_URL: null, 
-        SIGN_URL: null
+        SIGN_URL: null,
+        PLACES_API_KEY: null
     }
 }); 
 
@@ -302,7 +341,8 @@ com.xomena.geo.Collections.WebServiceCollection = Backbone.Collection.extend({
 });
 
 com.xomena.geo.Collections.InstanceCollection = Backbone.Collection.extend({
-  model: com.xomena.geo.Models.Instance
+  model: com.xomena.geo.Models.Instance,
+  url: '/instances'    
 });
 
 com.xomena.geo.services = new com.xomena.geo.Collections.WebServiceCollection();
@@ -349,6 +389,11 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
                         v.push(val);
                     }
                 }
+            } else if(t==='checkbox') {
+                if(this.checked){
+                    var val = $(this).val();
+                    v.push(val);
+                }
             } else {
                 var val = $(this).val();
                 if(val){
@@ -389,7 +434,8 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     }
     return false;  
   },
-  deleteInstance: function(){
+  deleteInstance: function(ev){
+    ev.preventDefault();  
     console.log("Delete instance #"+this.model.get("id"));  
     this.model.destroy(); // deletes the model when delete button clicked
     return false;  
@@ -440,7 +486,6 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   newTemplate: _.template($('#instanceTemplate').html()), // external template    
   initialize: function() {
     this.render(); // render is an optional function that defines the logic for rendering a template
-    //this.model.on('change', this.render, this); // calls render function once changed
     this.model.on('destroy', this.remove, this); // calls remove function once model deleted  
   },
   render: function() {
@@ -448,6 +493,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   },
   remove: function(){
     this.$el.remove(); // removes the HTML element from view when delete button clicked/model deleted
+    return false;  
   }
       
 });

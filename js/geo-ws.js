@@ -68,7 +68,7 @@
             async: false,
             success: function(data) {
                 for (var i = 1; i < data.length; i++) {
-                    var wserv = new com.xomena.geo.Models.WebService({id: com.xomena.geo.getNewId(), name: data[i][0], alias: data[i][1]});
+                    var wserv = new com.xomena.geo.Models.WebService({id: com.xomena.geo.getNewId(), name: data[i][0], alias: data[i][1], isplace: data[i][3]});
                     if(data[i][2]){
                         //Init parameters
                         initParameters(wserv, data[i][2]+'?jsonp=?');
@@ -110,14 +110,15 @@
             CLIENT_ID: localStorage.getItem("com.xomena.geo.Models.Config.CLIENT_ID"),
             CRYPTO_KEY: localStorage.getItem("com.xomena.geo.Models.Config.CRYPTO_KEY"),
             SERVER_URL: localStorage.getItem("com.xomena.geo.Models.Config.SERVER_URL"), 
-            SIGN_URL: localStorage.getItem("com.xomena.geo.Models.Config.SIGN_URL")
+            SIGN_URL: localStorage.getItem("com.xomena.geo.Models.Config.SIGN_URL"),
+            PLACES_API_KEY: localStorage.getItem("com.xomena.geo.Models.Config.PLACES_API_KEY")
         });
         var m_config_view = new com.xomena.geo.Views.ConfigView({model: com.xomena.geo.config});
         $("#config").append(m_config_view.el);
         
         m_dialog = $( "#config" ).dialog({
             autoOpen: false,
-            height: 460,
+            height: 500,
             width: 600,
             modal: true,
             buttons: {
@@ -127,12 +128,14 @@
                     com.xomena.geo.config.set("CLIENT_ID", $("#app-config-client-id").val());  
                     com.xomena.geo.config.set("CRYPTO_KEY", $("#app-config-crypto-key").val());
                     com.xomena.geo.config.set("SERVER_URL", $("#app-config-server-url").val());
-                    com.xomena.geo.config.set("SIGN_URL", $("#app-config-sign-url").val());               
+                    com.xomena.geo.config.set("SIGN_URL", $("#app-config-sign-url").val());
+                    com.xomena.geo.config.set("PLACES_API_KEY", $("#app-config-places-api-key").val());
                     localStorage.setItem("com.xomena.geo.Models.Config.API_KEY", com.xomena.geo.config.get("API_KEY"));  
                     localStorage.setItem("com.xomena.geo.Models.Config.CLIENT_ID", com.xomena.geo.config.get("CLIENT_ID")); 
                     localStorage.setItem("com.xomena.geo.Models.Config.CRYPTO_KEY", com.xomena.geo.config.get("CRYPTO_KEY"));
                     localStorage.setItem("com.xomena.geo.Models.Config.SERVER_URL", com.xomena.geo.config.get("SERVER_URL"));
-                    localStorage.setItem("com.xomena.geo.Models.Config.SIGN_URL", com.xomena.geo.config.get("SIGN_URL")); 
+                    localStorage.setItem("com.xomena.geo.Models.Config.SIGN_URL", com.xomena.geo.config.get("SIGN_URL"));
+                    localStorage.setItem("com.xomena.geo.Models.Config.PLACES_API_KEY", com.xomena.geo.config.get("PLACES_API_KEY"));  
                     console.log("Config saved");
                     m_dialog.dialog("close");
                 },
