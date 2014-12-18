@@ -62,6 +62,10 @@
     
     //DOM ready initialization
     $(function(){
+        console.log("Start blockUI");
+        $.blockUI({
+            message: '<img src="image/waiting.gif" title="Please wait" width="75" height="75" />'
+        });
         $.ajax({
             url: WS_DS_URI,
             dataType: 'jsonp',
@@ -101,6 +105,11 @@
                     });
                     return false;
                 });
+                console.log("Finish init instances");
+                window.setTimeout(function(){
+                    $.unblockUI();
+                    console.log("Finish blockUI");
+                }, 2500);
             }
         });
         

@@ -98,7 +98,12 @@ window.com.xomena.geo = {
 
       var m_res = JSON.stringify(data).replace(/\[/ig,"[\n").replace(/\{/ig,"{\n").replace(/\]/ig,"\n]").replace(/\}/ig,"\n}").replace(r,"$1\n")
         .replace(/\},\{/ig, "},\n{").replace(/,(\"\w+\":\[)/ig, ",\n$1").replace(/,\"formatted_address\"/ig, ",\n\"formatted_address\"").replace(/,(\"\w+\":\{)/ig, ",\n$1")
-        .replace(/\},(\"\w+\")/ig, "},\n$1").replace(/\],(\"\w+\")/ig, "],\n$1").replace(/,\"maneuver\":/ig, ",\n\"maneuver\":");
+        .replace(/\},(\"\w+\")/ig, "},\n$1").replace(/\],(\"\w+\")/ig, "],\n$1").replace(/,\"maneuver\":/ig, ",\n\"maneuver\":").replace(/,\"id\":/ig, ",\n\"id\":")
+        .replace(/,\"width\":/ig, ",\n\"width\":").replace(/,\"reference\":/ig, ",\n\"reference\":").replace(/,\"scope\":/ig, ",\n\"scope\":")
+        .replace(/,\"formatted_phone_number\":/ig, ",\n\"formatted_phone_number\":").replace(/,\"name\":/ig, ",\n\"name\":").replace(/,\"type\":/ig, ",\n\"type\":")
+        .replace(/,\"language\":/ig, ",\n\"language\":").replace(/,\"text\":/ig, ",\n\"text\":").replace(/,\"time\":/ig, ",\n\"time\":")
+        .replace(/,\"user_ratings_total\":/ig, ",\n\"user_ratings_total\":").replace(/,\"utc_offset\":/ig, ",\n\"utc_offset\":")
+        .replace(/,\"vicinity\":/ig, ",\n\"vicinity\":").replace(/,\"website\":/ig, ",\n\"website\":").replace(/,\"offset\":/ig, ",\n\"offset\":").replace(/,\"value\":/ig, ",\n\"value\":");
       
       
       var arr = m_res.split("\n");
