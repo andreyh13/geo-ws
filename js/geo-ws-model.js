@@ -28,13 +28,13 @@ window.com.xomena.geo = {
     }
     switch(t){
         case 'string':
-            output += '<input type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
+            output += '<input class="pure-input-2-3" type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
             if(m){
                 output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
             }
             break;
         case 'number':
-            output += '<input type="number" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
+            output += '<input class="pure-input-1-2" type="number" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
             if(m){
                 output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
             }
@@ -48,7 +48,7 @@ window.com.xomena.geo = {
                 var l = a1.length>1?a1[1]:a1[0];
                 m_options = [m_options, '<option value="', v, '">', l, '</option>'].join(""); 
             });
-            output += '<select id="parameter-'+id+'" name="'+name+'" class="chosen-select"'+(m?' multiple':'')+(r?' required':'')+' title="'+d+'">'+m_options+'</select>';
+            output += '<select id="parameter-'+id+'" name="'+name+'" class="pure-input-2-3 chosen-select"'+(m?' multiple':'')+(r?' required':'')+' title="'+d+'">'+m_options+'</select>';
             break;
         case 'checkboxes':
             output += '<ul class="checkboxes">';
@@ -58,8 +58,10 @@ window.com.xomena.geo = {
                 var v = a1[0];
                 var l = a1.length>1?a1[1]:a1[0];
                 output += '<li>';
+                output += '<label for="parameter-'+id+'-'+ind+'" title="'+d+'" class="pure-checkbox">';
                 output += '<input type="checkbox" id="parameter-'+id+'-'+ind+'" name="'+name+'" value="'+v+'"'+(r?' required':'')+'/>';
-                output += '<label for="parameter-'+id+'-'+ind+'" title="'+d+'">'+l+'</label>';
+                output += l;
+                output += '</label>';
                 output += '</li>';
             });
             output += '</ul>';
@@ -68,8 +70,10 @@ window.com.xomena.geo = {
             var a1 = o.split("|");
             var v = a1[0];
             var l = a1.length>1?a1[1]:a1[0];
+            output += '<label for="parameter-'+id+'" title="'+d+'" class="pure-checkbox">';
             output += '<input type="checkbox" id="parameter-'+id+'" name="'+name+'" value="'+v+'"'+(r?' required':'')+'/>';
-            output += '<label for="parameter-'+id+'" title="'+d+'">'+l+'</label>';
+            output += l;
+            output += '</label>';
             break;
         case 'parts':
             var parts = model.get("parts");
@@ -83,7 +87,7 @@ window.com.xomena.geo = {
             output += '</ul>';
             break;
         default:
-            output += '<input type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+'title="'+d+'"/>';
+            output += '<input class="pure-input-2-3" type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+'title="'+d+'"/>';
             if(m){
                 output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
             }
@@ -476,10 +480,10 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
       }
   }, 
   toggleWs: function(){
-      if(this.$(".ws-two-columns").hasClass("hidden")){
-          this.$(".ws-two-columns").removeClass("hidden");
+      if(this.$(".two-cols").hasClass("hidden")){
+          this.$(".two-cols").removeClass("hidden");
       } else {
-          this.$(".ws-two-columns").addClass("hidden");
+          this.$(".two-cols").addClass("hidden");
       }
   },    
   events: {

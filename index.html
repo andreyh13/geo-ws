@@ -7,15 +7,16 @@
     <link rel="stylesheet" href="css/chosen.css">
     <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/themes/smoothness/jquery-ui.css" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/styles/default.min.css">
+    <link rel="stylesheet" href="http://yui.yahooapis.com/combo?pure/0.5.0/base-min.css&pure/0.5.0/grids-responsive-min.css&pure/0.5.0/forms-min.css">
 </head>
 
-<body>
+<body class="yui3-normalized">
     <div class="wrapper ui-widget">
         <header class="ui-widget-header ui-corner-tl ui-corner-tr">
             <h1>Google Maps Web Services APIs</h1>
         </header>
         <div class="ui-widget-content ui-corner-bl ui-corner-br">
-           <form id="form-ws">
+           <form id="form-ws" class="pure-form pure-form-aligned">
                <ol id="instances-container">
                </ol>
                <div class="actions">
@@ -40,24 +41,35 @@
     
     <!-- external template -->
     <script id="instanceTemplate" type="text/template">
-        <div class="ws-two-columns">
-            <div class="ws-first-column">
-                <fieldset class="ws-version-fs">
+        <div class="pure-g two-cols">
+            <div class="pure-u-1 pure-u-lg-11-24">
+                <div class="pure-g">
+                <fieldset class="ws-version-fs pure-u-23-24 pure-u-xl-11-24">
                     <legend>Select the version</legend>
-                    <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-free-<%= id %>" <% print(version==='free'?'checked="checked"':''); %> value="free" />
-                    <label for="ws-version-free-<%= id %>">Free</label>
-                    <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-work-<%= id %>" <% print(version==='work'?'checked="checked"':''); %> value="work" />
-                    <label for="ws-version-work-<%= id %>">For Work</label>
+                    <label for="ws-version-free-<%= id %>" class="pure-radio">
+                        <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-free-<%= id %>" <% print(version==='free'?'checked="checked"':''); %> value="free" />
+                        Free
+                    </label>
+                    <label for="ws-version-work-<%= id %>" class="pure-radio">
+                        <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-work-<%= id %>" <% print(version==='work'?'checked="checked"':''); %> value="work" />
+                        For Work
+                    </label>
                 </fieldset>
-                <fieldset class="ws-output-fs">
+                <fieldset class="ws-output-fs pure-u-23-24 pure-u-xl-11-24">
                     <legend>Select the output format</legend>
-                    <input type="radio" name="output-<%= id %>" id="output-json-<%= id %>" <% print(output==='json'?'checked="checked"':''); %> value="json" />
-                    <label for="output-json-<%= id %>">JSON</label>
-                    <input type="radio" name="output-<%= id %>" id="output-xml-<%= id %>" <% print(output==='xml'?'checked="checked"':''); %> value="xml" />
-                    <label for="output-xml-<%= id %>">XML</label>
+                    <label for="output-json-<%= id %>" class="pure-radio">
+                        <input type="radio" name="output-<%= id %>" id="output-json-<%= id %>" <% print(output==='json'?'checked="checked"':''); %> value="json" />
+                        JSON
+                    </label>
+                    <label for="output-xml-<%= id %>" class="pure-radio">
+                        <input type="radio" name="output-<%= id %>" id="output-xml-<%= id %>" <% print(output==='xml'?'checked="checked"':''); %> value="xml" />
+                        XML
+                    </label>
                 </fieldset>
+                </div>
         
-                <fieldset class="ws-construct-fs">
+                <div class="pure-g">
+                <fieldset class="ws-construct-fs pure-u-23-24">
                     <legend>Construct</legend>
                     <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>" class="ws-choose">
                         <option value="">--Please select--</option>  
@@ -68,17 +80,19 @@
                     </select>
                     <div class="ws-parameters" id="ws-parameters-<%= id %>"></div>
                 </fieldset>
+                </div>
             </div>
-            <div class="ws-last-column">
-                <fieldset class="ws-url-fs">
+            <div class="pure-u-1 pure-u-lg-1-2">
+                <div class="pure-g">
+                <fieldset class="ws-url-fs pure-u-1">
                     <legend>URL</legend>
                     <div id="ws-url-<%= id %>"  class="ws-url"></div>
                 </fieldset>
-                <fieldset class="ws-results-fs">
+                <fieldset class="ws-results-fs pure-u-1">
                     <legend>Results</legend>
                     <div id="ws-result-<%= id %>"  class="ws-result"></div>
                 </fieldset>
-                
+                </div>
             </div>
         </div>
         <div id="instance-action-<%= id %>" class="instance-action">
@@ -120,5 +134,15 @@
     
     <script src="js/geo-ws-model.js"></script>
     <script src="js/geo-ws.js"></script>
+    
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-57959665-1', 'auto');
+        ga('send', 'pageview');
+    </script>
 </body>
 </html>
