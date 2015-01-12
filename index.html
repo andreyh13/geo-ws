@@ -108,7 +108,7 @@
     
     <!-- external template -->
     <script id="paramTemplate" type="text/template">
-      <label for="parameter-<%= id %>"><%= name %></label>
+      <label for="parameter-<%= id %>"><%= name %><%= model.get("required")?"<sup>*</sup>":"" %></label>
       <% print(com.xomena.geo.getFormElement(id, name, model)); %>
     </script>
     

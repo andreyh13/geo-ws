@@ -9,10 +9,15 @@
     float: left;
     width:87%;
     margin-bottom: 16px;
-    padding: 8px;
+    padding: 8px 0;
     background-color: #F6F3EF;
     font-size: 0.85em;
     position: relative;
+}
+
+#instances-container li.ws-instance > div.pure-g.two-cols{
+    background-color: #F6F3EF;
+    padding: 0 8px;
 }
 
 #instances-container li.ws-instance span.ui-icon-carat-2-n-s {
@@ -72,6 +77,10 @@
 
 .hidden {
     display: none;
+}
+
+ul.ws-params > li.ws-param {
+    padding: 4px 0 0;
 }
 
 @media screen and (min-width: 480px){
