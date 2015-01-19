@@ -107,7 +107,8 @@ window.com.xomena.geo = {
         .replace(/,\"formatted_phone_number\":/ig, ",\n\"formatted_phone_number\":").replace(/,\"name\":/ig, ",\n\"name\":").replace(/,\"type\":/ig, ",\n\"type\":")
         .replace(/,\"language\":/ig, ",\n\"language\":").replace(/,\"text\":/ig, ",\n\"text\":").replace(/,\"time\":/ig, ",\n\"time\":")
         .replace(/,\"user_ratings_total\":/ig, ",\n\"user_ratings_total\":").replace(/,\"utc_offset\":/ig, ",\n\"utc_offset\":")
-        .replace(/,\"vicinity\":/ig, ",\n\"vicinity\":").replace(/,\"website\":/ig, ",\n\"website\":").replace(/,\"offset\":/ig, ",\n\"offset\":").replace(/,\"value\":/ig, ",\n\"value\":");
+        .replace(/,\"vicinity\":/ig, ",\n\"vicinity\":").replace(/,\"website\":/ig, ",\n\"website\":").replace(/,\"offset\":/ig, ",\n\"offset\":").replace(/,\"value\":/ig, ",\n\"value\":")
+        .replace(/,\"place_id\":/ig, ",\n\"place_id\":");
       
       
       var arr = m_res.split("\n");
