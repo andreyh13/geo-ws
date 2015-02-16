@@ -22,7 +22,8 @@
                         options: data[i][4],
                         multiple: data[i][5],
                         pattern: data[i][6],
-                        placeholder: data[i][7]
+                        placeholder: data[i][7],
+                        requiredOrGroup: data[i][8]
                     });
                     partscol.add(part);
                 }
@@ -47,7 +48,8 @@
                         options: data[i][5],
                         multiple: data[i][6],
                         pattern: data[i][7],
-                        placeholder: data[i][8]
+                        placeholder: data[i][8],
+                        requiredOrGroup: data[i][9]
                     });
                     if(data[i][4]){
                         //Init parameter parts
@@ -92,6 +94,7 @@
                     var m_instance = new com.xomena.geo.Models.Instance({id: com.xomena.geo.getNewId(), services: com.xomena.geo.services});
                     instance_col.add(m_instance);
                     var m_instanceView = new com.xomena.geo.Views.InstanceView({model: m_instance});
+                    Backbone.Validation.bind(m_instanceView);
                     $("#instances-container").append(m_instanceView.el);
                     $("#exec-instance-"+m_instance.get("id")).button({
                         icons: {

@@ -18,6 +18,7 @@ window.com.xomena.geo = {
     var p = model.get("pattern");
     var h = model.get("placeholder");
     var r = model.get("required");
+    var rOr = model.get("requiredOrGroup");  
     var d = model.get("description");
     var m = model.get("multiple");
     var o = model.get("options");  
@@ -108,7 +109,7 @@ window.com.xomena.geo = {
         .replace(/,\"language\":/ig, ",\n\"language\":").replace(/,\"text\":/ig, ",\n\"text\":").replace(/,\"time\":/ig, ",\n\"time\":")
         .replace(/,\"user_ratings_total\":/ig, ",\n\"user_ratings_total\":").replace(/,\"utc_offset\":/ig, ",\n\"utc_offset\":")
         .replace(/,\"vicinity\":/ig, ",\n\"vicinity\":").replace(/,\"website\":/ig, ",\n\"website\":").replace(/,\"offset\":/ig, ",\n\"offset\":").replace(/,\"value\":/ig, ",\n\"value\":")
-        .replace(/,\"place_id\":/ig, ",\n\"place_id\":");
+        .replace(/,\"place_id\":/ig, ",\n\"place_id\":").replace(/,\"short_name\":/ig, ",\n\"short_name\":");
       
       
       var arr = m_res.split("\n");
@@ -163,8 +164,6 @@ com.xomena.geo.Models.WebService = Backbone.Model.extend({
         output: ["json", "xml"],
         parameters: null,
         isplace: false
-    },
-    validate: function(attrs, options){
     }
 });
     
@@ -180,7 +179,8 @@ com.xomena.geo.Models.Parameter = Backbone.Model.extend({
         multiple: false,
         separator: '|',
         pattern: '',
-        placeholder: ''
+        placeholder: '',
+        requiredOrGroup: false
     }
 });
 
@@ -204,7 +204,8 @@ com.xomena.geo.Models.ParameterPart = Backbone.Model.extend({
         multiple: false,
         separator: ':',
         pattern: '',
-        placeholder: ''
+        placeholder: '',
+        requiredOrGroup: false
     }
 });  
 
@@ -217,7 +218,10 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
         parameters: null,
         services: null
     },
-    validate: function(attrs, options){
+    validation: {
+        parameters: function(value){
+            console.log("Start parameters validation");
+        }
     },
     getURL: function(){
         var res = [];
@@ -415,32 +419,35 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     });  
     this.model.set("version", this.$("input[name='ws-version-val-"+this.model.get("id")+"']:checked").val());
     this.model.set("output", this.$("input[name='output-"+this.model.get("id")+"']:checked").val()); 
-    var m_url = this.model.getURL();
-    this.$("#ws-url-"+this.model.get("id")).html(m_url);
-    if(m_url && com.xomena.geo.config.get("SERVER_URL")){
-        $.ajax({
-            url: com.xomena.geo.config.get("SERVER_URL"),
-            dataType: self.model.get("output")=="json"?"json":"text",
-            type: "POST",
-            crossDomain: true,
-            async: true,
-            data: {
-                uri: m_url,
-                version: self.model.get("version"),
-                output: self.model.get("output")
-            },
-            success: function(data) {
-                if($.type(data)=="string"){
-                    self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='xml'>"+$.trim(data).replace(/</ig,"&lt;").replace(/>/ig,"&gt;")+"</code></pre>");
-                } else {
-                    self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='json'>"+com.xomena.geo.formatJSON(data)+"</code></pre>");
+    var isValid = this.model.isValid("parameters");  
+    if(isValid){  
+        var m_url = this.model.getURL();
+        this.$("#ws-url-"+this.model.get("id")).html(m_url);
+        if(m_url && com.xomena.geo.config.get("SERVER_URL")){
+            $.ajax({
+                url: com.xomena.geo.config.get("SERVER_URL"),
+                dataType: self.model.get("output")=="json"?"json":"text",
+                type: "POST",
+                crossDomain: true,
+                async: true,
+                data: {
+                    uri: m_url,
+                    version: self.model.get("version"),
+                    output: self.model.get("output")
+                },
+                success: function(data) {
+                    if($.type(data)=="string"){
+                        self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='xml'>"+$.trim(data).replace(/</ig,"&lt;").replace(/>/ig,"&gt;")+"</code></pre>");
+                    } else {
+                        self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='json'>"+com.xomena.geo.formatJSON(data)+"</code></pre>");
+                    }
+                    hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
+                },
+                error: function(jqXHR, textStatus, errorThrown){
+                    console.log("Server side error: "+textStatus+" - "+ errorThrown);
                 }
-                hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
-            },
-            error: function(jqXHR, textStatus, errorThrown){
-                console.log("Server side error: "+textStatus+" - "+ errorThrown);
-            }
-        });
+            });
+        }
     }
     return false;  
   },
@@ -516,6 +523,7 @@ com.xomena.geo.Views.InstancesView = Backbone.View.extend({
   render: function(){
     this.collection.each(function(instance){
         var instanceView = new com.xomena.geo.Views.InstanceView({model: instance});
+        Backbone.Validation.bind(instanceView);
         $("#instances-container").append(instanceView.el);
         $("#exec-instance-"+instance.get("id")).button({
             icons: {
