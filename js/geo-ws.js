@@ -176,5 +176,20 @@
                 primary: "ui-icon-plus"
             }
         });
+        
+        //Initialize validation dialog
+        $("#validation-dialog").dialog({
+            autoOpen: false,
+            modal: true,
+            minWidth: 400,
+            show: {
+                effect: "blind",
+                duration: 1000
+            },
+            hide: {
+                effect: "explode",
+                duration: 1000
+            }
+        });
     });
 })(jQuery);

@@ -221,6 +221,38 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
     validation: {
         parameters: function(value){
             console.log("Start parameters validation");
+            var msg = [];
+            var reqOrGroup = [];
+            value.forEach(function(p){
+                var m = p.get("model");
+                var n = p.get("name");
+                var v = p.get("value");
+                var r = m.get("required");
+                if(r && !v.length){
+                    msg.push("Parameter " + n + " is required.");
+                }
+                if(m.get("requiredOrGroup")){
+                    reqOrGroup.push({
+                        name: n,
+                        value: v
+                    });
+                }
+            });
+            if(reqOrGroup.length){
+                var notEmptyPar = _.find(reqOrGroup, function(elem){ 
+                    return elem.value.length; 
+                });
+                if(!notEmptyPar){
+                    var allNames = _.map(reqOrGroup, function(elem){ return elem.name; });
+                    msg.push("One of these parameters is required:<br/>&nbsp;&nbsp;&nbsp;" + allNames.join("<br/>&nbsp;&nbsp;&nbsp;"));
+                }
+            }
+            console.log("End parameters validation");
+            if(msg.length){
+                var warn = msg.join("<br/>"); 
+                $("#validation-dialog").find("p.validation-content").html(warn).end().dialog("open");
+                return warn;
+            }
         }
     },
     getURL: function(){
