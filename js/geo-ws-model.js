@@ -228,16 +228,33 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                 var n = p.get("name");
                 var v = p.get("value");
                 var r = m.get("required");
+                //Check required fields
                 if(r && !v.length){
                     msg.push("Parameter " + n + " is required.");
                 }
+                //Creating list of required one of
                 if(m.get("requiredOrGroup")){
                     reqOrGroup.push({
                         name: n,
                         value: v
                     });
                 }
+                //Check field against pattern
+                var p = m.get("pattern");
+                if(p && v.length){
+                    var patt = new RegExp(p,"ig");
+                    var notPassed = [];
+                    _.each(v, function(val){
+                        if(!patt.test(val)){
+                            notPassed.push(val);
+                        }
+                    });
+                    if(notPassed.length){
+                        msg.push("The following values of " + n + " doesn't match pattern:<br/>&nbsp;&nbsp;&nbsp;" + notPassed.join("<br/>&nbsp;&nbsp;&nbsp;"));
+                    }
+                }
             });
+            //Check required one of 
             if(reqOrGroup.length){
                 var notEmptyPar = _.find(reqOrGroup, function(elem){ 
                     return elem.value.length; 

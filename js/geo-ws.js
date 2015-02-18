@@ -181,7 +181,7 @@
         $("#validation-dialog").dialog({
             autoOpen: false,
             modal: true,
-            minWidth: 400,
+            minWidth: 580,
             show: {
                 effect: "blind",
                 duration: 1000
