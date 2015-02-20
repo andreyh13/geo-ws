@@ -23,7 +23,8 @@
                         multiple: data[i][5],
                         pattern: data[i][6],
                         placeholder: data[i][7],
-                        requiredOrGroup: data[i][8]
+                        requiredOrGroup: data[i][8],
+                        condVisibility: data[i][9]
                     });
                     partscol.add(part);
                 }
@@ -49,7 +50,8 @@
                         multiple: data[i][6],
                         pattern: data[i][7],
                         placeholder: data[i][8],
-                        requiredOrGroup: data[i][9]
+                        requiredOrGroup: data[i][9],
+                        condVisibility: data[i][10]
                     });
                     if(data[i][4]){
                         //Init parameter parts

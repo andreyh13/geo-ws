@@ -180,7 +180,8 @@ com.xomena.geo.Models.Parameter = Backbone.Model.extend({
         separator: '|',
         pattern: '',
         placeholder: '',
-        requiredOrGroup: false
+        requiredOrGroup: false,
+        condVisibility: ''
     }
 });
 
@@ -205,7 +206,8 @@ com.xomena.geo.Models.ParameterPart = Backbone.Model.extend({
         separator: ':',
         pattern: '',
         placeholder: '',
-        requiredOrGroup: false
+        requiredOrGroup: false,
+        condVisibility: ''
     }
 });  
 
