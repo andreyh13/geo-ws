@@ -12,7 +12,7 @@ window.com.xomena.geo = {
     window.com.xomena.geo.getNewId.count = ++window.com.xomena.geo.getNewId.count || 1;
     return window.com.xomena.geo.getNewId.count;
   },
-  getFormElement: function(id,name,model){
+  getFormElement: function(id,name,model,triggers,listeners){
     var output = "";
     var t = model.get("type");
     var p = model.get("pattern");
@@ -22,6 +22,8 @@ window.com.xomena.geo = {
     var d = model.get("description");
     var m = model.get("multiple");
     var o = model.get("options");  
+    var t_vis = triggers && triggers.visibility;
+    var l_vis = listeners && listeners.visibility;  
     if(m){
         output += '<div id="multiple-container-'+id+'">'; 
     } else {
@@ -29,13 +31,15 @@ window.com.xomena.geo = {
     }
     switch(t){
         case 'string':
-            output += '<input class="pure-input-2-3" type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
+            output += '<input class="pure-input-2-3'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
+                '" type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
             if(m){
                 output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
             }
             break;
         case 'number':
-            output += '<input class="pure-input-1-2" type="number" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
+            output += '<input class="pure-input-1-2'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
+                '" type="number" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
             if(m){
                 output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
             }
@@ -49,7 +53,8 @@ window.com.xomena.geo = {
                 var l = a1.length>1?a1[1]:a1[0];
                 m_options = [m_options, '<option value="', v, '">', l, '</option>'].join(""); 
             });
-            output += '<select id="parameter-'+id+'" name="'+name+'" class="pure-input-2-3 chosen-select"'+(m?' multiple':'')+(r?' required':'')+' title="'+d+'">'+m_options+'</select>';
+            output += '<select id="parameter-'+id+'" name="'+name+'" class="pure-input-2-3 chosen-select'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
+                '"'+(m?' multiple':'')+(r?' required':'')+' title="'+d+'">'+m_options+'</select>';
             break;
         case 'checkboxes':
             output += '<ul class="checkboxes">';
@@ -60,7 +65,8 @@ window.com.xomena.geo = {
                 var l = a1.length>1?a1[1]:a1[0];
                 output += '<li>';
                 output += '<label for="parameter-'+id+'-'+ind+'" title="'+d+'" class="pure-checkbox">';
-                output += '<input type="checkbox" id="parameter-'+id+'-'+ind+'" name="'+name+'" value="'+v+'"'+(r?' required':'')+'/>';
+                output += '<input type="checkbox" id="parameter-'+id+'-'+ind+'" name="'+name+'" value="'+v+'"'+(r?' required':'')+
+                    ' class="checkbox'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+'" />';
                 output += l;
                 output += '</label>';
                 output += '</li>';
@@ -72,7 +78,8 @@ window.com.xomena.geo = {
             var v = a1[0];
             var l = a1.length>1?a1[1]:a1[0];
             output += '<label for="parameter-'+id+'" title="'+d+'" class="pure-checkbox">';
-            output += '<input type="checkbox" id="parameter-'+id+'" name="'+name+'" value="'+v+'"'+(r?' required':'')+'/>';
+            output += '<input type="checkbox" id="parameter-'+id+'" name="'+name+'" value="'+v+'"'+(r?' required':'')+
+                ' class="checkbox'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+'"/>';
             output += l;
             output += '</label>';
             break;
@@ -88,7 +95,8 @@ window.com.xomena.geo = {
             output += '</ul>';
             break;
         default:
-            output += '<input class="pure-input-2-3" type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+'title="'+d+'"/>';
+            output += '<input class="pure-input-2-3'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
+                '" type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+'title="'+d+'"/>';
             if(m){
                 output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
             }
@@ -190,7 +198,9 @@ com.xomena.geo.Models.ParameterInstance = Backbone.Model.extend({
         id: null,
         name: null,
         model: null,
-        value: null
+        value: null,
+        triggerCondVisibility: false,
+        listenCondVisibility: false
     }
 }); 
     
@@ -533,6 +543,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
         });
         this.$(".chosen-select").chosen();
         this.$("#exec-instance-"+this.model.get("id")).button("enable");
+          
       } else {
         this.$(".ws-parameters").html("");  
         this.$("#exec-instance-"+this.model.get("id")).button("disable");
@@ -562,7 +573,13 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   remove: function(){
     this.$el.remove(); // removes the HTML element from view when delete button clicked/model deleted
     return false;  
-  }
+  },
+  setParametersVisibility: function(){
+     var parameters = this.model.get("parameters"); 
+     parameters.forEach(function(p){
+         
+     });
+  }    
       
 });
 
@@ -595,6 +612,7 @@ com.xomena.geo.Views.ParameterView = Backbone.View.extend({
   tagName: 'li', // defaults to div if not specified
   className: 'ws-param', // optional, can also set multiple 
   events: {
+    'change .trigger-visibility': 'triggerVisibility'  
   },
   newTemplate: _.template($('#paramTemplate').html()), // external template    
   initialize: function() {
@@ -606,8 +624,10 @@ com.xomena.geo.Views.ParameterView = Backbone.View.extend({
   },
   remove: function(){
     this.$el.remove(); // removes the HTML element from view when delete button clicked/model deleted
+  },
+  triggerVisibility: function(){
+    console.log("Triggered visibility event: "+this.model.get("name"));  
   }
-      
 });
 
 com.xomena.geo.Views.ParametersView = Backbone.View.extend({ 
@@ -617,11 +637,45 @@ com.xomena.geo.Views.ParametersView = Backbone.View.extend({
     this.collection;
   },
   render: function(){
-    var self = this;  
+    var self = this; 
+    this.processDependencies();  
     this.collection.each(function(param){
       var paramView = new com.xomena.geo.Views.ParameterView({model: param});
       self.$el.append(paramView.el);
     });
+  },
+  processDependencies: function(){
+      //Conditional visibility
+      var triggersCondVisible = [];
+      var listenersCondVisible = [];
+      var reParam = /[a-z_]+:\[.+\]/g; 
+      this.collection.each(function(param){
+          var m = param.get("model");
+          //Conditional visibility
+          var cond_visible = m.get("condVisibility");
+          if(cond_visible){
+              var matches = cond_visible.match(reParam);
+              if(matches){
+                  _.each(matches,function(match){
+                      var arr1 = match.split(":");
+                      if(!triggersCondVisible[arr1[0]]){
+                          triggersCondVisible[arr1[0]]= cond_visible;
+                      }
+                  });
+              }
+              if(!listenersCondVisible[m.get("name")]){
+                  listenersCondVisible[m.get("name")] = cond_visible;
+              }
+          }
+      });
+      this.collection.each(function(param){
+        if(triggersCondVisible[param.get("name")]){
+            param.set("triggerCondVisibility", true);
+        }
+        if(listenersCondVisible[param.get("name")]){
+            param.set("listenCondVisibility", true);
+        }  
+      });
   }
 });
 

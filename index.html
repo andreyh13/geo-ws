@@ -115,7 +115,15 @@
       <label for="parameter-<%= id %>"<%= model.get("required")?" class='parameter-required'":(model.get("requiredOrGroup")?" class='parameter-required-or'":"") %>>
       <%= name %><%= model.get("required") || model.get("requiredOrGroup")?"<sup>*</sup>":"" %>
       </label>
-      <% print(com.xomena.geo.getFormElement(id, name, model)); %>
+      <% 
+            var triggers = {
+                visibility: triggerCondVisibility
+            };
+            var listeners = {
+                visibility: listenCondVisibility
+            };
+            print(com.xomena.geo.getFormElement(id, name, model, triggers, listeners)); 
+      %>
     </script>
     
     
