@@ -42,6 +42,7 @@
     <script src="js/chosen.jquery.min.js"></script>
     <script src="js/jquery.blockUI.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/highlight.min.js"></script>
+    <script src="js/jem.js"></script>
     
     <!-- external template -->
     <script id="instanceTemplate" type="text/template">
@@ -90,7 +91,9 @@
                 <div class="pure-g">
                 <fieldset class="ws-url-fs pure-u-1">
                     <legend>URL</legend>
-                    <div id="ws-url-<%= id %>"  class="ws-url"></div>
+                    <div class="ws-url">
+                        <textarea id="ws-url-<%= id %>" readonly></textarea>
+                    </div>
                 </fieldset>
                 <fieldset class="ws-results-fs pure-u-1">
                     <legend>Results</legend>

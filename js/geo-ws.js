@@ -2,7 +2,7 @@
     var WS_DS_URI = "https://script.google.com/macros/s/AKfycbwPrEGcNZfsQEWmKm_XC-IXdEPdIQdIE1Na8pL4uBprm2YIT8E/exec?jsonp=?";
     
     var instance_col = new com.xomena.geo.Collections.InstanceCollection();
-    
+    var instancesView = null;
     var m_dialog;
     
     function initParameterParts(par, parts_url){
@@ -85,10 +85,11 @@
                 }
                 
                 //add first instance
-                instance_col.add(new com.xomena.geo.Models.Instance({id: com.xomena.geo.getNewId(), services: com.xomena.geo.services}));
+                var m_instance = new com.xomena.geo.Models.Instance({id: com.xomena.geo.getNewId(), services: com.xomena.geo.services});
+                instance_col.add(m_instance);
 
                 // creates view for collection and renders collection
-                var instancesView = new com.xomena.geo.Views.InstancesView({collection: instance_col});
+                instancesView = new com.xomena.geo.Views.InstancesView({collection: instance_col});
                 instancesView.render();
         
                 //adding new instance
@@ -98,6 +99,7 @@
                     var m_instanceView = new com.xomena.geo.Views.InstanceView({model: m_instance});
                     Backbone.Validation.bind(m_instanceView);
                     $("#instances-container").append(m_instanceView.el);
+                    com.xomena.geo.instanceViewsMap[m_instance.get("id")] = m_instanceView;
                     $("#exec-instance-"+m_instance.get("id")).button({
                         icons: {
                             primary: "ui-icon-play"
@@ -191,6 +193,16 @@
             hide: {
                 effect: "explode",
                 duration: 1000
+            }
+        });
+        
+        //Define custom events listeners
+        jem.on('VisibilityDependence', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling dependent visibility");
+            if(com.xomena.geo.instanceViewsMap[eventAttributes.instanceId]){
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].syncParameters();
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setParametersVisibility();
             }
         });
     });

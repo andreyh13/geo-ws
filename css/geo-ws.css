@@ -91,6 +91,10 @@ ul.ws-params > li.ws-param {
     color: #D2691E;
 }
 
+.ws-url > textarea {
+    width: 103%;
+}
+
 @media screen and (min-width: 480px){
     .ws-result {
         max-width: 86%;
@@ -306,6 +310,7 @@ ul.ws-params > li.ws-param {
         max-width: 1274px;
     }
 }
+
 
 
 

@@ -7,6 +7,7 @@ window.com.xomena.geo = {
   Views: {},
   Router: {},
   services: null,
+  instanceViewsMap: {},    
   config: {},    
   getNewId: function(){
     window.com.xomena.geo.getNewId.count = ++window.com.xomena.geo.getNewId.count || 1;
@@ -200,7 +201,8 @@ com.xomena.geo.Models.ParameterInstance = Backbone.Model.extend({
         model: null,
         value: null,
         triggerCondVisibility: false,
-        listenCondVisibility: false
+        listenCondVisibility: false,
+        parentInstance: null
     }
 }); 
     
@@ -386,9 +388,22 @@ com.xomena.geo.Collections.ParameterPartCollection = Backbone.Collection.extend(
 });
 
 com.xomena.geo.Collections.ParameterInstanceCollection = Backbone.Collection.extend({
-  model: com.xomena.geo.Models.ParameterInstance
+  model: com.xomena.geo.Models.ParameterInstance,
+  filterById: function(id){
+    return this.models.filter(
+      function(c) { 
+        return id === c.get("id"); 
+      }
+    );
+  },
+  filterByName: function(name){
+    return this.models.filter(
+      function(c) { 
+        return name === c.get("name"); 
+      }
+    );
+  }  
 });
-
 
 com.xomena.geo.Collections.WebServiceCollection = Backbone.Collection.extend({
   model: com.xomena.geo.Models.WebService,
@@ -430,6 +445,143 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     console.log("Start execution for instance #"+this.model.get("id"));
     var self = this;  
     this.$("#ws-url-"+this.model.get("id")).html("Preparing request please wait...");  
+    this.syncParameters();  
+    this.model.set("version", this.$("input[name='ws-version-val-"+this.model.get("id")+"']:checked").val());
+    this.model.set("output", this.$("input[name='output-"+this.model.get("id")+"']:checked").val()); 
+    var isValid = this.model.isValid("parameters");  
+    if(isValid){  
+        var m_url = this.model.getURL();
+        this.$("#ws-url-"+this.model.get("id")).html(m_url);
+        if(m_url && com.xomena.geo.config.get("SERVER_URL")){
+            $.ajax({
+                url: com.xomena.geo.config.get("SERVER_URL"),
+                dataType: self.model.get("output")=="json"?"json":"text",
+                type: "POST",
+                crossDomain: true,
+                async: true,
+                data: {
+                    uri: m_url,
+                    version: self.model.get("version"),
+                    output: self.model.get("output")
+                },
+                success: function(data) {
+                    if($.type(data)=="string"){
+                        self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='xml'>"+$.trim(data).replace(/</ig,"&lt;").replace(/>/ig,"&gt;")+"</code></pre>");
+                    } else {
+                        self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='json'>"+com.xomena.geo.formatJSON(data)+"</code></pre>");
+                    }
+                    hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
+                },
+                error: function(jqXHR, textStatus, errorThrown){
+                    console.log("Server side error: "+textStatus+" - "+ errorThrown);
+                }
+            });
+        }
+    } else {
+        this.$("#ws-url-"+this.model.get("id")).html("Please set valid parameters");
+    }
+    return false;  
+  },
+  deleteInstance: function(ev){
+    ev.preventDefault();  
+    console.log("Delete instance #"+this.model.get("id"));  
+    this.model.destroy(); // deletes the model when delete button clicked
+    return false;  
+  },    
+  chooseWebService: function(ev){
+      var self = this;
+      this.model.set("webservice",ev.target.value);
+      if(ev.target.value){
+        var services = this.model.get("services");
+        var service = services.filterById(parseInt(ev.target.value)); 
+        var params = service[0].get("parameters");
+        var parinstance_col = new com.xomena.geo.Collections.ParameterInstanceCollection();
+        _.each(params, function(p){
+          parinstance_col.add(new com.xomena.geo.Models.ParameterInstance({
+              id: com.xomena.geo.getNewId(),
+              name: p.get("name"),
+              model: p,
+              parentInstance: self.model.get("id")
+          }));
+        });
+        this.model.set("parameters", parinstance_col);
+        var paramsView = new com.xomena.geo.Views.ParametersView({collection: parinstance_col});
+        paramsView.render();
+        this.$(".ws-parameters").html(paramsView.el).tooltip({
+            position: {
+                my: "left top",
+                at: "right+5 top-5"
+            }
+        });
+        this.$(".chosen-select").chosen();
+        this.$("#exec-instance-"+this.model.get("id")).button("enable");
+        this.setParametersVisibility();  
+      } else {
+        this.$(".ws-parameters").html("");  
+        this.$("#exec-instance-"+this.model.get("id")).button("disable");
+      }
+  }, 
+  toggleWs: function(){
+      if(this.$(".two-cols").hasClass("hidden")){
+          this.$(".two-cols").removeClass("hidden");
+      } else {
+          this.$(".two-cols").addClass("hidden");
+      }
+  },    
+  events: {
+    'click .exec':   'execInstance',
+    'click .delete': 'deleteInstance',
+    'change .ws-choose': 'chooseWebService',
+    'click .ws-toggle': 'toggleWs'  
+  },
+  newTemplate: _.template($('#instanceTemplate').html()), // external template    
+  initialize: function() {
+    this.render(); // render is an optional function that defines the logic for rendering a template
+    this.model.on('destroy', this.remove, this); // calls remove function once model deleted  
+  },
+  render: function() {
+    this.$el.html(this.newTemplate(this.model.toJSON())); // calls the template
+  },
+  remove: function(){
+    this.$el.remove(); // removes the HTML element from view when delete button clicked/model deleted
+    return false;  
+  },
+  setParametersVisibility: function(){
+     var parameters = this.model.get("parameters"); 
+     parameters.forEach(function(p){
+         if(p.get("listenCondVisibility")){
+             var m = p.get("model");
+             var c = m.get("condVisibility");
+             var r = c;
+             var reParam = /[a-z_]+:\[.+\]/g;
+             if(c){
+                 var matches = c.match(reParam);
+                 if(matches){
+                    _.each(matches,function(match){
+                        var arr1 = match.split(":");
+                        var mp = parameters.filterByName(arr1[0]);
+                        var condv = arr1[1].replace(/\[/g,"").replace(/\]/g,"").split(",");
+                        var mpv = mp[0].get("value");
+                        var res = false;
+                        if($.isArray(condv) && $.isArray(mpv)){
+                            var inters = _.intersection(condv,mpv);
+                            res = inters.length>0;
+                        }
+                        r = r.replace(new RegExp(match.replace(/\[/g,"\\[").replace(/\]/g,"\\]")),""+res);
+                    });
+                 }
+                 var vis = eval(r);
+                 if(vis){
+                     $("#ws-param-"+p.get("id")).show();
+                 } else {
+                     $("#ws-param-"+p.get("id")).hide();
+                 }
+             }
+         }
+     });
+  },
+  syncParameters: function(){
+    var self = this;  
     var params = this.model.get("parameters");
     params.forEach(function(p){
         var m = p.get("model");
@@ -477,110 +629,8 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
             }
         });
         p.set("value", v);
-    });  
-    this.model.set("version", this.$("input[name='ws-version-val-"+this.model.get("id")+"']:checked").val());
-    this.model.set("output", this.$("input[name='output-"+this.model.get("id")+"']:checked").val()); 
-    var isValid = this.model.isValid("parameters");  
-    if(isValid){  
-        var m_url = this.model.getURL();
-        this.$("#ws-url-"+this.model.get("id")).html(m_url);
-        if(m_url && com.xomena.geo.config.get("SERVER_URL")){
-            $.ajax({
-                url: com.xomena.geo.config.get("SERVER_URL"),
-                dataType: self.model.get("output")=="json"?"json":"text",
-                type: "POST",
-                crossDomain: true,
-                async: true,
-                data: {
-                    uri: m_url,
-                    version: self.model.get("version"),
-                    output: self.model.get("output")
-                },
-                success: function(data) {
-                    if($.type(data)=="string"){
-                        self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='xml'>"+$.trim(data).replace(/</ig,"&lt;").replace(/>/ig,"&gt;")+"</code></pre>");
-                    } else {
-                        self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='json'>"+com.xomena.geo.formatJSON(data)+"</code></pre>");
-                    }
-                    hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
-                },
-                error: function(jqXHR, textStatus, errorThrown){
-                    console.log("Server side error: "+textStatus+" - "+ errorThrown);
-                }
-            });
-        }
-    }
-    return false;  
-  },
-  deleteInstance: function(ev){
-    ev.preventDefault();  
-    console.log("Delete instance #"+this.model.get("id"));  
-    this.model.destroy(); // deletes the model when delete button clicked
-    return false;  
-  },    
-  chooseWebService: function(ev){
-      this.model.set("webservice",ev.target.value);
-      if(ev.target.value){
-        var services = this.model.get("services");
-        var service = services.filterById(parseInt(ev.target.value)); 
-        var params = service[0].get("parameters");
-        var parinstance_col = new com.xomena.geo.Collections.ParameterInstanceCollection();
-        _.each(params, function(p){
-          parinstance_col.add(new com.xomena.geo.Models.ParameterInstance({
-              id: com.xomena.geo.getNewId(),
-              name: p.get("name"),
-              model: p
-          }));
-        });
-        this.model.set("parameters", parinstance_col);
-        var paramsView = new com.xomena.geo.Views.ParametersView({collection: parinstance_col});
-        paramsView.render();
-        this.$(".ws-parameters").html(paramsView.el).tooltip({
-            position: {
-                my: "left top",
-                at: "right+5 top-5"
-            }
-        });
-        this.$(".chosen-select").chosen();
-        this.$("#exec-instance-"+this.model.get("id")).button("enable");
-          
-      } else {
-        this.$(".ws-parameters").html("");  
-        this.$("#exec-instance-"+this.model.get("id")).button("disable");
-      }
-  }, 
-  toggleWs: function(){
-      if(this.$(".two-cols").hasClass("hidden")){
-          this.$(".two-cols").removeClass("hidden");
-      } else {
-          this.$(".two-cols").addClass("hidden");
-      }
-  },    
-  events: {
-    'click .exec':   'execInstance',
-    'click .delete': 'deleteInstance',
-    'change .ws-choose': 'chooseWebService',
-    'click .ws-toggle': 'toggleWs'  
-  },
-  newTemplate: _.template($('#instanceTemplate').html()), // external template    
-  initialize: function() {
-    this.render(); // render is an optional function that defines the logic for rendering a template
-    this.model.on('destroy', this.remove, this); // calls remove function once model deleted  
-  },
-  render: function() {
-    this.$el.html(this.newTemplate(this.model.toJSON())); // calls the template
-  },
-  remove: function(){
-    this.$el.remove(); // removes the HTML element from view when delete button clicked/model deleted
-    return false;  
-  },
-  setParametersVisibility: function(){
-     var parameters = this.model.get("parameters"); 
-     parameters.forEach(function(p){
-         
-     });
-  }    
-      
+    }); 
+  }
 });
 
 com.xomena.geo.Views.InstancesView = Backbone.View.extend({ 
@@ -593,6 +643,7 @@ com.xomena.geo.Views.InstancesView = Backbone.View.extend({
         var instanceView = new com.xomena.geo.Views.InstanceView({model: instance});
         Backbone.Validation.bind(instanceView);
         $("#instances-container").append(instanceView.el);
+        com.xomena.geo.instanceViewsMap[instance.get("id")] = instanceView;
         $("#exec-instance-"+instance.get("id")).button({
             icons: {
                 primary: "ui-icon-play"
@@ -604,7 +655,14 @@ com.xomena.geo.Views.InstancesView = Backbone.View.extend({
             }
         });
     });
-  }
+  },
+  filterById: function(id){
+    return this.collection.filter(
+      function(c) { 
+        return id === c.get("id"); 
+      }
+    );
+  }          
 });
 
 
@@ -626,7 +684,11 @@ com.xomena.geo.Views.ParameterView = Backbone.View.extend({
     this.$el.remove(); // removes the HTML element from view when delete button clicked/model deleted
   },
   triggerVisibility: function(){
-    console.log("Triggered visibility event: "+this.model.get("name"));  
+    console.log("Triggered visibility event: "+this.model.get("name")); 
+    jem.fire('VisibilityDependence', {
+        instanceId: this.model.get("parentInstance"),
+        parameterInstanceId: this.model.get("id")
+    });  
   }
 });
 
@@ -640,7 +702,7 @@ com.xomena.geo.Views.ParametersView = Backbone.View.extend({
     var self = this; 
     this.processDependencies();  
     this.collection.each(function(param){
-      var paramView = new com.xomena.geo.Views.ParameterView({model: param});
+      var paramView = new com.xomena.geo.Views.ParameterView({model: param, id: "ws-param-"+param.get("id")});
       self.$el.append(paramView.el);
     });
   },
