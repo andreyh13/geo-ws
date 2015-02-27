@@ -24,7 +24,8 @@
                         pattern: data[i][6],
                         placeholder: data[i][7],
                         requiredOrGroup: data[i][8],
-                        condVisibility: data[i][9]
+                        condVisibility: data[i][9],
+                        m4wOnly: data[i][10]
                     });
                     partscol.add(part);
                 }
@@ -51,7 +52,8 @@
                         pattern: data[i][7],
                         placeholder: data[i][8],
                         requiredOrGroup: data[i][9],
-                        condVisibility: data[i][10]
+                        condVisibility: data[i][10],
+                        m4wOnly: data[i][11]
                     });
                     if(data[i][4]){
                         //Init parameter parts
@@ -203,7 +205,18 @@
             if(com.xomena.geo.instanceViewsMap[eventAttributes.instanceId]){
                 com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].syncParameters();
                 com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setParametersVisibility();
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setM4WVisibility();
             }
         });
+        jem.on('M4WVisibility', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling m4w visibility");
+            if(com.xomena.geo.instanceViewsMap[eventAttributes.instanceId]){
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setM4WVisibility();
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].syncParameters();
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setParametersVisibility();
+            }
+        });
+        
     });
 })(jQuery);

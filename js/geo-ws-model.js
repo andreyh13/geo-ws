@@ -190,7 +190,8 @@ com.xomena.geo.Models.Parameter = Backbone.Model.extend({
         pattern: '',
         placeholder: '',
         requiredOrGroup: false,
-        condVisibility: ''
+        condVisibility: '',
+        m4wOnly: false 
     }
 });
 
@@ -219,7 +220,8 @@ com.xomena.geo.Models.ParameterPart = Backbone.Model.extend({
         pattern: '',
         placeholder: '',
         requiredOrGroup: false,
-        condVisibility: ''
+        condVisibility: '',
+        m4wOnly: false
     }
 });  
 
@@ -515,7 +517,8 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
         });
         this.$(".chosen-select").chosen();
         this.$("#exec-instance-"+this.model.get("id")).button("enable");
-        this.setParametersVisibility();  
+        this.setParametersVisibility(); 
+        this.setM4WVisibility();  
       } else {
         this.$(".ws-parameters").html("");  
         this.$("#exec-instance-"+this.model.get("id")).button("disable");
@@ -532,7 +535,8 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     'click .exec':   'execInstance',
     'click .delete': 'deleteInstance',
     'change .ws-choose': 'chooseWebService',
-    'click .ws-toggle': 'toggleWs'  
+    'click .ws-toggle': 'toggleWs',
+    'click .ws-version-fs [type="radio"]': 'toggleVersion'  
   },
   newTemplate: _.template($('#instanceTemplate').html()), // external template    
   initialize: function() {
@@ -580,6 +584,20 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
          }
      });
   },
+  setM4WVisibility: function(){
+     var self = this;   
+     var parameters = this.model.get("parameters"); 
+     parameters.forEach(function(p){
+         var m = p.get("model");
+         if(m.get("m4wOnly")){
+             if(self.model.get("version")==="work"){
+                 $("#ws-param-"+p.get("id")).show();
+             } else {
+                 $("#ws-param-"+p.get("id")).hide();
+             }
+         }
+     });
+  },    
   syncParameters: function(){
     var self = this;  
     var params = this.model.get("parameters");
@@ -630,7 +648,13 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
         });
         p.set("value", v);
     }); 
-  }
+  },
+  toggleVersion: function(){
+     this.model.set("version", this.$("input[name='ws-version-val-"+this.model.get("id")+"']:checked").val());
+     jem.fire('M4WVisibility', {
+        instanceId: this.model.get("id")
+     });
+  }    
 });
 
 com.xomena.geo.Views.InstancesView = Backbone.View.extend({ 
