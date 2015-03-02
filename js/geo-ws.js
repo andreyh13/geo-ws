@@ -25,7 +25,8 @@
                         placeholder: data[i][7],
                         requiredOrGroup: data[i][8],
                         condVisibility: data[i][9],
-                        m4wOnly: data[i][10]
+                        m4wOnly: data[i][10],
+                        condRequired: data[i][11]
                     });
                     partscol.add(part);
                 }
@@ -53,7 +54,8 @@
                         placeholder: data[i][8],
                         requiredOrGroup: data[i][9],
                         condVisibility: data[i][10],
-                        m4wOnly: data[i][11]
+                        m4wOnly: data[i][11],
+                        condRequired: data[i][12]
                     });
                     if(data[i][4]){
                         //Init parameter parts

@@ -191,7 +191,8 @@ com.xomena.geo.Models.Parameter = Backbone.Model.extend({
         placeholder: '',
         requiredOrGroup: false,
         condVisibility: '',
-        m4wOnly: false 
+        m4wOnly: false,
+        condRequired: ''
     }
 });
 
@@ -203,7 +204,9 @@ com.xomena.geo.Models.ParameterInstance = Backbone.Model.extend({
         value: null,
         triggerCondVisibility: false,
         listenCondVisibility: false,
-        parentInstance: null
+        parentInstance: null,
+        triggerCondRequired: false,
+        listenCondRequired: false
     }
 }); 
     
@@ -221,7 +224,8 @@ com.xomena.geo.Models.ParameterPart = Backbone.Model.extend({
         placeholder: '',
         requiredOrGroup: false,
         condVisibility: '',
-        m4wOnly: false
+        m4wOnly: false,
+        condRequired: ''
     }
 });  
 
@@ -567,9 +571,11 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
                         var condv = arr1[1].replace(/\[/g,"").replace(/\]/g,"").split(",");
                         var mpv = mp[0].get("value");
                         var res = false;
-                        if($.isArray(condv) && $.isArray(mpv)){
+                        if($.isArray(condv) && $.isArray(mpv) && mpv.length>0){
                             var inters = _.intersection(condv,mpv);
                             res = inters.length>0;
+                        } else if($.isArray(condv) && _.indexOf(condv, "")!==-1 && (mpv==null || mpv.length===0)){
+                            res = true;
                         }
                         r = r.replace(new RegExp(match.replace(/\[/g,"\\[").replace(/\]/g,"\\]")),""+res);
                     });
