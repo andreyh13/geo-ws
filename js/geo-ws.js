@@ -219,6 +219,34 @@
                 com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setParametersVisibility();
             }
         });
-        
+        jem.on('SetConditionalRequired', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling set conditional required");
+            var p = eventAttributes.parameter;
+            var r = p.get("isRequired");
+            var id = p.get("id");
+            var aster = "<sup>*</sup>";
+            var aster_re = /<sup>\*<\/sup>/g;
+            var m_html = $("#ws-param-"+id+" > label").html();
+            if(r){
+                $("#ws-param-"+id+" > label").addClass("parameter-required");
+                if(m_html.indexOf(aster)===-1){
+                    $("#ws-param-"+id+" > label").html(m_html+aster);
+                }
+                $("#parameter-"+id).attr("required","required");
+            } else {
+                $("#ws-param-"+id+" > label").removeClass("parameter-required");
+                $("#ws-param-"+id+" > label").html(m_html.replace(aster_re,""));
+                $("#parameter-"+id).removeAttr("required");
+            }
+        });
+        jem.on('RequiredDependence', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling dependent required");
+            if(com.xomena.geo.instanceViewsMap[eventAttributes.instanceId]){
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].syncParameters();
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setParametersRequired();
+            }
+        });
     });
 })(jQuery);

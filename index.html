@@ -120,10 +120,12 @@
       </label>
       <% 
             var triggers = {
-                visibility: triggerCondVisibility
+                visibility: triggerCondVisibility, 
+                required: triggerCondRequired
             };
             var listeners = {
-                visibility: listenCondVisibility
+                visibility: listenCondVisibility,
+                required: listenCondRequired
             };
             print(com.xomena.geo.getFormElement(id, name, model, triggers, listeners)); 
       %>
