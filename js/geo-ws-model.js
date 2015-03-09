@@ -124,7 +124,9 @@ window.com.xomena.geo = {
         .replace(/,\"language\":/ig, ",\n\"language\":").replace(/,\"text\":/ig, ",\n\"text\":").replace(/,\"time\":/ig, ",\n\"time\":")
         .replace(/,\"user_ratings_total\":/ig, ",\n\"user_ratings_total\":").replace(/,\"utc_offset\":/ig, ",\n\"utc_offset\":")
         .replace(/,\"vicinity\":/ig, ",\n\"vicinity\":").replace(/,\"website\":/ig, ",\n\"website\":").replace(/,\"offset\":/ig, ",\n\"offset\":").replace(/,\"value\":/ig, ",\n\"value\":")
-        .replace(/,\"place_id\":/ig, ",\n\"place_id\":").replace(/,\"short_name\":/ig, ",\n\"short_name\":");
+        .replace(/,\"place_id\":/ig, ",\n\"place_id\":").replace(/,\"short_name\":/ig, ",\n\"short_name\":").replace(/,\"rating\":/ig, ",\n\"rating\":")
+        .replace(/,\"longitude\":/ig, ",\n\"longitude\":").replace(/,\"placeId\":/ig, ",\n\"placeId\":").replace(/,\"message\":/ig, ",\n\"message\":")
+        .replace(/,\"status\":/ig, ",\n\"status\":");
       
       
       var arr = m_res.split("\n");
@@ -178,7 +180,11 @@ com.xomena.geo.Models.WebService = Backbone.Model.extend({
         basepath: 'https://maps.googleapis.com/maps/api/',
         output: ["json", "xml"],
         parameters: null,
-        isplace: false
+        isApiary: false,
+        jsonSuffix: 'json',
+        xmlSuffix: 'xml',
+        apiaryKeyFree: 'API_KEY',
+        apiaryKeyM4W: ''
     }
 });
     
@@ -297,22 +303,38 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                 $("#validation-dialog").find("p.validation-content").html(warn).end().dialog("open");
                 return warn;
             }
+        },
+        output: function(value){
+            if(!value){
+                var warn = "Please set the output format to JSON or XML if available";
+                $("#validation-dialog").find("p.validation-content").html(warn).end().dialog("open");
+                return warn;
+            }
         }
     },
     getURL: function(){
         var res = [];
         var m_service = this.get("webservice");
         var ver = this.get("version");
-        var m_isplace = false; 
+        var m_isApiary = false; 
         if(m_service){
             var m_services = this.get("services");
             var service = m_services.filterById(parseInt(m_service));
             if($.isArray(service) && service.length){
-                m_isplace = service[0].get("isplace");
+                m_isApiary = service[0].get("isApiary");
                 res.push(service[0].get("basepath"));
                 res.push(service[0].get("alias"));
-                res.push("/");
-                res.push(this.get("output"));
+                var m_output = "";
+                if(this.get("output")==="json" && service[0].get("jsonSuffix")!=="empty"){
+                    m_output = service[0].get("jsonSuffix");
+                }
+                if(this.get("output")==="xml" && service[0].get("xmlSuffix")!=="empty"){
+                    m_output = service[0].get("xmlSuffix");
+                }
+                if(m_output){
+                    res.push("/");
+                    res.push(m_output);
+                }
                 res.push("?");
                 
                 var pars = this.get("parameters");
@@ -337,17 +359,17 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                 }
                 
                 if(ver === "free"){
-                    if(com.xomena.geo.config.get("API_KEY")){
+                    if(com.xomena.geo.config.get(service[0].get("apiaryKeyFree"))){
                         res.push(aa);
                         res.push("key=");
-                        res.push(com.xomena.geo.config.get("API_KEY"));
+                        res.push(com.xomena.geo.config.get(service[0].get("apiaryKeyFree")));
                     }
                 } else {
-                    if(m_isplace){
-                        if(com.xomena.geo.config.get("PLACES_API_KEY")){
+                    if(m_isApiary){
+                        if(com.xomena.geo.config.get(service[0].get("apiaryKeyM4W"))){
                             res.push(aa);
                             res.push("key=");
-                            res.push(com.xomena.geo.config.get("PLACES_API_KEY"));
+                            res.push(com.xomena.geo.config.get(service[0].get("apiaryKeyM4W")));
                         }
                     } else {
                         if(com.xomena.geo.config.get("CLIENT_ID")){
@@ -360,7 +382,7 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
             }
         }
         var m_join = res.join("");
-        if(!m_isplace && m_join && ver=='work' && com.xomena.geo.config.get("SIGN_URL") && com.xomena.geo.config.get("CRYPTO_KEY")){
+        if(!m_isApiary && m_join && ver=='work' && com.xomena.geo.config.get("SIGN_URL") && com.xomena.geo.config.get("CRYPTO_KEY")){
             $.ajax({
                 url: com.xomena.geo.config.get("SIGN_URL"),
                 dataType: "text",
@@ -390,7 +412,8 @@ com.xomena.geo.Models.Config = Backbone.Model.extend({
         CRYPTO_KEY: null,
         SERVER_URL: null, 
         SIGN_URL: null,
-        PLACES_API_KEY: null
+        PLACES_API_KEY: null,
+        ROADS_API_KEY: null
     }
 }); 
 
@@ -531,9 +554,25 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
         this.setParametersVisibility(); 
         this.setM4WVisibility();  
         this.setParametersRequired();  
+        if(!service[0].get("jsonSuffix")){
+            $("#output-json-"+this.model.get("id")).prop("disabled", "disabled");
+            $("#output-json-"+this.model.get("id")).removeAttr("checked");
+        } else {
+            $("#output-json-"+this.model.get("id")).removeAttr("disabled");
+        }
+        if(!service[0].get("xmlSuffix")){
+            $("#output-xml-"+this.model.get("id")).prop("disabled", "disabled");
+            $("#output-xml-"+this.model.get("id")).removeAttr("checked");
+        } else {
+            $("#output-xml-"+this.model.get("id")).removeAttr("disabled");
+        }  
       } else {
         this.$(".ws-parameters").html("");  
         this.$("#exec-instance-"+this.model.get("id")).button("disable");
+        $("#output-json-"+this.model.get("id")).removeAttr("disabled");
+        $("#output-json-"+this.model.get("id")).prop("checked","checked");  
+        $("#output-xml-"+this.model.get("id")).removeAttr("disabled");  
+        $("#output-xml-"+this.model.get("id")).removeAttr("checked");  
       }
   }, 
   toggleWs: function(){
