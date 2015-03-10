@@ -121,11 +121,13 @@
       <% 
             var triggers = {
                 visibility: triggerCondVisibility, 
-                required: triggerCondRequired
+                required: triggerCondRequired,
+                requiredOr: triggerCondRequiredOr
             };
             var listeners = {
                 visibility: listenCondVisibility,
-                required: listenCondRequired
+                required: listenCondRequired,
+                requiredOr: listenCondRequiredOr
             };
             print(com.xomena.geo.getFormElement(id, name, model, triggers, listeners)); 
       %>

@@ -26,7 +26,8 @@
                         requiredOrGroup: data[i][8],
                         condVisibility: data[i][9],
                         m4wOnly: data[i][10],
-                        condRequired: data[i][11]
+                        condRequired: data[i][11],
+                        condRequiredOr: data[i][12]
                     });
                     partscol.add(part);
                 }
@@ -55,7 +56,8 @@
                         requiredOrGroup: data[i][9],
                         condVisibility: data[i][10],
                         m4wOnly: data[i][11],
-                        condRequired: data[i][12]
+                        condRequired: data[i][12],
+                        condRequiredOr: data[i][13]
                     });
                     if(data[i][4]){
                         //Init parameter parts
@@ -253,12 +255,39 @@
                 $("#parameter-"+id).removeAttr("required");
             }
         });
+        jem.on('SetConditionalRequiredOr', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling set conditional required OR group");
+            var p = eventAttributes.parameter;
+            var r = p.get("isRequiredOr");
+            var id = p.get("id");
+            var aster = "<sup>*</sup>";
+            var aster_re = /<sup>\*<\/sup>/g;
+            var m_html = $("#ws-param-"+id+" > label").html();
+            if(r){
+                $("#ws-param-"+id+" > label").addClass("parameter-required-or");
+                if(m_html.indexOf(aster)===-1){
+                    $("#ws-param-"+id+" > label").html(m_html+aster);
+                }
+            } else {
+                $("#ws-param-"+id+" > label").removeClass("parameter-required-or");
+                $("#ws-param-"+id+" > label").html(m_html.replace(aster_re,""));
+            }
+        });
         jem.on('RequiredDependence', function (eventName, eventAttributes) {
             // Handle the event
             console.log("Handling dependent required");
             if(com.xomena.geo.instanceViewsMap[eventAttributes.instanceId]){
                 com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].syncParameters();
                 com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setParametersRequired();
+            }
+        });
+        jem.on('RequiredOrDependence', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling dependent required OR group");
+            if(com.xomena.geo.instanceViewsMap[eventAttributes.instanceId]){
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].syncParameters();
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setParametersRequiredOr();
             }
         });
     });
