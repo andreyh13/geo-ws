@@ -2,7 +2,7 @@
     var WS_DS_URI = "https://script.google.com/macros/s/AKfycbwPrEGcNZfsQEWmKm_XC-IXdEPdIQdIE1Na8pL4uBprm2YIT8E/exec?jsonp=?";
     
     var instance_col = new com.xomena.geo.Collections.InstanceCollection();
-    
+    var instancesView = null;
     var m_dialog;
     
     function initParameterParts(par, parts_url){
@@ -22,7 +22,12 @@
                         options: data[i][4],
                         multiple: data[i][5],
                         pattern: data[i][6],
-                        placeholder: data[i][7]
+                        placeholder: data[i][7],
+                        requiredOrGroup: data[i][8],
+                        condVisibility: data[i][9],
+                        m4wOnly: data[i][10],
+                        condRequired: data[i][11],
+                        condRequiredOr: data[i][12]
                     });
                     partscol.add(part);
                 }
@@ -47,7 +52,12 @@
                         options: data[i][5],
                         multiple: data[i][6],
                         pattern: data[i][7],
-                        placeholder: data[i][8]
+                        placeholder: data[i][8],
+                        requiredOrGroup: data[i][9],
+                        condVisibility: data[i][10],
+                        m4wOnly: data[i][11],
+                        condRequired: data[i][12],
+                        condRequiredOr: data[i][13]
                     });
                     if(data[i][4]){
                         //Init parameter parts
@@ -72,7 +82,17 @@
             async: false,
             success: function(data) {
                 for (var i = 1; i < data.length; i++) {
-                    var wserv = new com.xomena.geo.Models.WebService({id: com.xomena.geo.getNewId(), name: data[i][0], alias: data[i][1], isplace: data[i][3]});
+                    var wserv = new com.xomena.geo.Models.WebService({
+                        id: com.xomena.geo.getNewId(), 
+                        name: data[i][0], 
+                        alias: data[i][1], 
+                        isApiary: data[i][3],
+                        basepath: data[i][4],
+                        jsonSuffix: data[i][5],
+                        xmlSuffix: data[i][6],
+                        apiaryKeyFree: data[i][7],
+                        apiaryKeyM4W: data[i][8]
+                    });
                     if(data[i][2]){
                         //Init parameters
                         initParameters(wserv, data[i][2]+'?jsonp=?');
@@ -81,10 +101,11 @@
                 }
                 
                 //add first instance
-                instance_col.add(new com.xomena.geo.Models.Instance({id: com.xomena.geo.getNewId(), services: com.xomena.geo.services}));
+                var m_instance = new com.xomena.geo.Models.Instance({id: com.xomena.geo.getNewId(), services: com.xomena.geo.services});
+                instance_col.add(m_instance);
 
                 // creates view for collection and renders collection
-                var instancesView = new com.xomena.geo.Views.InstancesView({collection: instance_col});
+                instancesView = new com.xomena.geo.Views.InstancesView({collection: instance_col});
                 instancesView.render();
         
                 //adding new instance
@@ -92,7 +113,9 @@
                     var m_instance = new com.xomena.geo.Models.Instance({id: com.xomena.geo.getNewId(), services: com.xomena.geo.services});
                     instance_col.add(m_instance);
                     var m_instanceView = new com.xomena.geo.Views.InstanceView({model: m_instance});
+                    Backbone.Validation.bind(m_instanceView);
                     $("#instances-container").append(m_instanceView.el);
+                    com.xomena.geo.instanceViewsMap[m_instance.get("id")] = m_instanceView;
                     $("#exec-instance-"+m_instance.get("id")).button({
                         icons: {
                             primary: "ui-icon-play"
@@ -120,14 +143,15 @@
             CRYPTO_KEY: localStorage.getItem("com.xomena.geo.Models.Config.CRYPTO_KEY"),
             SERVER_URL: localStorage.getItem("com.xomena.geo.Models.Config.SERVER_URL"), 
             SIGN_URL: localStorage.getItem("com.xomena.geo.Models.Config.SIGN_URL"),
-            PLACES_API_KEY: localStorage.getItem("com.xomena.geo.Models.Config.PLACES_API_KEY")
+            PLACES_API_KEY: localStorage.getItem("com.xomena.geo.Models.Config.PLACES_API_KEY"),
+            ROADS_API_KEY: localStorage.getItem("com.xomena.geo.Models.Config.ROADS_API_KEY")
         });
         var m_config_view = new com.xomena.geo.Views.ConfigView({model: com.xomena.geo.config});
         $("#config").append(m_config_view.el);
         
         m_dialog = $( "#config" ).dialog({
             autoOpen: false,
-            height: 500,
+            height: 540,
             width: 600,
             modal: true,
             buttons: {
@@ -139,12 +163,14 @@
                     com.xomena.geo.config.set("SERVER_URL", $("#app-config-server-url").val());
                     com.xomena.geo.config.set("SIGN_URL", $("#app-config-sign-url").val());
                     com.xomena.geo.config.set("PLACES_API_KEY", $("#app-config-places-api-key").val());
+                    com.xomena.geo.config.set("ROADS_API_KEY", $("#app-config-roads-api-key").val());
                     localStorage.setItem("com.xomena.geo.Models.Config.API_KEY", com.xomena.geo.config.get("API_KEY"));  
                     localStorage.setItem("com.xomena.geo.Models.Config.CLIENT_ID", com.xomena.geo.config.get("CLIENT_ID")); 
                     localStorage.setItem("com.xomena.geo.Models.Config.CRYPTO_KEY", com.xomena.geo.config.get("CRYPTO_KEY"));
                     localStorage.setItem("com.xomena.geo.Models.Config.SERVER_URL", com.xomena.geo.config.get("SERVER_URL"));
                     localStorage.setItem("com.xomena.geo.Models.Config.SIGN_URL", com.xomena.geo.config.get("SIGN_URL"));
                     localStorage.setItem("com.xomena.geo.Models.Config.PLACES_API_KEY", com.xomena.geo.config.get("PLACES_API_KEY"));  
+                    localStorage.setItem("com.xomena.geo.Models.Config.ROADS_API_KEY", com.xomena.geo.config.get("ROADS_API_KEY"));  
                     console.log("Config saved");
                     m_dialog.dialog("close");
                 },
@@ -171,6 +197,97 @@
         $("button#add-instance").button({
             icons: {
                 primary: "ui-icon-plus"
+            }
+        });
+        
+        //Initialize validation dialog
+        $("#validation-dialog").dialog({
+            autoOpen: false,
+            modal: true,
+            minWidth: 580,
+            show: {
+                effect: "blind",
+                duration: 1000
+            },
+            hide: {
+                effect: "explode",
+                duration: 1000
+            }
+        });
+        
+        //Define custom events listeners
+        jem.on('VisibilityDependence', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling dependent visibility");
+            if(com.xomena.geo.instanceViewsMap[eventAttributes.instanceId]){
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].syncParameters();
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setParametersVisibility();
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setM4WVisibility();
+            }
+        });
+        jem.on('M4WVisibility', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling m4w visibility");
+            if(com.xomena.geo.instanceViewsMap[eventAttributes.instanceId]){
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setM4WVisibility();
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].syncParameters();
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setParametersVisibility();
+            }
+        });
+        jem.on('SetConditionalRequired', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling set conditional required");
+            var p = eventAttributes.parameter;
+            var r = p.get("isRequired");
+            var id = p.get("id");
+            var aster = "<sup>*</sup>";
+            var aster_re = /<sup>\*<\/sup>/g;
+            var m_html = $("#ws-param-"+id+" > label").html();
+            if(r){
+                $("#ws-param-"+id+" > label").addClass("parameter-required");
+                if(m_html.indexOf(aster)===-1){
+                    $("#ws-param-"+id+" > label").html(m_html+aster);
+                }
+                $("#parameter-"+id).attr("required","required");
+            } else {
+                $("#ws-param-"+id+" > label").removeClass("parameter-required");
+                $("#ws-param-"+id+" > label").html(m_html.replace(aster_re,""));
+                $("#parameter-"+id).removeAttr("required");
+            }
+        });
+        jem.on('SetConditionalRequiredOr', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling set conditional required OR group");
+            var p = eventAttributes.parameter;
+            var r = p.get("isRequiredOr");
+            var id = p.get("id");
+            var aster = "<sup>*</sup>";
+            var aster_re = /<sup>\*<\/sup>/g;
+            var m_html = $("#ws-param-"+id+" > label").html();
+            if(r){
+                $("#ws-param-"+id+" > label").addClass("parameter-required-or");
+                if(m_html.indexOf(aster)===-1){
+                    $("#ws-param-"+id+" > label").html(m_html+aster);
+                }
+            } else {
+                $("#ws-param-"+id+" > label").removeClass("parameter-required-or");
+                $("#ws-param-"+id+" > label").html(m_html.replace(aster_re,""));
+            }
+        });
+        jem.on('RequiredDependence', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling dependent required");
+            if(com.xomena.geo.instanceViewsMap[eventAttributes.instanceId]){
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].syncParameters();
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setParametersRequired();
+            }
+        });
+        jem.on('RequiredOrDependence', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling dependent required OR group");
+            if(com.xomena.geo.instanceViewsMap[eventAttributes.instanceId]){
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].syncParameters();
+                com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setParametersRequiredOr();
             }
         });
     });

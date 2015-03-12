@@ -31,13 +31,18 @@
         </div>    
     </div>
     <div id="config"></div>
+    <div id="validation-dialog" title="Validation" class="hidden">
+        <p class="validation-content"></p>
+    </div>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
     <script src="http://documentcloud.github.com/underscore/underscore-min.js"></script>
     <script src="http://documentcloud.github.com/backbone/backbone-min.js"></script>
+    <script src="js/backbone-validation.js"></script>
     <script src="js/chosen.jquery.min.js"></script>
     <script src="js/jquery.blockUI.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/highlight.min.js"></script>
+    <script src="js/jem.js"></script>
     
     <!-- external template -->
     <script id="instanceTemplate" type="text/template">
@@ -86,7 +91,9 @@
                 <div class="pure-g">
                 <fieldset class="ws-url-fs pure-u-1">
                     <legend>URL</legend>
-                    <div id="ws-url-<%= id %>"  class="ws-url"></div>
+                    <div class="ws-url">
+                        <textarea id="ws-url-<%= id %>" readonly></textarea>
+                    </div>
                 </fieldset>
                 <fieldset class="ws-results-fs pure-u-1">
                     <legend>Results</legend>
@@ -108,8 +115,22 @@
     
     <!-- external template -->
     <script id="paramTemplate" type="text/template">
-      <label for="parameter-<%= id %>"><%= name %><%= model.get("required")?"<sup>*</sup>":"" %></label>
-      <% print(com.xomena.geo.getFormElement(id, name, model)); %>
+      <label for="parameter-<%= id %>"<%= model.get("required")?" class='parameter-required'":(model.get("requiredOrGroup")?" class='parameter-required-or'":"") %>>
+      <%= name %><%= model.get("required") || model.get("requiredOrGroup")?"<sup>*</sup>":"" %>
+      </label>
+      <% 
+            var triggers = {
+                visibility: triggerCondVisibility, 
+                required: triggerCondRequired,
+                requiredOr: triggerCondRequiredOr
+            };
+            var listeners = {
+                visibility: listenCondVisibility,
+                required: listenCondRequired,
+                requiredOr: listenCondRequiredOr
+            };
+            print(com.xomena.geo.getFormElement(id, name, model, triggers, listeners)); 
+      %>
     </script>
     
     
@@ -125,6 +146,8 @@
             <input type="text" name="app-config-crypto-key" id="app-config-crypto-key" value="<%= CRYPTO_KEY %>" placeholder="Please enter your Crypto Key" size="40" /><br/>
             <label for="app-config-places-api-key">Places for Work API key</label><br/>
             <input type="text" name="app-config-places-api-key" id="app-config-places-api-key" value="<%= PLACES_API_KEY %>" placeholder="Please enter your Places for Work API key" size="40" /><br/>
+            <label for="app-config-roads-api-key">Roads for Work API key</label><br/>
+            <input type="text" name="app-config-roads-api-key" id="app-config-roads-api-key" value="<%= ROADS_API_KEY %>" placeholder="Please enter your Roads for Work API key" size="40" /><br/>
             <label for="app-config-server-url">Server URL</label><br/>
             <input type="text" name="app-config-server-url" id="app-config-server-url" value="<%= SERVER_URL %>" placeholder="Please enter URL for server-side" size="40" /><br/>
             <label for="app-config-sign-url">Sign URL</label><br/>
