@@ -260,6 +260,12 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
         parameters: null,
         services: null
     },
+    initialize: function(){
+        console.log('The instance '+this.get("id")+' has been initialized.');
+        this.on('change', function(){
+            console.log('Values for the instance ' + this.get("id") + ' have changed.');
+        });
+    },
     validation: {
         parameters: function(value){
             console.log("Start parameters validation");
@@ -478,7 +484,8 @@ com.xomena.geo.Collections.WebServiceCollection = Backbone.Collection.extend({
 
 com.xomena.geo.Collections.InstanceCollection = Backbone.Collection.extend({
   model: com.xomena.geo.Models.Instance,
-  url: '/instances'    
+  url: '/instances',
+  localStorage: new Backbone.LocalStorage("com.xomena.geo.Collections.Instances")    
 });
 
 com.xomena.geo.services = new com.xomena.geo.Collections.WebServiceCollection();
@@ -494,6 +501,9 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     this.syncParameters();  
     this.model.set("version", this.$("input[name='ws-version-val-"+this.model.get("id")+"']:checked").val());
     this.model.set("output", this.$("input[name='output-"+this.model.get("id")+"']:checked").val()); 
+    jem.fire('InstanceUpdated', {
+        instance: this.model
+    });  
     var isValid = this.model.isValid("output") && this.model.isValid("parameters");  
     if(isValid){  
         var m_url = this.model.getURL();
@@ -791,7 +801,10 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
             }
         });
         p.set("value", v);
-    }); 
+    });
+    jem.fire('InstanceParamsSynced', {
+        instance: this.model
+    });
   },
   toggleVersion: function(){
      this.model.set("version", this.$("input[name='ws-version-val-"+this.model.get("id")+"']:checked").val());

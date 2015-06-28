@@ -2,8 +2,32 @@
     var WS_DS_URI = "https://script.google.com/macros/s/AKfycbwPrEGcNZfsQEWmKm_XC-IXdEPdIQdIE1Na8pL4uBprm2YIT8E/exec?jsonp=?";
     
     var instance_col = new com.xomena.geo.Collections.InstanceCollection();
+    
+    instance_col.on("add", function(inst) {
+        console.log("The instance " + inst.get("id") + " has added to collection" );
+        if(instance_col.localStorage.find(inst)){
+            instance_col.localStorage.update(inst);
+        } else {
+            instance_col.localStorage.create(inst);
+        }
+    });
+    instance_col.on("remove", function(inst) {
+        console.log("The instance " + inst.get("id") + " has removed from collection" );
+        instance_col.localStorage.destroy(inst);
+    });
+    
     var instancesView = null;
     var m_dialog;
+    
+    // Generate four random hex digits.
+    function S4() {
+        return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    };
+
+    // Generate a pseudo-GUID by concatenating random hexadecimal.
+    function guid() {
+        return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+    };
     
     function initParameterParts(par, parts_url){
         $.ajax({
@@ -100,9 +124,19 @@
                     com.xomena.geo.services.add(wserv);
                 }
                 
-                //add first instance
-                var m_instance = new com.xomena.geo.Models.Instance({id: com.xomena.geo.getNewId(), services: com.xomena.geo.services});
-                instance_col.add(m_instance);
+                //Get instances stored in localStorage
+                var m_stored = instance_col.localStorage.findAll();
+                if(!m_stored.length){
+                    //add first instance
+                    var m_instance = new com.xomena.geo.Models.Instance({id: guid(), services: com.xomena.geo.services});
+                    instance_col.add(m_instance);
+                } else {
+                    _.each(m_stored, function(inst){
+                        var m_instance = new com.xomena.geo.Models.Instance({id: inst.id, services: com.xomena.geo.services});
+                        //TODO: restore parameters
+                        instance_col.add(m_instance);
+                    });
+                }
 
                 // creates view for collection and renders collection
                 instancesView = new com.xomena.geo.Views.InstancesView({collection: instance_col});
@@ -110,7 +144,7 @@
         
                 //adding new instance
                 $("#add-instance").click(function(){
-                    var m_instance = new com.xomena.geo.Models.Instance({id: com.xomena.geo.getNewId(), services: com.xomena.geo.services});
+                    var m_instance = new com.xomena.geo.Models.Instance({id: guid(), services: com.xomena.geo.services});
                     instance_col.add(m_instance);
                     var m_instanceView = new com.xomena.geo.Views.InstanceView({model: m_instance});
                     Backbone.Validation.bind(m_instanceView);
@@ -290,5 +324,20 @@
                 com.xomena.geo.instanceViewsMap[eventAttributes.instanceId].setParametersRequiredOr();
             }
         });
+        jem.on('InstanceUpdated', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling instance updated event");
+            if(eventAttributes.instance){
+                instance_col.localStorage.update(eventAttributes.instance);
+            }
+        });
+        jem.on('InstanceParamsSynced', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling instance params synced event");
+            if(eventAttributes.instance){
+                instance_col.localStorage.update(eventAttributes.instance);
+            }
+        });
+        
     });
 })(jQuery);
