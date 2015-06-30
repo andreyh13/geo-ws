@@ -138,21 +138,12 @@
                         m_instance.set("version", inst.version);
                         m_instance.set("output", inst.output);
                         
+                        com.xomena.geo.storedValues[inst.id] = {};
                         if(inst.webservice){
-                            var services = m_instance.get("services");
-                            var service = services.filterById(parseInt(inst.webservice)); 
-                            var params = service[0].get("parameters");
-                            var parinstance_col = new com.xomena.geo.Collections.ParameterInstanceCollection();
-                            _.each(params, function(p){
-                                var p_instance = new com.xomena.geo.Models.ParameterInstance({
-                                    id: com.xomena.geo.getNewId(),
-                                    name: p.get("name"),
-                                    model: p,
-                                    parentInstance: m_instance.get("id")
-                                });
-                                parinstance_col.add(p_instance);
+                            com.xomena.geo.storedValues[inst.id][inst.webservice] = {};
+                            _.each(inst.parameters, function(param){
+                                com.xomena.geo.storedValues[inst.id][inst.webservice][param.name] = param.value;
                             });
-                            m_instance.set("parameters", parinstance_col);
                         }
                         
                         instance_col.add(m_instance);
@@ -187,6 +178,17 @@
                 window.setTimeout(function(){
                     $.unblockUI();
                     console.log("Finish blockUI");
+                    for(var key in com.xomena.geo.instanceViewsMap){
+                        var inst = com.xomena.geo.instanceViewsMap[key].model;
+                        var m_ws = inst.get("webservice");
+                        if(m_ws){
+                           com.xomena.geo.instanceViewsMap[key].chooseWebService({
+                               target: {
+                                   value: m_ws
+                               }
+                           }); 
+                        }
+                    }
                 }, 2500);
             }
         });

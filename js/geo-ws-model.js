@@ -8,7 +8,8 @@ window.com.xomena.geo = {
   Router: {},
   services: null,
   instanceViewsMap: {},    
-  config: {},    
+  config: {},  
+  storedValues: {},    
   getNewId: function(){
     window.com.xomena.geo.getNewId.count = ++window.com.xomena.geo.getNewId.count || 1;
     return window.com.xomena.geo.getNewId.count;
