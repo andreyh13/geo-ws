@@ -133,7 +133,28 @@
                 } else {
                     _.each(m_stored, function(inst){
                         var m_instance = new com.xomena.geo.Models.Instance({id: inst.id, services: com.xomena.geo.services});
-                        //TODO: restore parameters
+                        //restore parameters
+                        m_instance.set("webservice", inst.webservice);
+                        m_instance.set("version", inst.version);
+                        m_instance.set("output", inst.output);
+                        
+                        if(inst.webservice){
+                            var services = m_instance.get("services");
+                            var service = services.filterById(parseInt(inst.webservice)); 
+                            var params = service[0].get("parameters");
+                            var parinstance_col = new com.xomena.geo.Collections.ParameterInstanceCollection();
+                            _.each(params, function(p){
+                                var p_instance = new com.xomena.geo.Models.ParameterInstance({
+                                    id: com.xomena.geo.getNewId(),
+                                    name: p.get("name"),
+                                    model: p,
+                                    parentInstance: m_instance.get("id")
+                                });
+                                parinstance_col.add(p_instance);
+                            });
+                            m_instance.set("parameters", parinstance_col);
+                        }
+                        
                         instance_col.add(m_instance);
                     });
                 }
