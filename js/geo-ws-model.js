@@ -14,7 +14,7 @@ window.com.xomena.geo = {
     window.com.xomena.geo.getNewId.count = ++window.com.xomena.geo.getNewId.count || 1;
     return window.com.xomena.geo.getNewId.count;
   },
-  getFormElement: function(id,name,model,triggers,listeners){
+  getFormElement: function(id,name,model,triggers,listeners,parentInstance){
     var output = "";
     var t = model.get("type");
     var p = model.get("pattern");
@@ -35,11 +35,19 @@ window.com.xomena.geo = {
     } else {
         output += '<div id="container-'+id+'">'; 
     }
+    var sv = [];  
+    if(com.xomena.geo.instanceViewsMap[parentInstance]){
+        var m_ws = com.xomena.geo.instanceViewsMap[parentInstance].model.get("webservice");
+        if(com.xomena.geo.storedValues[parentInstance] && com.xomena.geo.storedValues[parentInstance][m_ws] &&
+           com.xomena.geo.storedValues[parentInstance][m_ws][name]){
+            sv = com.xomena.geo.storedValues[parentInstance][m_ws][name];
+        }
+    }
     switch(t){
         case 'string':
             output += '<input class="pure-input-2-3'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
                 (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
-                '" type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
+                '" type="text" id="parameter-'+id+'" name="'+name+'" value="'+(sv.length?sv[0]:'')+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
             if(m){
                 output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
             }
