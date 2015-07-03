@@ -42,7 +42,22 @@ window.com.xomena.geo = {
            com.xomena.geo.storedValues[parentInstance][m_ws][name]){
             sv = com.xomena.geo.storedValues[parentInstance][m_ws][name];
         }
+        if(/components:/ig.test(name)){
+            var arr = name.split(':');
+            if(com.xomena.geo.storedValues[parentInstance] && com.xomena.geo.storedValues[parentInstance][m_ws] &&
+                com.xomena.geo.storedValues[parentInstance][m_ws][arr[0]]){
+                    _.each(com.xomena.geo.storedValues[parentInstance][m_ws][arr[0]], function(m1){
+                        if((new RegExp(arr[1]+":")).test(m1)){
+                           var m2 = m1.split(":");
+                           if(m2.length>1 && m2[1]){
+                               sv.push(m2[1]);
+                           }
+                        }
+                    }); 
+            }
+        }    
     }
+    
     switch(t){
         case 'string':
             output += '<input class="pure-input-2-3'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
@@ -50,14 +65,30 @@ window.com.xomena.geo = {
                 '" type="text" id="parameter-'+id+'" name="'+name+'" value="'+(sv.length?sv[0]:'')+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
             if(m){
                 output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
+                if(sv.length>1){
+                    for(var i=1; i<sv.length; i++){
+                        output += '<br/>';
+                        output += '<input class="pure-input-2-3'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
+                (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
+                '" type="text" id="parameter-'+id+'-'+com.xomena.geo.getNewId()+'" name="'+name+'" value="'+sv[i]+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';
+                    }
+                }
             }
             break;
         case 'number':
             output += '<input class="pure-input-1-2'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
                 (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
-                '" type="number" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
+                '" type="number" id="parameter-'+id+'" name="'+name+'" value="'+(sv.length?sv[0]:'')+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
             if(m){
                 output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
+                if(sv.length>1){
+                    for(var i=1; i<sv.length; i++){
+                        output += '<br/>';
+                        output += '<input class="pure-input-1-2'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
+                (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
+                '" type="number" id="parameter-'+id+'-'+com.xomena.geo.getNewId()+'" name="'+name+'" value="'+sv[i]+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';
+                    }
+                }
             }
             break;
         case 'list':
@@ -67,7 +98,7 @@ window.com.xomena.geo = {
                 var a1 = opt.split("|");
                 var v = a1[0];
                 var l = a1.length>1?a1[1]:a1[0];
-                m_options = [m_options, '<option value="', v, '">', l, '</option>'].join(""); 
+                m_options = [m_options, '<option value="', v, '"', (_.indexOf(sv, v)!==-1?' selected':''), '>', l, '</option>'].join(""); 
             });
             output += '<select id="parameter-'+id+'" name="'+name+'" class="pure-input-2-3 chosen-select'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
                 (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
@@ -82,7 +113,7 @@ window.com.xomena.geo = {
                 var l = a1.length>1?a1[1]:a1[0];
                 output += '<li>';
                 output += '<label for="parameter-'+id+'-'+ind+'" title="'+d+'" class="pure-checkbox">';
-                output += '<input type="checkbox" id="parameter-'+id+'-'+ind+'" name="'+name+'" value="'+v+'"'+(r?' required':'')+
+                output += '<input type="checkbox" id="parameter-'+id+'-'+ind+'" name="'+name+'" value="'+v+'"'+(_.indexOf(sv, v)!==-1?' checked':'')+(r?' required':'')+
                     ' class="checkbox'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+(t_req?' trigger-required':'')+(l_req?' listen-required':'')+
                     (t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+'" />';
                 output += l;
@@ -96,7 +127,7 @@ window.com.xomena.geo = {
             var v = a1[0];
             var l = a1.length>1?a1[1]:a1[0];
             output += '<label for="parameter-'+id+'" title="'+d+'" class="pure-checkbox">';
-            output += '<input type="checkbox" id="parameter-'+id+'" name="'+name+'" value="'+v+'"'+(r?' required':'')+
+            output += '<input type="checkbox" id="parameter-'+id+'" name="'+name+'" value="'+v+'"'+(_.indexOf(sv, v)!==-1?' checked':'')+(r?' required':'')+
                 ' class="checkbox'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+(t_req?' trigger-required':'')+(l_req?' listen-required':'')+
                 (t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+'"/>';
             output += l;
@@ -108,7 +139,7 @@ window.com.xomena.geo = {
             parts.forEach(function(p){
                 output += '<li>';
                 output += '<label for="parameter-'+id+'-'+p.get("id")+'">'+p.get('name')+'</label>';
-                output += com.xomena.geo.getFormElement(id+"-"+p.get("id"), name+":"+p.get("name"), p);
+                output += com.xomena.geo.getFormElement(id+"-"+p.get("id"), name+":"+p.get("name"), p, null, null, parentInstance);
                 output += '</li>';
             });
             output += '</ul>';
@@ -116,9 +147,17 @@ window.com.xomena.geo = {
         default:
             output += '<input class="pure-input-2-3'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
                 (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
-                '" type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+'title="'+d+'"/>';
+                '" type="text" id="parameter-'+id+'" name="'+name+'" value="'+(sv.length?sv[0]:'')+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+'title="'+d+'"/>';
             if(m){
                 output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
+                if(sv.length>1){
+                    for(var i=1; i<sv.length; i++){
+                        output += '<br/>';
+                        output += '<input class="pure-input-2-3'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
+                (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
+                '" type="text" id="parameter-'+id+'-'+com.xomena.geo.getNewId()+'" name="'+name+'" value="'+sv[i]+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';
+                    }
+                }
             }
     }
     if(m){
