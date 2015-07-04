@@ -186,7 +186,16 @@
                                target: {
                                    value: m_ws
                                }
-                           }); 
+                           });
+                           jem.fire('VisibilityDependence', {
+                                instanceId: key
+                           });
+                           jem.fire('RequiredDependence', {
+                                instanceId: key
+                           });
+                           jem.fire('RequiredOrDependence', {
+                                instanceId: key
+                           });    
                         }
                     }
                 }, 5000);
@@ -359,6 +368,19 @@
             console.log("Handling instance params synced event");
             if(eventAttributes.instance){
                 instance_col.localStorage.update(eventAttributes.instance);
+            }
+        });
+        
+        $( window ).unload(function() {
+            //Save current state
+            for(var key in com.xomena.geo.instanceViewsMap){
+                var m_view = com.xomena.geo.instanceViewsMap[key];
+                m_view.syncParameters();  
+                m_view.model.set("version", m_view.$("input[name='ws-version-val-"+m_view.model.get("id")+"']:checked").val());
+                m_view.model.set("output", m_view.$("input[name='output-"+m_view.model.get("id")+"']:checked").val()); 
+                jem.fire('InstanceUpdated', {
+                    instance: m_view.model
+                });
             }
         });
         
