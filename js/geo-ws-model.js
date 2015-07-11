@@ -191,7 +191,7 @@ window.com.xomena.geo = {
               a.push("  ");
           }
           return a.join("");
-      }
+      };
       
       var ispoints = false;
       var points = "";
@@ -594,6 +594,8 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   },    
   chooseWebService: function(ev){
       var self = this;
+	  //TODO: debug it
+	  //this.storeValues();
       this.model.set("webservice",ev.target.value);
       if(ev.target.value){
         var services = this.model.get("services");
@@ -853,6 +855,65 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     jem.fire('InstanceParamsSynced', {
         instance: this.model
     });
+  },
+  storeValues: function(){
+    var self = this;  
+	var ws = this.model.get("webservice");
+	if(ws){
+		var m_id = this.model.get("id");
+		if(!(m_id in com.xomena.geo.storedValues)){
+			com.xomena.geo.storedValues[m_id] = {};
+		}
+		com.xomena.geo.storedValues[m_id][ws] = {};
+    	var params = this.model.get("parameters");
+    	params.forEach(function(p){
+        	var m = p.get("model");
+        	var t = m.get("type");
+        	var n = p.get("name");
+        	var v = [];
+        	self.$("input[name^='"+n+"'], select[name^='"+n+"']").each(function(){
+            	if(t==="list"){
+               		var val = $(this).val();
+                	if($.isArray(val)){
+                    	v = _.union(v,val);
+                	} else {
+                    	if(val){    
+                        	v.push(val);
+                    	}
+                	}
+            	} else if(t==='parts'){
+                	var m_n = $(this).attr("name");
+                	var prefix = m_n.split(":")[1];
+                	var val = $(this).val();
+                	if($.isArray(val)){
+                    	v.push(prefix + ":" + val.join("|"));
+                	} else {
+                    	if(val){
+                        	v.push(prefix + ":" + val);
+                    	}
+                	}
+            	} else if(t==='checkboxes'){
+                	if(this.checked){
+                    	var val = $(this).val();
+                    	if(val){
+                        	v.push(val);
+                    	}
+                	}
+            	} else if(t==='checkbox') {
+                	if(this.checked){
+                    	var val = $(this).val();
+                    	v.push(val);
+                	}
+            	} else {
+                	var val = $(this).val();
+                	if(val){
+                    	v.push(val);
+                	}
+            	}
+        	});
+        	com.xomena.geo.storedValues[m_id][ws][n] = v;
+    	});
+	 }
   },
   toggleVersion: function(){
      this.model.set("version", this.$("input[name='ws-version-val-"+this.model.get("id")+"']:checked").val());

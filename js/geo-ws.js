@@ -1,6 +1,8 @@
 (function($){
     var WS_DS_URI = "https://script.google.com/macros/s/AKfycbwPrEGcNZfsQEWmKm_XC-IXdEPdIQdIE1Na8pL4uBprm2YIT8E/exec?jsonp=?";
-    
+    var URL_SERVER_DEF = "http://aux.xomena.elementfx.com/geows.php";
+	var URL_SIGN_DEF = "http://aux.xomena.elementfx.com/geowssign.php";
+	
     var instance_col = new com.xomena.geo.Collections.InstanceCollection();
     
     instance_col.on("add", function(inst) {
@@ -207,8 +209,12 @@
             API_KEY: localStorage.getItem("com.xomena.geo.Models.Config.API_KEY"),
             CLIENT_ID: localStorage.getItem("com.xomena.geo.Models.Config.CLIENT_ID"),
             CRYPTO_KEY: localStorage.getItem("com.xomena.geo.Models.Config.CRYPTO_KEY"),
-            SERVER_URL: localStorage.getItem("com.xomena.geo.Models.Config.SERVER_URL"), 
-            SIGN_URL: localStorage.getItem("com.xomena.geo.Models.Config.SIGN_URL"),
+            SERVER_URL: localStorage.getItem("com.xomena.geo.Models.Config.SERVER_URL")?
+			            localStorage.getItem("com.xomena.geo.Models.Config.SERVER_URL"):
+						URL_SERVER_DEF, 
+            SIGN_URL: localStorage.getItem("com.xomena.geo.Models.Config.SIGN_URL")?
+			          localStorage.getItem("com.xomena.geo.Models.Config.SIGN_URL"):
+					  URL_SIGN_DEF,
             PLACES_API_KEY: localStorage.getItem("com.xomena.geo.Models.Config.PLACES_API_KEY"),
             ROADS_API_KEY: localStorage.getItem("com.xomena.geo.Models.Config.ROADS_API_KEY")
         });
