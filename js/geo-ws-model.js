@@ -594,8 +594,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   },    
   chooseWebService: function(ev){
       var self = this;
-	  //TODO: debug it
-	  //this.storeValues();
+	  this.storeValues();
       this.model.set("webservice",ev.target.value);
       if(ev.target.value){
         var services = this.model.get("services");
@@ -859,13 +858,17 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   storeValues: function(){
     var self = this;  
 	var ws = this.model.get("webservice");
-	if(ws){
+	if(ws){	
+		var params = this.model.get("parameters");
+		if(!params){
+			return;
+		}
 		var m_id = this.model.get("id");
 		if(!(m_id in com.xomena.geo.storedValues)){
 			com.xomena.geo.storedValues[m_id] = {};
 		}
 		com.xomena.geo.storedValues[m_id][ws] = {};
-    	var params = this.model.get("parameters");
+    	
     	params.forEach(function(p){
         	var m = p.get("model");
         	var t = m.get("type");
