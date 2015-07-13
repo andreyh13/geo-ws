@@ -673,6 +673,9 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   },
   setParametersVisibility: function(){
      var parameters = this.model.get("parameters"); 
+	 if(!parameters){
+		 return;
+	 }
      parameters.forEach(function(p){
          if(p.get("listenCondVisibility")){
              var m = p.get("model");
@@ -711,6 +714,9 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   setM4WVisibility: function(){
      var self = this;   
      var parameters = this.model.get("parameters"); 
+	 if(!parameters){
+		 return;
+	 }
      parameters.forEach(function(p){
          var m = p.get("model");
          if(m.get("m4wOnly")){
@@ -725,6 +731,9 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   },
   setParametersRequired: function(){
      var parameters = this.model.get("parameters"); 
+	 if(!parameters){
+		 return;
+	 }
      parameters.forEach(function(p){
          if(p.get("listenCondRequired")){
              var m = p.get("model");
@@ -764,6 +773,9 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   },
   setParametersRequiredOr: function(){
      var parameters = this.model.get("parameters"); 
+	 if(!parameters){
+		 return;
+	 }
      parameters.forEach(function(p){
          if(p.get("listenCondRequiredOr")){
              var m = p.get("model");
@@ -804,6 +816,9 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   syncParameters: function(){
     var self = this;  
     var params = this.model.get("parameters");
+	if(!params){
+		return;
+	}
     params.forEach(function(p){
         var m = p.get("model");
         var t = m.get("type");
