@@ -8,12 +8,13 @@ window.com.xomena.geo = {
   Router: {},
   services: null,
   instanceViewsMap: {},    
-  config: {},    
+  config: {},  
+  storedValues: {},    
   getNewId: function(){
     window.com.xomena.geo.getNewId.count = ++window.com.xomena.geo.getNewId.count || 1;
     return window.com.xomena.geo.getNewId.count;
   },
-  getFormElement: function(id,name,model,triggers,listeners){
+  getFormElement: function(id,name,model,triggers,listeners,parentInstance){
     var output = "";
     var t = model.get("type");
     var p = model.get("pattern");
@@ -34,21 +35,60 @@ window.com.xomena.geo = {
     } else {
         output += '<div id="container-'+id+'">'; 
     }
+    var sv = [];  
+    if(com.xomena.geo.instanceViewsMap[parentInstance]){
+        var m_ws = com.xomena.geo.instanceViewsMap[parentInstance].model.get("webservice");
+        if(com.xomena.geo.storedValues[parentInstance] && com.xomena.geo.storedValues[parentInstance][m_ws] &&
+           com.xomena.geo.storedValues[parentInstance][m_ws][name]){
+            sv = com.xomena.geo.storedValues[parentInstance][m_ws][name];
+        }
+        if(/components:/ig.test(name)){
+            var arr = name.split(':');
+            if(com.xomena.geo.storedValues[parentInstance] && com.xomena.geo.storedValues[parentInstance][m_ws] &&
+                com.xomena.geo.storedValues[parentInstance][m_ws][arr[0]]){
+                    _.each(com.xomena.geo.storedValues[parentInstance][m_ws][arr[0]], function(m1){
+                        if((new RegExp(arr[1]+":")).test(m1)){
+                           var m2 = m1.split(":");
+                           if(m2.length>1 && m2[1]){
+                               sv.push(m2[1]);
+                           }
+                        }
+                    }); 
+            }
+        }    
+    }
+    
     switch(t){
         case 'string':
             output += '<input class="pure-input-2-3'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
                 (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
-                '" type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
+                '" type="text" id="parameter-'+id+'" name="'+name+'" value="'+(sv.length?sv[0]:'')+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
             if(m){
                 output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
+                if(sv.length>1){
+                    for(var i=1; i<sv.length; i++){
+                        output += '<br/>';
+                        output += '<input class="pure-input-2-3'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
+                (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
+                '" type="text" id="parameter-'+id+'-'+com.xomena.geo.getNewId()+'" name="'+name+'" value="'+sv[i]+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';
+                    }
+                }
             }
             break;
         case 'number':
             output += '<input class="pure-input-1-2'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
                 (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
-                '" type="number" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
+                '" type="number" id="parameter-'+id+'" name="'+name+'" value="'+(sv.length?sv[0]:'')+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';   
             if(m){
                 output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
+                if(sv.length>1){
+                    for(var i=1; i<sv.length; i++){
+                        output += '<br/>';
+                        output += '<input class="pure-input-1-2'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
+                (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
+                '" type="number" id="parameter-'+id+'-'+com.xomena.geo.getNewId()+'" name="'+name+'" value="'+sv[i]+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';
+                    }
+                }
             }
             break;
         case 'list':
@@ -58,7 +98,7 @@ window.com.xomena.geo = {
                 var a1 = opt.split("|");
                 var v = a1[0];
                 var l = a1.length>1?a1[1]:a1[0];
-                m_options = [m_options, '<option value="', v, '">', l, '</option>'].join(""); 
+                m_options = [m_options, '<option value="', v, '"', (_.indexOf(sv, v)!==-1?' selected':''), '>', l, '</option>'].join(""); 
             });
             output += '<select id="parameter-'+id+'" name="'+name+'" class="pure-input-2-3 chosen-select'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
                 (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
@@ -73,7 +113,7 @@ window.com.xomena.geo = {
                 var l = a1.length>1?a1[1]:a1[0];
                 output += '<li>';
                 output += '<label for="parameter-'+id+'-'+ind+'" title="'+d+'" class="pure-checkbox">';
-                output += '<input type="checkbox" id="parameter-'+id+'-'+ind+'" name="'+name+'" value="'+v+'"'+(r?' required':'')+
+                output += '<input type="checkbox" id="parameter-'+id+'-'+ind+'" name="'+name+'" value="'+v+'"'+(_.indexOf(sv, v)!==-1?' checked':'')+(r?' required':'')+
                     ' class="checkbox'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+(t_req?' trigger-required':'')+(l_req?' listen-required':'')+
                     (t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+'" />';
                 output += l;
@@ -87,7 +127,7 @@ window.com.xomena.geo = {
             var v = a1[0];
             var l = a1.length>1?a1[1]:a1[0];
             output += '<label for="parameter-'+id+'" title="'+d+'" class="pure-checkbox">';
-            output += '<input type="checkbox" id="parameter-'+id+'" name="'+name+'" value="'+v+'"'+(r?' required':'')+
+            output += '<input type="checkbox" id="parameter-'+id+'" name="'+name+'" value="'+v+'"'+(_.indexOf(sv, v)!==-1?' checked':'')+(r?' required':'')+
                 ' class="checkbox'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+(t_req?' trigger-required':'')+(l_req?' listen-required':'')+
                 (t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+'"/>';
             output += l;
@@ -99,7 +139,7 @@ window.com.xomena.geo = {
             parts.forEach(function(p){
                 output += '<li>';
                 output += '<label for="parameter-'+id+'-'+p.get("id")+'">'+p.get('name')+'</label>';
-                output += com.xomena.geo.getFormElement(id+"-"+p.get("id"), name+":"+p.get("name"), p);
+                output += com.xomena.geo.getFormElement(id+"-"+p.get("id"), name+":"+p.get("name"), p, null, null, parentInstance);
                 output += '</li>';
             });
             output += '</ul>';
@@ -107,9 +147,17 @@ window.com.xomena.geo = {
         default:
             output += '<input class="pure-input-2-3'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
                 (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
-                '" type="text" id="parameter-'+id+'" name="'+name+'" value="" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+'title="'+d+'"/>';
+                '" type="text" id="parameter-'+id+'" name="'+name+'" value="'+(sv.length?sv[0]:'')+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+'title="'+d+'"/>';
             if(m){
                 output += '<button type="button" name="add-parameter-'+id+'" id="add-parameter-'+id+'" class="add-parameter">Add</button>';
+                if(sv.length>1){
+                    for(var i=1; i<sv.length; i++){
+                        output += '<br/>';
+                        output += '<input class="pure-input-2-3'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
+                (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
+                '" type="text" id="parameter-'+id+'-'+com.xomena.geo.getNewId()+'" name="'+name+'" value="'+sv[i]+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+' title="'+d+'"/>';
+                    }
+                }
             }
     }
     if(m){
@@ -130,7 +178,7 @@ window.com.xomena.geo = {
         .replace(/,\"vicinity\":/ig, ",\n\"vicinity\":").replace(/,\"website\":/ig, ",\n\"website\":").replace(/,\"offset\":/ig, ",\n\"offset\":").replace(/,\"value\":/ig, ",\n\"value\":")
         .replace(/,\"place_id\":/ig, ",\n\"place_id\":").replace(/,\"short_name\":/ig, ",\n\"short_name\":").replace(/,\"rating\":/ig, ",\n\"rating\":")
         .replace(/,\"longitude\":/ig, ",\n\"longitude\":").replace(/,\"placeId\":/ig, ",\n\"placeId\":").replace(/,\"message\":/ig, ",\n\"message\":")
-        .replace(/,\"status\":/ig, ",\n\"status\":");
+        .replace(/,\"price_level\":/ig, ",\n\"price_level\":").replace(/,\"status\":/ig, ",\n\"status\":");
       
       
       var arr = m_res.split("\n");
@@ -143,7 +191,7 @@ window.com.xomena.geo = {
               a.push("  ");
           }
           return a.join("");
-      }
+      };
       
       var ispoints = false;
       var points = "";
@@ -259,6 +307,12 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
         output: "json",
         parameters: null,
         services: null
+    },
+    initialize: function(){
+        console.log('The instance '+this.get("id")+' has been initialized.');
+        this.on('change', function(){
+            console.log('Values for the instance ' + this.get("id") + ' have changed.');
+        });
     },
     validation: {
         parameters: function(value){
@@ -478,7 +532,8 @@ com.xomena.geo.Collections.WebServiceCollection = Backbone.Collection.extend({
 
 com.xomena.geo.Collections.InstanceCollection = Backbone.Collection.extend({
   model: com.xomena.geo.Models.Instance,
-  url: '/instances'    
+  url: '/instances',
+  localStorage: new Backbone.LocalStorage("com.xomena.geo.Collections.Instances")    
 });
 
 com.xomena.geo.services = new com.xomena.geo.Collections.WebServiceCollection();
@@ -494,6 +549,9 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     this.syncParameters();  
     this.model.set("version", this.$("input[name='ws-version-val-"+this.model.get("id")+"']:checked").val());
     this.model.set("output", this.$("input[name='output-"+this.model.get("id")+"']:checked").val()); 
+    jem.fire('InstanceUpdated', {
+        instance: this.model
+    });  
     var isValid = this.model.isValid("output") && this.model.isValid("parameters");  
     if(isValid){  
         var m_url = this.model.getURL();
@@ -536,6 +594,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   },    
   chooseWebService: function(ev){
       var self = this;
+	  this.storeValues();
       this.model.set("webservice",ev.target.value);
       if(ev.target.value){
         var services = this.model.get("services");
@@ -791,7 +850,73 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
             }
         });
         p.set("value", v);
-    }); 
+    });
+    jem.fire('InstanceParamsSynced', {
+        instance: this.model
+    });
+  },
+  storeValues: function(){
+    var self = this;  
+	var ws = this.model.get("webservice");
+	if(ws){	
+		var params = this.model.get("parameters");
+		if(!params){
+			return;
+		}
+		var m_id = this.model.get("id");
+		if(!(m_id in com.xomena.geo.storedValues)){
+			com.xomena.geo.storedValues[m_id] = {};
+		}
+		com.xomena.geo.storedValues[m_id][ws] = {};
+    	
+    	params.forEach(function(p){
+        	var m = p.get("model");
+        	var t = m.get("type");
+        	var n = p.get("name");
+        	var v = [];
+        	self.$("input[name^='"+n+"'], select[name^='"+n+"']").each(function(){
+            	if(t==="list"){
+               		var val = $(this).val();
+                	if($.isArray(val)){
+                    	v = _.union(v,val);
+                	} else {
+                    	if(val){    
+                        	v.push(val);
+                    	}
+                	}
+            	} else if(t==='parts'){
+                	var m_n = $(this).attr("name");
+                	var prefix = m_n.split(":")[1];
+                	var val = $(this).val();
+                	if($.isArray(val)){
+                    	v.push(prefix + ":" + val.join("|"));
+                	} else {
+                    	if(val){
+                        	v.push(prefix + ":" + val);
+                    	}
+                	}
+            	} else if(t==='checkboxes'){
+                	if(this.checked){
+                    	var val = $(this).val();
+                    	if(val){
+                        	v.push(val);
+                    	}
+                	}
+            	} else if(t==='checkbox') {
+                	if(this.checked){
+                    	var val = $(this).val();
+                    	v.push(val);
+                	}
+            	} else {
+                	var val = $(this).val();
+                	if(val){
+                    	v.push(val);
+                	}
+            	}
+        	});
+        	com.xomena.geo.storedValues[m_id][ws][n] = v;
+    	});
+	 }
   },
   toggleVersion: function(){
      this.model.set("version", this.$("input[name='ws-version-val-"+this.model.get("id")+"']:checked").val());

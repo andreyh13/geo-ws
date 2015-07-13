@@ -20,12 +20,8 @@ To start to work please fill in the Setting for your API keys, client ID, crypto
 Please put the following values:
  - Server URL
         http://aux.xomena.elementfx.com/geows.php
-        or
-        http://php-xomena.rhcloud.com/geows/geows.php
  - Sign URL
         http://aux.xomena.elementfx.com/geowssign.php
-        or
-        http://php-xomena.rhcloud.com/geows/geowssign.php
  
 [Geocoding API]: https://developers.google.com/maps/documentation/geocoding 
 [Directions API]: https://developers.google.com/maps/documentation/directions
