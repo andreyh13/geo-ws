@@ -589,6 +589,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   deleteInstance: function(ev){
     ev.preventDefault();  
     console.log("Delete instance #"+this.model.get("id"));  
+	delete com.xomena.geo.instanceViewsMap[this.model.get("id")];
     this.model.destroy(); // deletes the model when delete button clicked
     return false;  
   },    
