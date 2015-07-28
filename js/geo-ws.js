@@ -174,6 +174,9 @@
                             primary: "ui-icon-trash"
                         }
                     });
+                    $("#rtabs-"+m_instance.get("id")).tabs({
+                      active: 0 
+                    });
                     return false;
                 });
                 console.log("Finish init instances");

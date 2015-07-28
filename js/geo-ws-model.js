@@ -963,6 +963,9 @@ com.xomena.geo.Views.InstancesView = Backbone.View.extend({
                 primary: "ui-icon-trash"
             }
         });
+        $("#rtabs-"+instance.get("id")).tabs({
+          active: 0 
+        }); 
     });
   },
   filterById: function(id){
