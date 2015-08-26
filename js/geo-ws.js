@@ -1,42 +1,41 @@
-(function($){
-    var WS_DS_URI = "https://script.google.com/macros/s/AKfycbwPrEGcNZfsQEWmKm_XC-IXdEPdIQdIE1Na8pL4uBprm2YIT8E/exec?jsonp=?";
-    var URL_SERVER_DEF = "http://aux.xomena.elementfx.com/geows.php";
-	var URL_SIGN_DEF = "http://aux.xomena.elementfx.com/geowssign.php";
-	
-    var instance_col = new com.xomena.geo.Collections.InstanceCollection();
+(function ($) {
+    'use strict';
+    var WS_DS_URI = "https://script.google.com/macros/s/AKfycbwPrEGcNZfsQEWmKm_XC-IXdEPdIQdIE1Na8pL4uBprm2YIT8E/exec?jsonp=?",
+        URL_SERVER_DEF = "http://aux.xomena.elementfx.com/geows.php",
+	    URL_SIGN_DEF = "http://aux.xomena.elementfx.com/geowssign.php",
+	    instance_col = new com.xomena.geo.Collections.InstanceCollection(),
+        instancesView = null,
+        m_dialog;
     
-    instance_col.on("add", function(inst) {
-        console.log("The instance " + inst.get("id") + " has added to collection" );
-        if(instance_col.localStorage.find(inst)){
+    instance_col.on("add", function (inst) {
+        console.log("The instance " + inst.get("id") + " has added to collection");
+        if (instance_col.localStorage.find(inst)) {
             instance_col.localStorage.update(inst);
         } else {
             instance_col.localStorage.create(inst);
         }
     });
-    instance_col.on("remove", function(inst) {
-        console.log("The instance " + inst.get("id") + " has removed from collection" );
+    instance_col.on("remove", function (inst) {
+        console.log("The instance " + inst.get("id") + " has removed from collection");
         instance_col.localStorage.destroy(inst);
     });
-    
-    var instancesView = null;
-    var m_dialog;
-    
+
     // Generate four random hex digits.
     function S4() {
-        return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
-    };
+        return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+    }
 
     // Generate a pseudo-GUID by concatenating random hexadecimal.
     function guid() {
-        return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
-    };
+        return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
+    }
     
-    function initParameterParts(par, parts_url){
+    function initParameterParts (par, parts_url) {
         $.ajax({
             url: parts_url,
             dataType: 'jsonp',
             async: false,
-            success: function(data) {
+            success: function (data) {
                 var partscol = new com.xomena.geo.Collections.ParameterPartCollection();
                 for (var i = 1; i < data.length; i++) {
                     var part = new com.xomena.geo.Models.ParameterPart({
@@ -62,12 +61,12 @@
         });    
     }
     
-    function initParameters(wserv, params_url){
+    function initParameters (wserv, params_url) {
         $.ajax({
             url: params_url,
             dataType: 'jsonp',
             async: false,
-            success: function(data) {
+            success: function (data) {
                 var parcol = [];
                 for (var i = 1; i < data.length; i++) {
                     var par = new com.xomena.geo.Models.Parameter({

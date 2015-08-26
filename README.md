@@ -2,7 +2,7 @@ Google Maps Web Services Requests Builder
 ==========================================
 
 ## Description
-This application allows to construct Google Maps WebServices HTTPS request.
+This application allows to construct Google Maps WebServices HTTPS requests.
 
 The Google Maps Web Services Requests Builder application is available for the following Google Maps 
 APIs:
