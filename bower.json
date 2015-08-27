@@ -1,0 +1,32 @@
+{
+  "name": "geo-ws",
+  "version": "1.0.0",
+  "homepage": "https://github.com/andreyh13/geo-ws",
+  "authors": [
+    "Xomena <andreyh.13@gmail.com>"
+  ],
+  "description": "Google Maps Web Services requests builder",
+  "keywords": [
+    "google",
+    "maps",
+    "api",
+    "https",
+    "web",
+    "service",
+    "geocoding",
+    "directions",
+    "places",
+    "roads"
+  ],
+  "license": "Apache",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0"
+  }
+}
