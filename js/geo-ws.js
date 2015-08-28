@@ -176,6 +176,7 @@
                     $("#rtabs-"+m_instance.get("id")).tabs({
                       active: 0 
                     });
+                    $("#instances-container > li:last").get(0).scrollIntoView(true);
                     return false;
                 });
                 console.log("Finish init instances");
