@@ -1,3 +1,7 @@
+.paper-header h1 {
+    margin: 0;
+}
+
 #instances-container {
     list-style-type:decimal;
     list-style-position:outside;

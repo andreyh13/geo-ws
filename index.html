@@ -3,34 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <title>Maps Web Services Requests Builder</title>
+
+    <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+
     <link rel="stylesheet" href="css/geo-ws.css">
     <link rel="stylesheet" href="bower_components/chosen/chosen.min.css">
     <link rel="stylesheet" href="bower_components/jquery-ui/themes/smoothness/jquery-ui.min.css" />
     <link rel="stylesheet" href="bower_components/highlight/src/styles/googlecode.css">
     <link rel="stylesheet" href="bower_components/highlight/src/styles/github.css">
     <link rel="stylesheet" href="http://yui.yahooapis.com/combo?pure/0.5.0/base-min.css&pure/0.5.0/grids-responsive-min.css&pure/0.5.0/forms-min.css">
+
+    <link rel="import" href="bower_components/paper-styles/paper-styles.html">
+    <link rel="import" href="bower_components/paper-header-panel/paper-header-panel.html">
+
+    <style is="custom-style">
+      paper-header-panel {
+        float: left;
+        @apply(--shadow-elevation-2dp);
+        height: 100%;
+      }
+
+      .paper-header {
+        height: 60px;
+        font-size: 14px;
+        line-height: 60px;
+        padding: 0 10px;
+        color: white;
+        transition: height 0.2s;
+      }
+
+      .paper-header h1 {
+        -webkit-margin-before: 0;
+        -webkit-margin-after: 0;
+      }
+
+      .paper-header h1 .green {
+        color: #0B8043;
+      }
+
+      .paper-header h1 .yellow {
+        color: #F4B400;
+      }
+
+      .paper-header h1 .red {
+        color: #DB4437;
+      }
+
+      .cover {
+        margin: 60px;
+      }
+
+      .blue .paper-header {
+        background-color: #4285F4;
+      }
+      .blue .content {
+        background: linear-gradient(white, #b3e5fc);
+      }
+    </style>
 </head>
 
-<body class="yui3-normalized">
-    <div class="wrapper ui-widget">
-        <header class="ui-widget-header ui-corner-tl ui-corner-tr">
-            <h1>Google Maps Web Services Requests Builder</h1>
-        </header>
-        <div class="ui-widget-content ui-corner-bl ui-corner-br">
-           <form id="form-ws" class="pure-form pure-form-aligned">
-               <ol id="instances-container">
-               </ol>
-               <div class="actions">
-                   <button name="add-instance" id="add-instance">
-                       Add new
-                   </button>
-                   <button name="edit-config" id="edit-config">
-                       <span class="ui-icon ui-icon-wrench"></span>Settings
-                   </button>
-               </div>
-           </form> 
-        </div>    
-    </div>
+<body class="yui3-normalized fullbleed layout vertical">
+    <paper-header-panel class="blue" mode="waterfall">
+        <div class="paper-header">
+            <header>
+                <h1>G<span class="red">o</span><span class="yellow">o</span>g<span class="green">l</span><span class="red">e</span> Maps Web Services Requests Builder</h1>
+            </header>
+        </div>
+        <div class="content fill">
+            <div class="wrapper ui-widget">
+                <div class="ui-widget-content ui-corner-bl ui-corner-br">
+                    <form id="form-ws" class="pure-form pure-form-aligned">
+                        <ol id="instances-container">
+                        </ol>
+                        <div class="actions">
+                            <button name="add-instance" id="add-instance">
+                                Add new
+                            </button>
+                            <button name="edit-config" id="edit-config">
+                                <span class="ui-icon ui-icon-wrench"></span>Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </paper-header-panel>
     <div id="config"></div>
     <div id="validation-dialog" title="Validation" class="hidden">
         <p class="validation-content"></p>
