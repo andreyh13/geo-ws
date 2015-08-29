@@ -21,6 +21,8 @@
     <link rel="import" href="bower_components/paper-fab/paper-fab.html">
     <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
     <link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
+    <link rel="import" href="bower_components/paper-card/paper-card.html">
+    <link rel="import" href="bower_components/paper-button/paper-button.html">
 
     <style is="custom-style">
       paper-header-panel {
@@ -73,6 +75,11 @@
         bottom:24px;
         right: 36px;
       }
+
+      paper-card {
+        width: 100%;
+        margin-top: -16px;
+      }
     </style>
 </head>
 
@@ -109,81 +116,81 @@
     
     <!-- external template -->
     <script id="instanceTemplate" type="text/template">
-        <div class="pure-g two-cols">
-            <div class="pure-u-1 pure-u-lg-11-24">
-                <div class="pure-g">
-                <fieldset class="ws-version-fs pure-u-23-24 pure-u-xl-11-24">
-                    <legend>Select the version</legend>
-                    <label for="ws-version-free-<%= id %>" class="pure-radio">
-                        <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-free-<%= id %>" <% print(version==='free'?'checked="checked"':''); %> value="free" />
-                        Free
-                    </label>
-                    <label for="ws-version-work-<%= id %>" class="pure-radio">
-                        <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-work-<%= id %>" <% print(version==='work'?'checked="checked"':''); %> value="work" />
-                        For Work
-                    </label>
-                </fieldset>
-                <fieldset class="ws-output-fs pure-u-23-24 pure-u-xl-11-24">
-                    <legend>Select the output format</legend>
-                    <label for="output-json-<%= id %>" class="pure-radio">
-                        <input type="radio" name="output-<%= id %>" id="output-json-<%= id %>" <% print(output==='json'?'checked="checked"':''); %> value="json" />
-                        JSON
-                    </label>
-                    <label for="output-xml-<%= id %>" class="pure-radio">
-                        <input type="radio" name="output-<%= id %>" id="output-xml-<%= id %>" <% print(output==='xml'?'checked="checked"':''); %> value="xml" />
-                        XML
-                    </label>
-                </fieldset>
-                </div>
+        <paper-card elevation="3">
+            <div class="card-content">
+                <div class="pure-g two-cols">
+                    <div class="pure-u-1 pure-u-lg-11-24">
+                        <div class="pure-g">
+                        <fieldset class="ws-version-fs pure-u-23-24 pure-u-xl-11-24">
+                            <legend>Select the version</legend>
+                            <label for="ws-version-free-<%= id %>" class="pure-radio">
+                                <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-free-<%= id %>" <% print(version==='free'?'checked="checked"':''); %> value="free" />
+                                Free
+                            </label>
+                            <label for="ws-version-work-<%= id %>" class="pure-radio">
+                                <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-work-<%= id %>" <% print(version==='work'?'checked="checked"':''); %> value="work" />
+                                For Work
+                            </label>
+                        </fieldset>
+                        <fieldset class="ws-output-fs pure-u-23-24 pure-u-xl-11-24">
+                            <legend>Select the output format</legend>
+                            <label for="output-json-<%= id %>" class="pure-radio">
+                                <input type="radio" name="output-<%= id %>" id="output-json-<%= id %>" <% print(output==='json'?'checked="checked"':''); %> value="json" />
+                                JSON
+                            </label>
+                            <label for="output-xml-<%= id %>" class="pure-radio">
+                                <input type="radio" name="output-<%= id %>" id="output-xml-<%= id %>" <% print(output==='xml'?'checked="checked"':''); %> value="xml" />
+                                XML
+                            </label>
+                        </fieldset>
+                        </div>
         
-                <div class="pure-g">
-                <fieldset class="ws-construct-fs pure-u-23-24">
-                    <legend>Construct</legend>
-                    <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>" class="ws-choose">
-                        <option value="">--Please select--</option>  
-                        <% services.forEach(function(model){
-                            print('<option value="'+model.get('id')+'"'+(model.get('id')==webservice?'  selected':'')+'>'+model.get('name')+'</option>');
-                        });
-                        %>
-                    </select>
-                    <div class="ws-parameters" id="ws-parameters-<%= id %>"></div>
-                </fieldset>
+                        <div class="pure-g">
+                        <fieldset class="ws-construct-fs pure-u-23-24">
+                            <legend>Construct</legend>
+                            <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>" class="ws-choose">
+                                <option value="">--Please select--</option>
+                                <% services.forEach(function(model){
+                                    print('<option value="'+model.get('id')+'"'+(model.get('id')==webservice?'  selected':'')+'>'+model.get('name')+'</option>');
+                                });
+                                %>
+                            </select>
+                            <div class="ws-parameters" id="ws-parameters-<%= id %>"></div>
+                        </fieldset>
+                        </div>
+                    </div>
+                    <div class="pure-u-1 pure-u-lg-1-2">
+                        <div class="pure-g">
+                        <fieldset class="ws-url-fs pure-u-1">
+                            <legend>URL</legend>
+                            <div class="ws-url">
+                                <textarea id="ws-url-<%= id %>" readonly></textarea>
+                            </div>
+                        </fieldset>
+                        <fieldset class="ws-results-fs pure-u-1">
+                            <legend>Results</legend>
+                            <div id="rtabs-<%= id %>" class="tabs">
+                                <ul>
+                                <li><a href="#rtabs-<%= id %>-1">Output</a></li>
+                                <li><a href="#rtabs-<%= id %>-2">Map</a></li>
+                                </ul>
+                                <div id="rtabs-<%= id %>-1">
+                                    <div id="ws-result-<%= id %>"  class="ws-result"></div>
+                                </div>
+                                <div id="rtabs-<%= id %>-2">
+                                    <div id="ws-map-<%= id %>" class="map-canvas"></div>
+                                </div>
+                            </div>
+                        </fieldset>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="pure-u-1 pure-u-lg-1-2">
-                <div class="pure-g">
-                <fieldset class="ws-url-fs pure-u-1">
-                    <legend>URL</legend>
-                    <div class="ws-url">
-                        <textarea id="ws-url-<%= id %>" readonly></textarea>
-                    </div>
-                </fieldset>
-                <fieldset class="ws-results-fs pure-u-1">
-                    <legend>Results</legend>
-                    <div id="rtabs-<%= id %>" class="tabs">
-                      <ul>
-                        <li><a href="#rtabs-<%= id %>-1">Output</a></li>
-                        <li><a href="#rtabs-<%= id %>-2">Map</a></li>
-                      </ul>
-                      <div id="rtabs-<%= id %>-1">
-                        <div id="ws-result-<%= id %>"  class="ws-result"></div>  
-                      </div>
-                      <div id="rtabs-<%= id %>-2">
-                        <div id="ws-map-<%= id %>" class="map-canvas"></div>
-                      </div>
-                    </div>
-                </fieldset>
-                </div>
+            <div id="instance-action-<%= id %>" class="card-actions">
+                <paper-button id="exec-instance-<%= id %>" class="exec" disabled>Execute</paper-button>
+                <paper-button id="remove-instance-<%= id %>" class="delete">Remove</paper-button>
             </div>
-        </div>
-        <div id="instance-action-<%= id %>" class="instance-action">
-            <button name="exec-instance-<%= id %>" id="exec-instance-<%= id %>" class="exec" disabled>
-                Execute
-            </button>
-            <button name="remove-instance-<%= id %>" id="remove-instance-<%= id %>" class="delete">
-                Remove
-            </button>
-        </div>
+        </paper-card>
         <span class="ui-icon ui-icon-carat-2-n-s ws-toggle"></span>
     </script>
     

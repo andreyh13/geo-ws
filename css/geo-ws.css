@@ -7,21 +7,25 @@
     list-style-position:outside;
     float: left;
     width: 98%;
+    counter-reset: item;
 }
 
 #instances-container li.ws-instance {
     float: left;
     width:87%;
-    margin-bottom: 16px;
-    padding: 8px 0;
-    background-color: #DCE775;
+    margin-bottom: 24px;
+    padding: 0;
     font-size: 0.85em;
     position: relative;
+    display: block;
 }
 
-#instances-container li.ws-instance > div.pure-g.two-cols{
-    background-color: #DCE775;
-    padding: 0 8px;
+#instances-container li.ws-instance:before {
+  content: counter(item) ". ";
+  counter-increment: item;
+  width: 2em;
+  display: inline-block;
+  margin-left: -24px;
 }
 
 #instances-container li.ws-instance span.ui-icon-carat-2-n-s {
@@ -37,13 +41,6 @@
 
 .ws-results-fs{
     min-height: 40px;
-}
-
-.instance-action {
-    float: left;
-    width: 99%;
-    margin: 8px 0 0;
-    background-color: #DCE775;
 }
 
 .ws-result {

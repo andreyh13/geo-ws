@@ -1,3 +1,4 @@
+'use strict';
 window.com = window.com || {};
 window.com.xomena = window.com.xomena || {};
 
@@ -541,7 +542,7 @@ com.xomena.geo.services = new com.xomena.geo.Collections.WebServiceCollection();
 /*Define views*/
 com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   tagName: 'li', 
-  className: 'ws-instance ui-widget-content ui-corner-tl ui-corner-tr ui-corner-bl ui-corner-br', 
+  className: 'ws-instance',
   execInstance: function(){
     console.log("Start execution for instance #"+this.model.get("id"));
     var self = this;  
@@ -620,7 +621,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
             }
         });
         this.$(".chosen-select").chosen();
-        this.$("#exec-instance-"+this.model.get("id")).button("enable");
+        this.$("#exec-instance-"+this.model.get("id")).removeAttr("disabled");
         this.setParametersVisibility(); 
         this.setM4WVisibility();  
         this.setParametersRequired();
@@ -639,7 +640,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
         }  
       } else {
         this.$(".ws-parameters").html("");  
-        this.$("#exec-instance-"+this.model.get("id")).button("disable");
+        this.$("#exec-instance-"+this.model.get("id")).attr("disabled","disabled");
         $("#output-json-"+this.model.get("id")).removeAttr("disabled");
         $("#output-json-"+this.model.get("id")).prop("checked","checked");  
         $("#output-xml-"+this.model.get("id")).removeAttr("disabled");  
@@ -953,7 +954,7 @@ com.xomena.geo.Views.InstancesView = Backbone.View.extend({
         Backbone.Validation.bind(instanceView);
         $("#instances-container").append(instanceView.el);
         com.xomena.geo.instanceViewsMap[instance.get("id")] = instanceView;
-        $("#exec-instance-"+instance.get("id")).button({
+        /*$("#exec-instance-"+instance.get("id")).button({
             icons: {
                 primary: "ui-icon-play"
             }
@@ -962,7 +963,7 @@ com.xomena.geo.Views.InstancesView = Backbone.View.extend({
             icons: {
                 primary: "ui-icon-trash"
             }
-        });
+        });*/
         $("#rtabs-"+instance.get("id")).tabs({
           active: 0 
         }); 
