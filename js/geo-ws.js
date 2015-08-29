@@ -262,19 +262,12 @@
             $("#multiple-container-"+m_id+" > #parameter-"+m_id).clone().attr("id","parameter-"+m_id+"-"+com.xomena.geo.getNewId()).appendTo("#multiple-container-"+m_id);
         });
         
-        $("#edit-config").button().on("click", function(ev) {
+        $("#edit-config").on("click", function(ev) {
             ev.preventDefault();
             m_dialog.dialog("open");
             return false;
         });
-        
-        //Init some buttons
-        $("button#add-instance").button({
-            icons: {
-                primary: "ui-icon-plus"
-            }
-        });
-        
+
         //Initialize validation dialog
         $("#validation-dialog").dialog({
             autoOpen: false,

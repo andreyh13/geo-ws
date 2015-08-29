@@ -14,13 +14,13 @@
     width:87%;
     margin-bottom: 16px;
     padding: 8px 0;
-    background-color: #F6F3EF;
+    background-color: #DCE775;
     font-size: 0.85em;
     position: relative;
 }
 
 #instances-container li.ws-instance > div.pure-g.two-cols{
-    background-color: #F6F3EF;
+    background-color: #DCE775;
     padding: 0 8px;
 }
 
@@ -43,7 +43,7 @@
     float: left;
     width: 99%;
     margin: 8px 0 0;
-    background-color: #F6F3EF;
+    background-color: #DCE775;
 }
 
 .ws-result {
@@ -69,10 +69,6 @@
     margin:0;
     padding:0;
     display: inline-block;
-}
-
-.wrapper .actions{
-    margin: 16px;
 }
 
 .chosen-container-multi {
