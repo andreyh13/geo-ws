@@ -1,10 +1,10 @@
-Google Maps Web Services APIs
-====================================
+Google Maps Web Services Requests Builder
+==========================================
 
 ## Description
-This application allows to construct Google Maps WebServices HTTP request.
+This application allows to construct Google Maps WebServices HTTPS requests.
 
-The Google Maps Web Services APIs application is available for the following Google Maps 
+The Google Maps Web Services Requests Builder application is available for the following Google Maps 
 APIs:
 
  - [Geocoding API]
@@ -15,7 +15,7 @@ APIs:
  - [Places API]
  - [Roads API]
  
-To start to work please fill in the Setting for your API keys, client ID, crypto key, etc. 
+To start working with Requests Builder please fill in the Settings for your API keys, client ID, crypto key, etc. 
 
 Please put the following values:
  - Server URL

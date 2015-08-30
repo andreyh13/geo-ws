@@ -1,3 +1,4 @@
+'use strict';
 window.com = window.com || {};
 window.com.xomena = window.com.xomena || {};
 
@@ -541,11 +542,11 @@ com.xomena.geo.services = new com.xomena.geo.Collections.WebServiceCollection();
 /*Define views*/
 com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   tagName: 'li', 
-  className: 'ws-instance ui-widget-content ui-corner-tl ui-corner-tr ui-corner-bl ui-corner-br', 
+  className: 'ws-instance',
   execInstance: function(){
     console.log("Start execution for instance #"+this.model.get("id"));
     var self = this;  
-    this.$("#ws-url-"+this.model.get("id")).html("Preparing request please wait...");  
+    document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = "Preparing request please wait...";
     this.syncParameters();  
     this.model.set("version", this.$("input[name='ws-version-val-"+this.model.get("id")+"']:checked").val());
     this.model.set("output", this.$("input[name='output-"+this.model.get("id")+"']:checked").val()); 
@@ -555,7 +556,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     var isValid = this.model.isValid("output") && this.model.isValid("parameters");  
     if(isValid){  
         var m_url = this.model.getURL();
-        this.$("#ws-url-"+this.model.get("id")).html(m_url);
+        document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = m_url;
         if(m_url && com.xomena.geo.config.get("SERVER_URL")){
             $.ajax({
                 url: com.xomena.geo.config.get("SERVER_URL"),
@@ -582,7 +583,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
             });
         }
     } else {
-        this.$("#ws-url-"+this.model.get("id")).html("Please set valid parameters");
+        document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = "Please set valid parameters";
     }
     return false;  
   },
@@ -620,7 +621,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
             }
         });
         this.$(".chosen-select").chosen();
-        this.$("#exec-instance-"+this.model.get("id")).button("enable");
+        this.$("#exec-instance-"+this.model.get("id")).removeAttr("disabled");
         this.setParametersVisibility(); 
         this.setM4WVisibility();  
         this.setParametersRequired();
@@ -639,7 +640,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
         }  
       } else {
         this.$(".ws-parameters").html("");  
-        this.$("#exec-instance-"+this.model.get("id")).button("disable");
+        this.$("#exec-instance-"+this.model.get("id")).attr("disabled","disabled");
         $("#output-json-"+this.model.get("id")).removeAttr("disabled");
         $("#output-json-"+this.model.get("id")).prop("checked","checked");  
         $("#output-xml-"+this.model.get("id")).removeAttr("disabled");  
@@ -953,15 +954,9 @@ com.xomena.geo.Views.InstancesView = Backbone.View.extend({
         Backbone.Validation.bind(instanceView);
         $("#instances-container").append(instanceView.el);
         com.xomena.geo.instanceViewsMap[instance.get("id")] = instanceView;
-        $("#exec-instance-"+instance.get("id")).button({
-            icons: {
-                primary: "ui-icon-play"
-            }
-        });
-        $("#remove-instance-"+instance.get("id")).button({
-            icons: {
-                primary: "ui-icon-trash"
-            }
+        document.querySelector('#t-'+instance.get("id")).selected = 0;
+        $("#ws-result-"+instance.get("id")).width(function (ind, val) {
+            return $($(this).parents("div.pure-g").get(0)).width();
         });
     });
   },

@@ -2,115 +2,211 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Web Services APIs</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+    <title>Maps Web Services Requests Builder</title>
+
+    <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+
     <link rel="stylesheet" href="css/geo-ws.css">
-    <link rel="stylesheet" href="css/chosen.css">
-    <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/themes/smoothness/jquery-ui.css" />
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/styles/default.min.css">
+    <link rel="stylesheet" href="bower_components/chosen/chosen.min.css">
+    <link rel="stylesheet" href="bower_components/jquery-ui/themes/smoothness/jquery-ui.min.css" />
+    <link rel="stylesheet" href="bower_components/highlight/src/styles/googlecode.css">
+    <link rel="stylesheet" href="bower_components/highlight/src/styles/github.css">
     <link rel="stylesheet" href="http://yui.yahooapis.com/combo?pure/0.5.0/base-min.css&pure/0.5.0/grids-responsive-min.css&pure/0.5.0/forms-min.css">
+
+    <link rel="import" href="bower_components/paper-styles/paper-styles.html">
+    <link rel="import" href="bower_components/paper-header-panel/paper-header-panel.html">
+    <link rel="import" href="bower_components/iron-icons/iron-icons.html">
+    <link rel="import" href="bower_components/paper-fab/paper-fab.html">
+    <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
+    <link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
+    <link rel="import" href="bower_components/paper-card/paper-card.html">
+    <link rel="import" href="bower_components/paper-button/paper-button.html">
+    <link rel="import" href="bower_components/iron-autogrow-textarea/iron-autogrow-textarea.html">
+    <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
+    <link rel="import" href="bower_components/paper-tabs/paper-tab.html">
+    <link rel="import" href="bower_components/iron-pages/iron-pages.html">
+
+    <style is="custom-style">
+      paper-header-panel {
+        float: left;
+        @apply(--shadow-elevation-2dp);
+        height: 100%;
+      }
+
+      .paper-header {
+        height: 60px;
+        font-size: 14px;
+        line-height: 60px;
+        padding: 0 10px;
+        color: white;
+        transition: height 0.2s;
+      }
+
+      .paper-header h1 {
+        -webkit-margin-before: 0;
+        -webkit-margin-after: 0;
+        font-size: 24px;
+      }
+
+      .paper-header h1 .green {
+        color: #0B8043;
+      }
+
+      .paper-header h1 .yellow {
+        color: #F4B400;
+      }
+
+      .paper-header h1 .red {
+        color: #DB4437;
+      }
+
+      .cover {
+        margin: 60px;
+      }
+
+      .blue .paper-header {
+        background-color: #4285F4;
+      }
+      .blue .content {
+        background: linear-gradient(white, #b3e5fc);
+      }
+
+      paper-fab {
+        display: block;
+        position: fixed;
+        bottom:24px;
+        right: 36px;
+      }
+
+      paper-card {
+        width: 100%;
+        margin-top: -16px;
+      }
+
+      .ws-url iron-autogrow-textarea {
+        width: 100%;
+        border: 0 none;
+      }
+
+      paper-tabs {
+        background-color: #7986CB;
+        color: #fff;
+        box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2);
+      }
+    </style>
 </head>
 
-<body class="yui3-normalized">
-    <div class="wrapper ui-widget">
-        <header class="ui-widget-header ui-corner-tl ui-corner-tr">
-            <h1>Google Maps Web Services APIs</h1>
-        </header>
-        <div class="ui-widget-content ui-corner-bl ui-corner-br">
-           <form id="form-ws" class="pure-form pure-form-aligned">
-               <ol id="instances-container">
-               </ol>
-               <div class="actions">
-                   <button name="add-instance" id="add-instance">
-                       Add new
-                   </button>
-                   <button name="edit-config" id="edit-config">
-                       <span class="ui-icon ui-icon-wrench"></span>Settings
-                   </button>
-               </div>
-           </form> 
-        </div>    
-    </div>
+<body class="yui3-normalized fullbleed layout vertical">
+    <paper-header-panel class="blue" mode="waterfall">
+        <paper-toolbar class="paper-header">
+            <header class="title">
+                <h1>G<span class="red">o</span><span class="yellow">o</span>g<span class="green">l</span><span class="red">e</span> Maps Web Services Requests Builder</h1>
+            </header>
+            <paper-icon-button icon="settings" title="Settings" id="edit-config"></paper-icon-button>
+        </paper-toolbar>
+        <div class="content fill">
+            <form id="form-ws" class="pure-form pure-form-aligned">
+                <ol id="instances-container">
+                </ol>
+            </form>
+            <paper-fab mini icon="add" title="Add new" tabindex="0" id="add-instance"></paper-fab>
+        </div>
+    </paper-header-panel>
     <div id="config"></div>
     <div id="validation-dialog" title="Validation" class="hidden">
         <p class="validation-content"></p>
     </div>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
-    <script src="http://documentcloud.github.com/underscore/underscore-min.js"></script>
-    <script src="http://documentcloud.github.com/backbone/backbone-min.js"></script>
-    <script src="js/backbone-validation.js"></script>
-    <script src="js/backbone.localStorage-min.js"></script>
-    <script src="js/chosen.jquery.min.js"></script>
-    <script src="js/jquery.blockUI.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/highlight.min.js"></script>
-    <script src="js/jem.js"></script>
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="bower_components/jquery-ui/jquery-ui.min.js"></script>
+    <script src="bower_components/underscore/underscore-min.js"></script>
+    <script src="bower_components/backbone/backbone-min.js"></script>
+    <script src="bower_components/backbone.validation/dist/backbone-validation-min.js"></script>
+    <script src="bower_components/backbone.localStorage/backbone.localStorage-min.js"></script>
+    <script src="bower_components/chosen/chosen.jquery.min.js"></script>
+    <script src="bower_components/blockUI/jquery.blockUI.js"></script>
+    <script src="bower_components/highlight/build/highlight.pack.js"></script>
+    <script src="bower_components/jem.js/jem.js"></script>
     
     <!-- external template -->
     <script id="instanceTemplate" type="text/template">
-        <div class="pure-g two-cols">
-            <div class="pure-u-1 pure-u-lg-11-24">
-                <div class="pure-g">
-                <fieldset class="ws-version-fs pure-u-23-24 pure-u-xl-11-24">
-                    <legend>Select the version</legend>
-                    <label for="ws-version-free-<%= id %>" class="pure-radio">
-                        <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-free-<%= id %>" <% print(version==='free'?'checked="checked"':''); %> value="free" />
-                        Free
-                    </label>
-                    <label for="ws-version-work-<%= id %>" class="pure-radio">
-                        <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-work-<%= id %>" <% print(version==='work'?'checked="checked"':''); %> value="work" />
-                        For Work
-                    </label>
-                </fieldset>
-                <fieldset class="ws-output-fs pure-u-23-24 pure-u-xl-11-24">
-                    <legend>Select the output format</legend>
-                    <label for="output-json-<%= id %>" class="pure-radio">
-                        <input type="radio" name="output-<%= id %>" id="output-json-<%= id %>" <% print(output==='json'?'checked="checked"':''); %> value="json" />
-                        JSON
-                    </label>
-                    <label for="output-xml-<%= id %>" class="pure-radio">
-                        <input type="radio" name="output-<%= id %>" id="output-xml-<%= id %>" <% print(output==='xml'?'checked="checked"':''); %> value="xml" />
-                        XML
-                    </label>
-                </fieldset>
-                </div>
+        <paper-card elevation="3">
+            <div class="card-content">
+                <div class="pure-g two-cols">
+                    <div class="pure-u-1 pure-u-lg-11-24">
+                        <div class="pure-g">
+                        <fieldset class="ws-version-fs pure-u-23-24 pure-u-xl-11-24">
+                            <legend>Select the version</legend>
+                            <label for="ws-version-free-<%= id %>" class="pure-radio">
+                                <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-free-<%= id %>" <% print(version==='free'?'checked="checked"':''); %> value="free" />
+                                Free
+                            </label>
+                            <label for="ws-version-work-<%= id %>" class="pure-radio">
+                                <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-work-<%= id %>" <% print(version==='work'?'checked="checked"':''); %> value="work" />
+                                For Work
+                            </label>
+                        </fieldset>
+                        <fieldset class="ws-output-fs pure-u-23-24 pure-u-xl-11-24">
+                            <legend>Select the output format</legend>
+                            <label for="output-json-<%= id %>" class="pure-radio">
+                                <input type="radio" name="output-<%= id %>" id="output-json-<%= id %>" <% print(output==='json'?'checked="checked"':''); %> value="json" />
+                                JSON
+                            </label>
+                            <label for="output-xml-<%= id %>" class="pure-radio">
+                                <input type="radio" name="output-<%= id %>" id="output-xml-<%= id %>" <% print(output==='xml'?'checked="checked"':''); %> value="xml" />
+                                XML
+                            </label>
+                        </fieldset>
+                        </div>
         
-                <div class="pure-g">
-                <fieldset class="ws-construct-fs pure-u-23-24">
-                    <legend>Construct</legend>
-                    <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>" class="ws-choose">
-                        <option value="">--Please select--</option>  
-                        <% services.forEach(function(model){
-                            print('<option value="'+model.get('id')+'"'+(model.get('id')==webservice?'  selected':'')+'>'+model.get('name')+'</option>');
-                        });
-                        %>
-                    </select>
-                    <div class="ws-parameters" id="ws-parameters-<%= id %>"></div>
-                </fieldset>
-                </div>
-            </div>
-            <div class="pure-u-1 pure-u-lg-1-2">
-                <div class="pure-g">
-                <fieldset class="ws-url-fs pure-u-1">
-                    <legend>URL</legend>
-                    <div class="ws-url">
-                        <textarea id="ws-url-<%= id %>" readonly></textarea>
+                        <div class="pure-g">
+                        <fieldset class="ws-construct-fs pure-u-23-24">
+                            <legend>Construct</legend>
+                            <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>" class="ws-choose">
+                                <option value="">--Please select--</option>
+                                <% services.forEach(function(model){
+                                    print('<option value="'+model.get('id')+'"'+(model.get('id')==webservice?'  selected':'')+'>'+model.get('name')+'</option>');
+                                });
+                                %>
+                            </select>
+                            <div class="ws-parameters" id="ws-parameters-<%= id %>"></div>
+                        </fieldset>
+                        </div>
                     </div>
-                </fieldset>
-                <fieldset class="ws-results-fs pure-u-1">
-                    <legend>Results</legend>
-                    <div id="ws-result-<%= id %>"  class="ws-result"></div>
-                </fieldset>
+                    <div class="pure-u-1 pure-u-lg-1-2">
+                        <div class="pure-g">
+                        <fieldset class="ws-url-fs pure-u-1">
+                            <legend>URL</legend>
+                            <div class="ws-url">
+                                <iron-autogrow-textarea id="ws-url-<%= id %>" rows="3" readonly></iron-autogrow-textarea>
+                            </div>
+                        </fieldset>
+                        <fieldset class="ws-results-fs pure-u-1">
+                            <template id="t-<%= id %>" is="dom-bind">
+                            <paper-tabs selected="{{selected}}">
+                                <paper-tab>Results</paper-tab>
+                                <paper-tab>Map</paper-tab>
+                            </paper-tabs>
+                            <iron-pages selected="{{selected}}">
+                                <div id="rtabs-<%= id %>-1">
+                                    <div id="ws-result-<%= id %>"  class="ws-result"></div>
+                                </div>
+                                <div id="rtabs-<%= id %>-2">
+                                    <div id="ws-map-<%= id %>" class="map-canvas"></div>
+                                </div>
+                            </iron-pages>
+                            </template>
+                        </fieldset>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div id="instance-action-<%= id %>" class="instance-action">
-            <button name="exec-instance-<%= id %>" id="exec-instance-<%= id %>" class="exec" disabled>
-                Execute
-            </button>
-            <button name="remove-instance-<%= id %>" id="remove-instance-<%= id %>" class="delete">
-                Remove
-            </button>
-        </div>
+            <div id="instance-action-<%= id %>" class="card-actions">
+                <paper-button id="exec-instance-<%= id %>" class="exec" disabled>Execute</paper-button>
+                <paper-button id="remove-instance-<%= id %>" class="delete">Remove</paper-button>
+            </div>
+        </paper-card>
         <span class="ui-icon ui-icon-carat-2-n-s ws-toggle"></span>
     </script>
     
