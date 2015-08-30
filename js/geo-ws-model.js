@@ -954,9 +954,7 @@ com.xomena.geo.Views.InstancesView = Backbone.View.extend({
         Backbone.Validation.bind(instanceView);
         $("#instances-container").append(instanceView.el);
         com.xomena.geo.instanceViewsMap[instance.get("id")] = instanceView;
-        $("#rtabs-"+instance.get("id")).tabs({
-          active: 0 
-        }); 
+        document.querySelector('#t-'+instance.get("id")).selected = 0;
     });
   },
   filterById: function(id){

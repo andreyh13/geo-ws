@@ -163,10 +163,8 @@
                     Backbone.Validation.bind(m_instanceView);
                     $("#instances-container").append(m_instanceView.el);
                     com.xomena.geo.instanceViewsMap[m_instance.get("id")] = m_instanceView;
-                    $("#rtabs-"+m_instance.get("id")).tabs({
-                      active: 0 
-                    });
                     $("#instances-container > li:last").get(0).scrollIntoView(true);
+                    document.querySelector('#t-'+m_instance.get("id")).selected = 0;
                     return false;
                 });
                 console.log("Finish init instances");
