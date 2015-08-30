@@ -50,7 +50,7 @@
 }
 
 .ws-url {
-    max-width: 82%;
+    max-width: 100%;
 }
 
 .ui-widget {
@@ -86,10 +86,6 @@ ul.ws-params > li.ws-param {
 
 .parameter-required-or {
     color: #D2691E;
-}
-
-.ws-url > textarea {
-    width: 103%;
 }
 
 @media screen and (min-width: 480px){
@@ -152,9 +148,6 @@ ul.ws-params > li.ws-param {
     }
     .ws-result {
         max-width: 577px;
-    }
-    .ws-url {
-        max-width: 97%;
     }
 }
 

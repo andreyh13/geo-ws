@@ -23,6 +23,7 @@
     <link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
     <link rel="import" href="bower_components/paper-card/paper-card.html">
     <link rel="import" href="bower_components/paper-button/paper-button.html">
+    <link rel="import" href="bower_components/iron-autogrow-textarea/iron-autogrow-textarea.html">
 
     <style is="custom-style">
       paper-header-panel {
@@ -79,6 +80,11 @@
       paper-card {
         width: 100%;
         margin-top: -16px;
+      }
+
+      .ws-url iron-autogrow-textarea {
+        width: 100%;
+        border: 0 none;
       }
     </style>
 </head>
@@ -164,7 +170,7 @@
                         <fieldset class="ws-url-fs pure-u-1">
                             <legend>URL</legend>
                             <div class="ws-url">
-                                <textarea id="ws-url-<%= id %>" readonly></textarea>
+                                <iron-autogrow-textarea id="ws-url-<%= id %>" rows="3" readonly></iron-autogrow-textarea>
                             </div>
                         </fieldset>
                         <fieldset class="ws-results-fs pure-u-1">

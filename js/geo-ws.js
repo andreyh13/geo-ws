@@ -163,16 +163,6 @@
                     Backbone.Validation.bind(m_instanceView);
                     $("#instances-container").append(m_instanceView.el);
                     com.xomena.geo.instanceViewsMap[m_instance.get("id")] = m_instanceView;
-                    /*$("#exec-instance-"+m_instance.get("id")).button({
-                        icons: {
-                            primary: "ui-icon-play"
-                        }
-                    });
-                    $("#remove-instance-"+m_instance.get("id")).button({
-                        icons: {
-                            primary: "ui-icon-trash"
-                        }
-                    });*/
                     $("#rtabs-"+m_instance.get("id")).tabs({
                       active: 0 
                     });

@@ -33,6 +33,7 @@
     "blockUI": "malsup/blockui",
     "chosen": "^1.2.0",
     "highlight": "^7.0.0",
+    "iron-autogrow-textarea": "PolymerElements/iron-autogrow-textarea#~1.0.4",
     "jem.js": "sedran/jem.js#~1.1.0",
     "jquery": "^2.0.0",
     "jquery-ui": "jqueryui#^1.11.0",
