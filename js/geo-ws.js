@@ -165,6 +165,9 @@
                     com.xomena.geo.instanceViewsMap[m_instance.get("id")] = m_instanceView;
                     $("#instances-container > li:last").get(0).scrollIntoView(true);
                     document.querySelector('#t-'+m_instance.get("id")).selected = 0;
+                    $("#ws-result-"+m_instance.get("id")).width(function (ind, val) {
+                        return $($(this).parents("div.pure-g").get(0)).width();
+                    });
                     return false;
                 });
                 console.log("Finish init instances");
@@ -361,6 +364,15 @@
             }
         });
         
+        $( window ).resize(function () {
+            for(var key in com.xomena.geo.instanceViewsMap){
+                var m_view = com.xomena.geo.instanceViewsMap[key];
+                $("#ws-result-"+m_view.model.get("id")).width(function (ind, val) {
+                        return $($(this).parents("div.pure-g").get(0)).width();
+                });
+            }
+        });
+
         $( window ).unload(function() {
             //Save current state
             for(var key in com.xomena.geo.instanceViewsMap){
