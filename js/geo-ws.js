@@ -4,8 +4,7 @@
         URL_SERVER_DEF = "http://aux.xomena.elementfx.com/geows.php",
 	    URL_SIGN_DEF = "http://aux.xomena.elementfx.com/geowssign.php",
 	    instance_col = new com.xomena.geo.Collections.InstanceCollection(),
-        instancesView = null,
-        m_dialog;
+        instancesView = null;
     
     instance_col.on("add", function (inst) {
         console.log("The instance " + inst.get("id") + " has added to collection");
@@ -213,37 +212,24 @@
             ROADS_API_KEY: localStorage.getItem("com.xomena.geo.Models.Config.ROADS_API_KEY")
         });
         var m_config_view = new com.xomena.geo.Views.ConfigView({model: com.xomena.geo.config});
-        $("#config").append(m_config_view.el);
-        
-        m_dialog = $( "#config" ).dialog({
-            autoOpen: false,
-            height: 540,
-            width: 600,
-            modal: true,
-            buttons: {
-                Save: function(){
-                    console.log("Saving config...");
-                    com.xomena.geo.config.set("API_KEY", $("#app-config-api-key").val());
-                    com.xomena.geo.config.set("CLIENT_ID", $("#app-config-client-id").val());  
-                    com.xomena.geo.config.set("CRYPTO_KEY", $("#app-config-crypto-key").val());
-                    com.xomena.geo.config.set("SERVER_URL", $("#app-config-server-url").val());
-                    com.xomena.geo.config.set("SIGN_URL", $("#app-config-sign-url").val());
-                    com.xomena.geo.config.set("PLACES_API_KEY", $("#app-config-places-api-key").val());
-                    com.xomena.geo.config.set("ROADS_API_KEY", $("#app-config-roads-api-key").val());
-                    localStorage.setItem("com.xomena.geo.Models.Config.API_KEY", com.xomena.geo.config.get("API_KEY"));  
-                    localStorage.setItem("com.xomena.geo.Models.Config.CLIENT_ID", com.xomena.geo.config.get("CLIENT_ID")); 
-                    localStorage.setItem("com.xomena.geo.Models.Config.CRYPTO_KEY", com.xomena.geo.config.get("CRYPTO_KEY"));
-                    localStorage.setItem("com.xomena.geo.Models.Config.SERVER_URL", com.xomena.geo.config.get("SERVER_URL"));
-                    localStorage.setItem("com.xomena.geo.Models.Config.SIGN_URL", com.xomena.geo.config.get("SIGN_URL"));
-                    localStorage.setItem("com.xomena.geo.Models.Config.PLACES_API_KEY", com.xomena.geo.config.get("PLACES_API_KEY"));  
-                    localStorage.setItem("com.xomena.geo.Models.Config.ROADS_API_KEY", com.xomena.geo.config.get("ROADS_API_KEY"));  
-                    console.log("Config saved");
-                    m_dialog.dialog("close");
-                },
-                Cancel: function() {
-                    m_dialog.dialog("close");
-                }
-            }
+        $("#config > paper-dialog-scrollable").append(m_config_view.el);
+        $(document).delegate("paper-button.config-save", "click", function () {
+            console.log("Saving config...");
+            com.xomena.geo.config.set("API_KEY", $("#app-config-api-key").val());
+            com.xomena.geo.config.set("CLIENT_ID", $("#app-config-client-id").val());
+            com.xomena.geo.config.set("CRYPTO_KEY", $("#app-config-crypto-key").val());
+            com.xomena.geo.config.set("SERVER_URL", $("#app-config-server-url").val());
+            com.xomena.geo.config.set("SIGN_URL", $("#app-config-sign-url").val());
+            com.xomena.geo.config.set("PLACES_API_KEY", $("#app-config-places-api-key").val());
+            com.xomena.geo.config.set("ROADS_API_KEY", $("#app-config-roads-api-key").val());
+            localStorage.setItem("com.xomena.geo.Models.Config.API_KEY", com.xomena.geo.config.get("API_KEY"));
+            localStorage.setItem("com.xomena.geo.Models.Config.CLIENT_ID", com.xomena.geo.config.get("CLIENT_ID"));
+            localStorage.setItem("com.xomena.geo.Models.Config.CRYPTO_KEY", com.xomena.geo.config.get("CRYPTO_KEY"));
+            localStorage.setItem("com.xomena.geo.Models.Config.SERVER_URL", com.xomena.geo.config.get("SERVER_URL"));
+            localStorage.setItem("com.xomena.geo.Models.Config.SIGN_URL", com.xomena.geo.config.get("SIGN_URL"));
+            localStorage.setItem("com.xomena.geo.Models.Config.PLACES_API_KEY", com.xomena.geo.config.get("PLACES_API_KEY"));
+            localStorage.setItem("com.xomena.geo.Models.Config.ROADS_API_KEY", com.xomena.geo.config.get("ROADS_API_KEY"));
+            console.log("Config saved");
         });
         
         $(document).delegate("button.add-parameter", "click", function(){
@@ -255,7 +241,10 @@
         
         $("#edit-config").on("click", function(ev) {
             ev.preventDefault();
-            m_dialog.dialog("open");
+            var dialog = document.getElementById("config");
+            if (dialog) {
+                dialog.open();
+            }
             return false;
         });
 
