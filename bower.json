@@ -32,6 +32,8 @@
     "backbone.validation": "backbone-validation#^0.11.0",
     "blockUI": "malsup/blockui",
     "chosen": "^1.2.0",
+    "google-apis": "GoogleWebComponents/google-apis#~1.0.3",
+    "google-map": "GoogleWebComponents/google-map#~1.0.6",
     "highlight": "^7.0.0",
     "iron-autogrow-textarea": "PolymerElements/iron-autogrow-textarea#~1.0.4",
     "iron-pages": "PolymerElements/iron-pages#~1.0.3",

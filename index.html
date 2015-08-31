@@ -27,6 +27,10 @@
     <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
     <link rel="import" href="bower_components/paper-tabs/paper-tab.html">
     <link rel="import" href="bower_components/iron-pages/iron-pages.html">
+    <link rel="import" href="bower_components/google-apis/google-maps-api.html">
+    <link rel="import" href="bower_components/google-map/google-map.html">
+    <link rel="import" href="bower_components/google-map/google-map-marker.html">
+    <link rel="import" href="bower_components/google-map/google-map-directions.html">
 
     <style is="custom-style">
       paper-header-panel {
@@ -94,6 +98,10 @@
         background-color: #7986CB;
         color: #fff;
         box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2);
+      }
+
+      google-map {
+        height: 560px;
       }
     </style>
 </head>
@@ -193,7 +201,8 @@
                                     <div id="ws-result-<%= id %>"  class="ws-result"></div>
                                 </div>
                                 <div id="rtabs-<%= id %>-2">
-                                    <div id="ws-map-<%= id %>" class="map-canvas"></div>
+                                    <google-map api-key="AIzaSyAe7JGPA_miJHu6DCw1JvJT6jrNElRnwSs" latitude="37.77493" longitude="-122.41942" signed-in="true" version="3" map="{{map}}">
+                                    </google-map>
                                 </div>
                             </iron-pages>
                             </template>
