@@ -940,7 +940,13 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
      jem.fire('M4WVisibility', {
         instanceId: this.model.get("id")
      });
-  }    
+  },
+  renderMap: function (data, format) {
+      var m_map = document.querySelector("t-"+this.model.get("id")).map;
+      if(m_map){
+
+      }
+  }
 });
 
 com.xomena.geo.Views.InstancesView = Backbone.View.extend({ 
