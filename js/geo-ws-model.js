@@ -237,7 +237,8 @@ com.xomena.geo.Models.WebService = Backbone.Model.extend({
         jsonSuffix: 'json',
         xmlSuffix: 'xml',
         apiaryKeyFree: 'API_KEY',
-        apiaryKeyM4W: ''
+        apiaryKeyM4W: '',
+        render: ''
     }
 });
     
