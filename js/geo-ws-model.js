@@ -577,6 +577,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
                         self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='json'>"+com.xomena.geo.formatJSON(data)+"</code></pre>");
                     }
                     hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
+                    self.renderMap(data);
                 },
                 error: function(jqXHR, textStatus, errorThrown){
                     console.log("Server side error: "+textStatus+" - "+ errorThrown);
@@ -592,6 +593,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     ev.preventDefault();  
     console.log("Delete instance #"+this.model.get("id"));  
 	delete com.xomena.geo.instanceViewsMap[this.model.get("id")];
+    window.com.xomena.mapRenderer.removeInstance(this.model.get("id"));
     this.model.destroy(); // deletes the model when delete button clicked
     return false;  
   },    
@@ -942,10 +944,11 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
         instanceId: this.model.get("id")
      });
   },
-  renderMap: function (data, format) {
-      var m_map = document.querySelector("t-"+this.model.get("id")).map;
+  renderMap: function (data) {
+      var m_map = document.querySelector("#t-"+this.model.get("id")).map;
       if(m_map){
-
+          window.com.xomena.mapRenderer.updateInstance(this.model, data);
+          window.com.xomena.mapRenderer.renderMap(this.model.get("id"));
       }
   }
 });
