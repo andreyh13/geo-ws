@@ -89,6 +89,25 @@ ul.ws-params > li.ws-param {
     color: #D2691E;
 }
 
+.devsite-product-logo-container {
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: none;
+    display: inline-block;
+    height: 56px;
+    margin-right: 20px;
+    transition: box-shadow .2s;
+    width: 56px;
+    margin-top: 4px;
+}
+
+.devsite-product-logo {
+    height: 32px;
+    margin: 12px;
+    width: 32px;
+    vertical-align: middle;
+}
+
 @media screen and (min-width: 568px){
     #instances-container li.ws-instance {
         width:90%;

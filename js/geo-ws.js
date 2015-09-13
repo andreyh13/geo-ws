@@ -115,7 +115,8 @@
                         jsonSuffix: data[i][5],
                         xmlSuffix: data[i][6],
                         apiaryKeyFree: data[i][7],
-                        apiaryKeyM4W: data[i][8]
+                        apiaryKeyM4W: data[i][8],
+                        render: data[i][9]
                     });
                     if(data[i][2]){
                         //Init parameters

@@ -43,7 +43,7 @@
       }
 
       .paper-header {
-        height: 60px;
+        height: 70px;
         font-size: 14px;
         line-height: 60px;
         padding: 0 10px;
@@ -113,7 +113,12 @@
     <paper-header-panel class="blue" mode="waterfall">
         <paper-toolbar class="paper-header">
             <header class="title">
-                <h1>G<span class="red">o</span><span class="yellow">o</span>g<span class="green">l</span><span class="red">e</span> Maps Web Services Requests Builder</h1>
+                <h1>
+                    <div class="devsite-product-logo-container">
+                        <img class="devsite-product-logo"  src="https://www.gstatic.com/images/branding/product/1x/maps_64dp.png" alt="Google Maps Web Services Requests Builder">
+                    </div>
+                    G<span class="red">o</span><span class="yellow">o</span>g<span class="green">l</span><span class="red">e</span> Maps Web Services Requests Builder
+                </h1>
             </header>
             <paper-icon-button icon="settings" title="Settings" id="edit-config"></paper-icon-button>
         </paper-toolbar>
@@ -273,6 +278,7 @@
     </script>
     
     <script src="js/geo-ws-model.js"></script>
+    <script src="js/geo-map-renderer.js"></script>
     <script src="js/geo-ws.js"></script>
     
     <script>
