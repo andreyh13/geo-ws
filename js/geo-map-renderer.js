@@ -3,6 +3,8 @@
 
     var ICON_URL = "http://maps.google.com/mapfiles/kml/paddle/blu-blank.png",
         ICON_LABELS = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        ICON_ARROW = "http://www.google.com/mapfiles/arrow.png",
+        ICON_ARROW_SHADOW = "http://www.google.com/mapfiles/arrowshadow.png",
         infoWindow = null;
 
     window.com = window.com || {};
@@ -107,6 +109,8 @@
             if (m_strategy && m_map && m_data && m_format) {
                 m_geoJSON = m_strategy.getGeoJSON(m_data, m_format);
                 if (m_geoJSON) {
+                    //Lets add additional features
+                    this.addAdditionalFeatures(id, m_geoJSON);
                     m_map.data.addGeoJson(m_geoJSON);
                     if(m_geoJSON.bounds && m_geoJSON.bounds instanceof google.maps.LatLngBounds){
                         m_map.fitBounds(m_geoJSON.bounds);
@@ -196,6 +200,32 @@
          */
         Strategy: function (type) {
             this.type = type;
+        },
+
+        /**
+         * Allows to add additional features like location for reverse geocoding or places searches
+         * @param {String} id The ID of Web Service instance
+         * @param {Object} geoJSON GeoJSON object obtained from response
+         */
+        addAdditionalFeatures: function (id, geoJSON) {
+            if (this.instances[id] && this.instances[id].model) {
+                var m_service = this.instances[id].model.get("webservice");
+                if(m_service){
+                    var m_services = this.instances[id].model.get("services");
+                    var service = m_services.filterById(parseInt(m_service));
+                    if($.isArray(service) && service.length){
+                        switch(service[0].get("name")){
+                            case "Reverse geocoding":
+                                var m_latlng = this.instances[id].model.getParameterValue("latlng");
+                                if($.isArray(m_latlng) && m_latlng.length) {
+                                    var m_arr = m_latlng[0].split(",");
+                                    m_add_arrow_point("arrow-"+id, parseFloat(m_arr[0]), parseFloat(m_arr[1]), geoJSON);
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
         }
     };
 
@@ -437,6 +467,30 @@
             }
         }
         return res;
+    }
+
+    /**
+     * Adds arrow feature to show location (reverse geocoding, places searches)
+     * @param {String} id      ID for feature
+     * @param {Float} lat     Latitude
+     * @param {Float} lng     Longitude
+     * @param {Object}   geoJSON GeoJSON object from response
+     */
+    function m_add_arrow_point (id, lat, lng, geoJSON) {
+        if(geoJSON && geoJSON.features) {
+            geoJSON.features.unshift({
+                "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [lng, lat]
+                    },
+                    "properties": {
+                        "address": lat + "," + lng,
+                        "icon": ICON_ARROW
+                    },
+                    "id": id
+            });
+        }
     }
 
     /**
