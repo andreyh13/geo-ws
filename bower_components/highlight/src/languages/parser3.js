@@ -2,51 +2,53 @@
 Language: Parser3
 Requires: xml.js
 Author: Oleg Volchkov <oleg@volchkov.net>
+Category: template
 */
 
 function(hljs) {
+  var CURLY_SUBCOMMENT = hljs.COMMENT(
+    '{',
+    '}',
+    {
+      contains: ['self']
+    }
+  );
   return {
-    defaultMode: {
-      subLanguage: 'xml',
-      contains: [
+    subLanguage: 'xml', relevance: 0,
+    contains: [
+      hljs.COMMENT('^#', '$'),
+      hljs.COMMENT(
+        '\\^rem{',
+        '}',
         {
-          className: 'comment',
-          begin: '^#', end: '$'
-        },
-        {
-          className: 'comment',
-          begin: '\\^rem{', end: '}',
           relevance: 10,
           contains: [
-            {
-              begin: '{', end: '}',
-              contains: ['self']
-            }
+            CURLY_SUBCOMMENT
           ]
-        },
-        {
-          className: 'preprocessor',
-          begin: '^@(?:BASE|USE|CLASS|OPTIONS)$',
-          relevance: 10
-        },
-        {
-          className: 'title',
-          begin: '@[\\w\\-]+\\[[\\w^;\\-]*\\](?:\\[[\\w^;\\-]*\\])?(?:.*)$'
-        },
-        {
-          className: 'variable',
-          begin: '\\$\\{?[\\w\\-\\.\\:]+\\}?'
-        },
-        {
-          className: 'keyword',
-          begin: '\\^[\\w\\-\\.\\:]+'
-        },
-        {
-          className: 'number',
-          begin: '\\^#[0-9a-fA-F]+'
-        },
-        hljs.C_NUMBER_MODE
-      ]
-    }
+        }
+      ),
+      {
+        className: 'preprocessor',
+        begin: '^@(?:BASE|USE|CLASS|OPTIONS)$',
+        relevance: 10
+      },
+      {
+        className: 'title',
+        begin: '@[\\w\\-]+\\[[\\w^;\\-]*\\](?:\\[[\\w^;\\-]*\\])?(?:.*)$'
+      },
+      {
+        className: 'variable',
+        begin: '\\$\\{?[\\w\\-\\.\\:]+\\}?'
+      },
+      {
+        className: 'keyword',
+        begin: '\\^[\\w\\-\\.\\:]+'
+      },
+      {
+        className: 'number',
+        begin: '\\^#[0-9a-fA-F]+'
+      },
+      hljs.C_NUMBER_MODE
+    ]
   };
 }

@@ -2,65 +2,45 @@
 Language: Diff
 Description: Unified and context diff
 Author: Vasily Polovnyov <vast@whiteants.net>
+Category: common
 */
 
 function(hljs) {
   return {
-    case_insensitive: true,
-    defaultMode: {
-      contains: [
-        {
-          className: 'chunk',
-          begin: '^\\@\\@ +\\-\\d+,\\d+ +\\+\\d+,\\d+ +\\@\\@$',
-          relevance: 10
-        },
-        {
-          className: 'chunk',
-          begin: '^\\*\\*\\* +\\d+,\\d+ +\\*\\*\\*\\*$',
-          relevance: 10
-        },
-        {
-          className: 'chunk',
-          begin: '^\\-\\-\\- +\\d+,\\d+ +\\-\\-\\-\\-$',
-          relevance: 10
-        },
-        {
-          className: 'header',
-          begin: 'Index: ', end: '$'
-        },
-        {
-          className: 'header',
-          begin: '=====', end: '=====$'
-        },
-        {
-          className: 'header',
-          begin: '^\\-\\-\\-', end: '$'
-        },
-        {
-          className: 'header',
-          begin: '^\\*{3} ', end: '$'
-        },
-        {
-          className: 'header',
-          begin: '^\\+\\+\\+', end: '$'
-        },
-        {
-          className: 'header',
-          begin: '\\*{5}', end: '\\*{5}$'
-        },
-        {
-          className: 'addition',
-          begin: '^\\+', end: '$'
-        },
-        {
-          className: 'deletion',
-          begin: '^\\-', end: '$'
-        },
-        {
-          className: 'change',
-          begin: '^\\!', end: '$'
-        }
-      ]
-    }
+    aliases: ['patch'],
+    contains: [
+      {
+        className: 'chunk',
+        relevance: 10,
+        variants: [
+          {begin: /^@@ +\-\d+,\d+ +\+\d+,\d+ +@@$/},
+          {begin: /^\*\*\* +\d+,\d+ +\*\*\*\*$/},
+          {begin: /^\-\-\- +\d+,\d+ +\-\-\-\-$/}
+        ]
+      },
+      {
+        className: 'header',
+        variants: [
+          {begin: /Index: /, end: /$/},
+          {begin: /=====/, end: /=====$/},
+          {begin: /^\-\-\-/, end: /$/},
+          {begin: /^\*{3} /, end: /$/},
+          {begin: /^\+\+\+/, end: /$/},
+          {begin: /\*{5}/, end: /\*{5}$/}
+        ]
+      },
+      {
+        className: 'addition',
+        begin: '^\\+', end: '$'
+      },
+      {
+        className: 'deletion',
+        begin: '^\\-', end: '$'
+      },
+      {
+        className: 'change',
+        begin: '^\\!', end: '$'
+      }
+    ]
   };
 }
