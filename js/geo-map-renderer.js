@@ -130,6 +130,9 @@
             this.instances[id].map.data.forEach(function (feature) {
                 self.instances[id].map.data.remove(feature);
             });
+            if(infoWindow) {
+                infoWindow.close();
+            }
         },
 
         /**
