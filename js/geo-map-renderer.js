@@ -5,6 +5,7 @@
         ICON_LABELS = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         ICON_ARROW = "http://www.google.com/mapfiles/arrow.png",
         ICON_ARROW_SHADOW = "http://www.google.com/mapfiles/arrowshadow.png",
+        ROUTE_COLORS = ['#C53929', '#0B8043', '#3367D6'],
         infoWindow = null;
 
     window.com = window.com || {};
@@ -37,17 +38,35 @@
             if (this.instances[model.get("id")].map) {
                 //Define styles for data layer features
                 this.instances[model.get("id")].map.data.setStyle(function (feature) {
-                    var m_icon = feature.getProperty("icon"),
-                        m_address = feature.getProperty("address");
+                    var style = {};
+                    switch (feature.getGeometry().getType()) {
+                        case "Point":
+                            var m_icon = feature.getProperty("icon"),
+                                m_address = feature.getProperty("address"),
+                                m_zindex = feature.getProperty("zIndex");
 
-                    var style = {
-                        icon: {
-                            url: m_icon ? m_icon : ICON_URL,
-                            scaledSize: new google.maps.Size(32, 32)
-                        },
-                        title: m_address ? m_address : "",
-                        visible: true
-                    };
+                            style = {
+                                icon: {
+                                    url: m_icon ? m_icon : ICON_URL,
+                                    scaledSize: new google.maps.Size(32, 32)
+                                },
+                                title: m_address ? m_address : "",
+                                visible: true,
+                                zIndex: m_zindex ? m_zindex : 0
+                            };
+                            break;
+                        case "LineString":
+                            var m_color = feature.getProperty("color"),
+                                m_zindex = feature.getProperty("zIndex");
+
+                            style = {
+                                strokeColor: m_color ? m_color : "#0000FF",
+                                strokeOpacity: 1.0,
+                                strokeWeight: 4,
+                                zIndex: m_zindex ? m_zindex : 0
+                            };
+                            break;
+                    }
 
                     return style;
                 });
@@ -257,7 +276,7 @@
         case "geocode":
             return m_parseGeocodeJSON(data);
         case "directions":
-            break;
+            return m_parseDirectionsJSON(data);
         case "distancematrix":
             break;
         case "elevation":
@@ -288,7 +307,7 @@
         case "geocode":
             return m_parseGeocodeXML(data);
         case "directions":
-            break;
+            return m_parseDirectionsXML(data);
         case "distancematrix":
             break;
         case "elevation":
@@ -348,7 +367,8 @@
                             "place_id": elem.place_id,
                             "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
                                 (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
-                            "content": m_info_window_content_address(elem)
+                            "content": m_info_window_content_address(elem),
+                            "zIndex": 2
                         },
                         "id": elem.place_id
                     });
@@ -358,6 +378,46 @@
                             bounds.extend(new google.maps.LatLng(elem.geometry.viewport.northeast.lat, elem.geometry.viewport.northeast.lng));
                             bounds.extend(new google.maps.LatLng(elem.geometry.viewport.southwest.lat, elem.geometry.viewport.southwest.lng));
                         }
+                    }
+                });
+                res.bounds = bounds;
+            }
+        }
+        return res;
+    }
+
+    function m_parseDirectionsJSON (data) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        },
+        bounds = new google.maps.LatLngBounds();
+        if (_.isObject(data) && data.status && data.status === "OK") {
+            if (data.routes && _.isArray(data.routes) && data.routes.length) {
+                _.each(data.routes, function (route, index) {
+                    var arr1 = google.maps.geometry.encoding.decodePath(route.overview_polyline.points),
+                        m_coord = [];
+                    _.each(arr1, function (p, ind1) {
+                        m_coord.push([p.lng(), p.lat()]);
+                    });
+                    res.features.push({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": m_coord
+                        },
+                        "properties": {
+                            "color": ROUTE_COLORS[index],
+                            "summary": route.summary,
+                            "warnings": route.warnings,
+                            "waypoint_order": route.waypoint_order,
+                            "zIndex": data.routes.length - index
+                        },
+                        "id": data.geocoded_waypoints[0].place_id + "-" + index
+                    });
+                    if (route.bounds) {
+                        bounds.extend(new google.maps.LatLng(route.bounds.northeast.lat, route.bounds.northeast.lng));
+                        bounds.extend(new google.maps.LatLng(route.bounds.southwest.lat, route.bounds.southwest.lng));
                     }
                 });
                 res.bounds = bounds;
@@ -469,6 +529,16 @@
                 }
             }
         }
+        return res;
+    }
+
+    function m_parseDirectionsXML (data) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        },
+        bounds = new google.maps.LatLngBounds();
+
         return res;
     }
 
