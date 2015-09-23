@@ -2,6 +2,7 @@
 Language: Erlang
 Description: Erlang is a general-purpose functional language, with strict evaluation, single assignment, and dynamic typing.
 Author: Nikolay Zakharov <nikolay.desh@gmail.com>, Dmitry Kovega <arhibot@gmail.com>
+Category: functional
 */
 
 function(hljs) {
@@ -9,17 +10,13 @@ function(hljs) {
   var FUNCTION_NAME_RE = '(' + BASIC_ATOM_RE + ':' + BASIC_ATOM_RE + '|' + BASIC_ATOM_RE + ')';
   var ERLANG_RESERVED = {
     keyword:
-      'after and andalso|10 band begin bnot bor bsl bzr bxor case catch cond div end fun let ' +
-      'not of orelse|10 query receive rem try when xor',
+      'after and andalso|10 band begin bnot bor bsl bzr bxor case catch cond div end fun if ' +
+      'let not of orelse|10 query receive rem try when xor',
     literal:
       'false true'
   };
 
-  var COMMENT = {
-    className: 'comment',
-    begin: '%', end: '$',
-    relevance: 0
-  };
+  var COMMENT = hljs.COMMENT('%', '$');
   var NUMBER = {
     className: 'number',
     begin: '\\b(\\d+#[a-fA-F0-9]+|\\d+(\\.\\d+)?([eE][-+]?\\d+)?)',
@@ -62,8 +59,7 @@ function(hljs) {
     relevance: 0
   };
   var RECORD_ACCESS = {
-    begin: '#', end: '}',
-    illegal: '.',
+    begin: '#' + hljs.UNDERSCORE_IDENT_RE,
     relevance: 0,
     returnBegin: true,
     contains: [
@@ -73,7 +69,7 @@ function(hljs) {
         relevance: 0
       },
       {
-        begin: '{', endsWithParent: true,
+        begin: '{', end: '}',
         relevance: 0
         // "contains" defined later
       }
@@ -81,8 +77,8 @@ function(hljs) {
   };
 
   var BLOCK_STATEMENTS = {
-    keywords: ERLANG_RESERVED,
-    begin: '(fun|receive|if|try|case)', end: 'end'
+    beginKeywords: 'fun receive if try case', end: 'end',
+    keywords: ERLANG_RESERVED
   };
   BLOCK_STATEMENTS.contains = [
     COMMENT,
@@ -118,47 +114,45 @@ function(hljs) {
     contains: BASIC_MODES
   };
   return {
-    defaultMode: {
-      keywords: ERLANG_RESERVED,
-      illegal: '(</|\\*=|\\+=|-=|/=|/\\*|\\*/|\\(\\*|\\*\\))',
-      contains: [
-        {
-          className: 'function',
-          begin: '^' + BASIC_ATOM_RE + '\\s*\\(', end: '->',
-          returnBegin: true,
-          illegal: '\\(|#|//|/\\*|\\\\|:',
-          contains: [
-            PARAMS,
-            {
-              className: 'title', begin: BASIC_ATOM_RE
-            }
-          ],
-          starts: {
-            end: ';|\\.',
-            keywords: ERLANG_RESERVED,
-            contains: BASIC_MODES
-          }
-        },
-        COMMENT,
-        {
-          className: 'pp',
-          begin: '^-', end: '\\.',
-          relevance: 0,
-          excludeEnd: true,
-          returnBegin: true,
-          lexems: '-' + hljs.IDENT_RE,
-          keywords:
-            '-module -record -undef -export -ifdef -ifndef -author -copyright -doc -vsn ' +
-            '-import -include -include_lib -compile -define -else -endif -file -behaviour ' +
-            '-behavior',
-          contains: [PARAMS]
-        },
-        NUMBER,
-        hljs.QUOTE_STRING_MODE,
-        RECORD_ACCESS,
-        VAR1, VAR2,
-        TUPLE
-      ]
-    }
+    aliases: ['erl'],
+    keywords: ERLANG_RESERVED,
+    illegal: '(</|\\*=|\\+=|-=|/\\*|\\*/|\\(\\*|\\*\\))',
+    contains: [
+      {
+        className: 'function',
+        begin: '^' + BASIC_ATOM_RE + '\\s*\\(', end: '->',
+        returnBegin: true,
+        illegal: '\\(|#|//|/\\*|\\\\|:|;',
+        contains: [
+          PARAMS,
+          hljs.inherit(hljs.TITLE_MODE, {begin: BASIC_ATOM_RE})
+        ],
+        starts: {
+          end: ';|\\.',
+          keywords: ERLANG_RESERVED,
+          contains: BASIC_MODES
+        }
+      },
+      COMMENT,
+      {
+        className: 'pp',
+        begin: '^-', end: '\\.',
+        relevance: 0,
+        excludeEnd: true,
+        returnBegin: true,
+        lexemes: '-' + hljs.IDENT_RE,
+        keywords:
+          '-module -record -undef -export -ifdef -ifndef -author -copyright -doc -vsn ' +
+          '-import -include -include_lib -compile -define -else -endif -file -behaviour ' +
+          '-behavior -spec',
+        contains: [PARAMS]
+      },
+      NUMBER,
+      hljs.QUOTE_STRING_MODE,
+      RECORD_ACCESS,
+      VAR1, VAR2,
+      TUPLE,
+      {begin: /\.$/} // relevance booster
+    ]
   };
 }

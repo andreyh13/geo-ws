@@ -468,6 +468,19 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
             });
         }
         return m_join;
+    },
+
+    getParameterValue: function (pname) {
+        var res = null,
+            pars = this.get("parameters");
+        if(pars){
+            pars.forEach(function(p){
+                if (p.get("name") === pname) {
+                    res = p.get("value");
+                }
+            });
+        }
+        return res;
     }
 });
 

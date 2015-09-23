@@ -3,6 +3,9 @@
 
     var ICON_URL = "http://maps.google.com/mapfiles/kml/paddle/blu-blank.png",
         ICON_LABELS = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        ICON_ARROW = "http://www.google.com/mapfiles/arrow.png",
+        ICON_ARROW_SHADOW = "http://www.google.com/mapfiles/arrowshadow.png",
+        ROUTE_COLORS = ['#C53929', '#0B8043', '#3367D6'],
         infoWindow = null;
 
     window.com = window.com || {};
@@ -35,17 +38,35 @@
             if (this.instances[model.get("id")].map) {
                 //Define styles for data layer features
                 this.instances[model.get("id")].map.data.setStyle(function (feature) {
-                    var m_icon = feature.getProperty("icon"),
-                        m_address = feature.getProperty("address");
+                    var style = {};
+                    switch (feature.getGeometry().getType()) {
+                        case "Point":
+                            var m_icon = feature.getProperty("icon"),
+                                m_address = feature.getProperty("address"),
+                                m_zindex = feature.getProperty("zIndex");
 
-                    var style = {
-                        icon: {
-                            url: m_icon ? m_icon : ICON_URL,
-                            scaledSize: new google.maps.Size(32, 32)
-                        },
-                        title: m_address ? m_address : "",
-                        visible: true
-                    };
+                            style = {
+                                icon: {
+                                    url: m_icon ? m_icon : ICON_URL,
+                                    scaledSize: new google.maps.Size(32, 32)
+                                },
+                                title: m_address ? m_address : "",
+                                visible: true,
+                                zIndex: m_zindex ? m_zindex : 0
+                            };
+                            break;
+                        case "LineString":
+                            var m_color = feature.getProperty("color"),
+                                m_zindex = feature.getProperty("zIndex");
+
+                            style = {
+                                strokeColor: m_color ? m_color : "#0000FF",
+                                strokeOpacity: 1.0,
+                                strokeWeight: 4,
+                                zIndex: m_zindex ? m_zindex : 0
+                            };
+                            break;
+                    }
 
                     return style;
                 });
@@ -107,6 +128,8 @@
             if (m_strategy && m_map && m_data && m_format) {
                 m_geoJSON = m_strategy.getGeoJSON(m_data, m_format);
                 if (m_geoJSON) {
+                    //Lets add additional features
+                    this.addAdditionalFeatures(id, m_geoJSON);
                     m_map.data.addGeoJson(m_geoJSON);
                     if(m_geoJSON.bounds && m_geoJSON.bounds instanceof google.maps.LatLngBounds){
                         m_map.fitBounds(m_geoJSON.bounds);
@@ -126,6 +149,9 @@
             this.instances[id].map.data.forEach(function (feature) {
                 self.instances[id].map.data.remove(feature);
             });
+            if(infoWindow) {
+                infoWindow.close();
+            }
         },
 
         /**
@@ -196,6 +222,32 @@
          */
         Strategy: function (type) {
             this.type = type;
+        },
+
+        /**
+         * Allows to add additional features like location for reverse geocoding or places searches
+         * @param {String} id The ID of Web Service instance
+         * @param {Object} geoJSON GeoJSON object obtained from response
+         */
+        addAdditionalFeatures: function (id, geoJSON) {
+            if (this.instances[id] && this.instances[id].model) {
+                var m_service = this.instances[id].model.get("webservice");
+                if(m_service){
+                    var m_services = this.instances[id].model.get("services");
+                    var service = m_services.filterById(parseInt(m_service));
+                    if($.isArray(service) && service.length){
+                        switch(service[0].get("name")){
+                            case "Reverse geocoding":
+                                var m_latlng = this.instances[id].model.getParameterValue("latlng");
+                                if($.isArray(m_latlng) && m_latlng.length) {
+                                    var m_arr = m_latlng[0].split(",");
+                                    m_add_arrow_point("arrow-"+id, parseFloat(m_arr[0]), parseFloat(m_arr[1]), geoJSON);
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
         }
     };
 
@@ -224,7 +276,7 @@
         case "geocode":
             return m_parseGeocodeJSON(data);
         case "directions":
-            break;
+            return m_parseDirectionsJSON(data);
         case "distancematrix":
             break;
         case "elevation":
@@ -255,7 +307,7 @@
         case "geocode":
             return m_parseGeocodeXML(data);
         case "directions":
-            break;
+            return m_parseDirectionsXML(data);
         case "distancematrix":
             break;
         case "elevation":
@@ -315,7 +367,8 @@
                             "place_id": elem.place_id,
                             "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
                                 (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
-                            "content": m_info_window_content_address(elem)
+                            "content": m_info_window_content_address(elem),
+                            "zIndex": 2
                         },
                         "id": elem.place_id
                     });
@@ -325,6 +378,46 @@
                             bounds.extend(new google.maps.LatLng(elem.geometry.viewport.northeast.lat, elem.geometry.viewport.northeast.lng));
                             bounds.extend(new google.maps.LatLng(elem.geometry.viewport.southwest.lat, elem.geometry.viewport.southwest.lng));
                         }
+                    }
+                });
+                res.bounds = bounds;
+            }
+        }
+        return res;
+    }
+
+    function m_parseDirectionsJSON (data) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        },
+        bounds = new google.maps.LatLngBounds();
+        if (_.isObject(data) && data.status && data.status === "OK") {
+            if (data.routes && _.isArray(data.routes) && data.routes.length) {
+                _.each(data.routes, function (route, index) {
+                    var arr1 = google.maps.geometry.encoding.decodePath(route.overview_polyline.points),
+                        m_coord = [];
+                    _.each(arr1, function (p, ind1) {
+                        m_coord.push([p.lng(), p.lat()]);
+                    });
+                    res.features.push({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": m_coord
+                        },
+                        "properties": {
+                            "color": ROUTE_COLORS[index],
+                            "summary": route.summary,
+                            "warnings": route.warnings,
+                            "waypoint_order": route.waypoint_order,
+                            "zIndex": data.routes.length - index
+                        },
+                        "id": data.geocoded_waypoints[0].place_id + "-" + index
+                    });
+                    if (route.bounds) {
+                        bounds.extend(new google.maps.LatLng(route.bounds.northeast.lat, route.bounds.northeast.lng));
+                        bounds.extend(new google.maps.LatLng(route.bounds.southwest.lat, route.bounds.southwest.lng));
                     }
                 });
                 res.bounds = bounds;
@@ -437,6 +530,70 @@
             }
         }
         return res;
+    }
+
+    function m_parseDirectionsXML (data) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        },
+        bounds = new google.maps.LatLngBounds(),
+        xmlDoc = m_getXMLDoc($.trim(data));
+        if (data && xmlDoc) {
+            var m_status = $(xmlDoc).find("status").text();
+            if(m_status === "OK") {
+                $(xmlDoc).find("route").each(function(index, elem){
+                    var arr1 = google.maps.geometry.encoding.decodePath($(this).find("overview_polyline > points").text()),
+                        m_coord = [];
+                    _.each(arr1, function (p, ind1) {
+                        m_coord.push([p.lng(), p.lat()]);
+                    });
+                    res.features.push({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": m_coord
+                        },
+                        "properties": {
+                            "color": ROUTE_COLORS[index],
+                            "summary": $(this).find("summary").text(),
+                            "zIndex": $(xmlDoc).find("route").length - index
+                        },
+                        "id": $(xmlDoc).find("geocoded_waypoint > place_id").text() + "-" + index
+                    });
+                    if ($(xmlDoc).find("bounds").length) {
+                        bounds.extend(new google.maps.LatLng(parseFloat($(xmlDoc).find("bounds > northeast > lat").text()), parseFloat($(xmlDoc).find("bounds > northeast > lng").text())));
+                        bounds.extend(new google.maps.LatLng(parseFloat($(xmlDoc).find("bounds > southwest > lat").text()), parseFloat($(xmlDoc).find("bounds > southwest > lng").text())));
+                    }
+                });
+                res.bounds = bounds;
+            }
+        }
+        return res;
+    }
+
+    /**
+     * Adds arrow feature to show location (reverse geocoding, places searches)
+     * @param {String} id      ID for feature
+     * @param {Float} lat     Latitude
+     * @param {Float} lng     Longitude
+     * @param {Object}   geoJSON GeoJSON object from response
+     */
+    function m_add_arrow_point (id, lat, lng, geoJSON) {
+        if(geoJSON && geoJSON.features) {
+            geoJSON.features.unshift({
+                "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [lng, lat]
+                    },
+                    "properties": {
+                        "address": lat + "," + lng,
+                        "icon": ICON_ARROW
+                    },
+                    "id": id
+            });
+        }
     }
 
     /**
