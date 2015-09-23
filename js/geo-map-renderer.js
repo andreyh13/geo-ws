@@ -537,8 +537,38 @@
             "type": "FeatureCollection",
             "features": []
         },
-        bounds = new google.maps.LatLngBounds();
-
+        bounds = new google.maps.LatLngBounds(),
+        xmlDoc = m_getXMLDoc($.trim(data));
+        if (data && xmlDoc) {
+            var m_status = $(xmlDoc).find("status").text();
+            if(m_status === "OK") {
+                $(xmlDoc).find("route").each(function(index, elem){
+                    var arr1 = google.maps.geometry.encoding.decodePath($(this).find("overview_polyline > points").text()),
+                        m_coord = [];
+                    _.each(arr1, function (p, ind1) {
+                        m_coord.push([p.lng(), p.lat()]);
+                    });
+                    res.features.push({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": m_coord
+                        },
+                        "properties": {
+                            "color": ROUTE_COLORS[index],
+                            "summary": $(this).find("summary").text(),
+                            "zIndex": $(xmlDoc).find("route").length - index
+                        },
+                        "id": $(xmlDoc).find("geocoded_waypoint > place_id").text() + "-" + index
+                    });
+                    if ($(xmlDoc).find("bounds").length) {
+                        bounds.extend(new google.maps.LatLng(parseFloat($(xmlDoc).find("bounds > northeast > lat").text()), parseFloat($(xmlDoc).find("bounds > northeast > lng").text())));
+                        bounds.extend(new google.maps.LatLng(parseFloat($(xmlDoc).find("bounds > southwest > lat").text()), parseFloat($(xmlDoc).find("bounds > southwest > lng").text())));
+                    }
+                });
+                res.bounds = bounds;
+            }
+        }
         return res;
     }
 
