@@ -137,12 +137,14 @@ window.com.xomena.geo = {
         case 'parts':
             var parts = model.get("parts");
             output += '<ul class="parts-container">';
-            parts.forEach(function(p){
-                output += '<li>';
-                output += '<label for="parameter-'+id+'-'+p.get("id")+'">'+p.get('name')+'</label>';
-                output += com.xomena.geo.getFormElement(id+"-"+p.get("id"), name+":"+p.get("name"), p, null, null, parentInstance);
-                output += '</li>';
-            });
+            if(parts) {
+                parts.forEach(function(p){
+                    output += '<li>';
+                    output += '<label for="parameter-'+id+'-'+p.get("id")+'">'+p.get('name')+'</label>';
+                    output += com.xomena.geo.getFormElement(id+"-"+p.get("id"), name+":"+p.get("name"), p, null, null, parentInstance);
+                    output += '</li>';
+                });
+            }
             output += '</ul>';
             break;
         default:

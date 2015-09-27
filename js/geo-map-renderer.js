@@ -9,7 +9,8 @@
         infoWindow = null,
         placesServices = null,
         ICON_SIZE_32 = null,
-        ICON_SIZE_16 = null;
+        ICON_SIZE_16 = null,
+        ICON_PLACE = "https://maps.gstatic.com/mapfiles/place_api/icons/geocode-71.png";
 
     window.com = window.com || {};
     window.com.xomena = window.com.xomena || {};
@@ -144,14 +145,16 @@
         renderMap: function (id) {
             if (!this.instances[id]) { return; }
             if (!this.instances[id].map) { return; }
-            this.clearMap(id);
             var m_strategy = this.getStrategy(id),
                 m_map = this.getMap(id),
                 m_data = this.getData(id),
                 m_format = this.getFormat(id),
                 m_geoJSON = null;
+            if (!m_strategy || !m_strategy.isAsync()) {
+                this.clearMap(id);
+            }
             if (m_strategy && m_map && m_data && m_format) {
-                m_geoJSON = m_strategy.getGeoJSON(m_data, m_format, m_map);
+                m_geoJSON = m_strategy.getGeoJSON(m_data, m_format, m_map, id);
                 if (m_geoJSON) {
                     //Lets add additional features
                     this.addAdditionalFeatures(id, m_geoJSON);
@@ -299,12 +302,12 @@
      * @param   {String} format Format ("json", "xml")
      * @returns {Object} GeoJSON object
      */
-    window.com.xomena.mapRenderer.Strategy.prototype.getGeoJSON = function (data, format, map) {
+    window.com.xomena.mapRenderer.Strategy.prototype.getGeoJSON = function (data, format, map, id) {
         switch (format) {
         case "json":
-            return this.m_getGeoJSON_JSON(data, map);
+            return this.m_getGeoJSON_JSON(data, map, id);
         case "xml":
-            return this.m_getGeoJSON_XML(data, map);
+            return this.m_getGeoJSON_XML(data, map, id);
         }
     };
 
@@ -313,12 +316,12 @@
      * @param   {Object} data Data from the web service (JSON object)
      * @returns {Object} GeoJSON object
      */
-    window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_JSON = function (data, map) {
+    window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_JSON = function (data, map, id) {
         switch (this.type) {
         case "geocode":
-            return m_parseGeocodeJSON(data, map);
+            return m_parseGeocodeJSON(data, map, id);
         case "directions":
-            return m_parseDirectionsJSON(data, map);
+            return m_parseDirectionsJSON(data, map, id);
         case "distancematrix":
             break;
         case "elevation":
@@ -326,11 +329,13 @@
         case "timezone":
             break;
         case "places_search":
-            return m_parsePlacesSearchJSON(data, map);
+            return m_parsePlacesSearchJSON(data, map, id);
+        case "places_radar":
+            return m_parsePlacesRadarJSON(data, map, id);
         case "places_detail":
-            break;
+            return m_parsePlacesDetailJSON(data, map, id);
         case "places_autocomplete":
-            break;
+            return m_parsePlacesAutocompleteJSON(data, map, id);
         case "roads":
             break;
         case "speed":
@@ -344,12 +349,12 @@
      * @param   {String} data Data from the web service (XML string)
      * @returns {Object} GeoJSON object
      */
-    window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_XML = function (data, map) {
+    window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_XML = function (data, map, id) {
         switch (this.type) {
         case "geocode":
-            return m_parseGeocodeXML(data, map);
+            return m_parseGeocodeXML(data, map, id);
         case "directions":
-            return m_parseDirectionsXML(data, map);
+            return m_parseDirectionsXML(data, map, id);
         case "distancematrix":
             break;
         case "elevation":
@@ -357,11 +362,13 @@
         case "timezone":
             break;
         case "places_search":
-            return m_parsePlacesSearchXML(data, map);
+            return m_parsePlacesSearchXML(data, map, id);
+        case "places_radar":
+            return m_parsePlacesRadarXML(data, map, id);
         case "places_detail":
-            break;
+            return m_parsePlacesDetailXML(data, map, id);
         case "places_autocomplete":
-            break;
+            return m_parsePlacesAutocompleteXML(data, map, id);
         case "roads":
             break;
         case "speed":
@@ -370,6 +377,20 @@
         return null;
     };
 
+    /**
+     * Defines if the strategy has asynchronous nature
+     * @returns {Boolean} True if nature is acync, false otherwise
+     */
+    window.com.xomena.mapRenderer.Strategy.prototype.isAsync = function () {
+        switch (this.type) {
+            case "places_radar":
+            case "places_autocomplete":
+                return true;
+            default:
+                return false;
+        }
+    }
+
     window.com.xomena.strategies = {
         GeocodeRender:  new window.com.xomena.mapRenderer.Strategy("geocode"),
         DirectionsRender: new window.com.xomena.mapRenderer.Strategy("directions"),
@@ -377,6 +398,7 @@
         ElevationRender: new window.com.xomena.mapRenderer.Strategy("elevation"),
         TimezoneRender: new window.com.xomena.mapRenderer.Strategy("timezone"),
         PlacesSearchRender: new window.com.xomena.mapRenderer.Strategy("places_search"),
+        PlacesRadarRender: new window.com.xomena.mapRenderer.Strategy("places_radar"),
         PlacesDetailRender: new window.com.xomena.mapRenderer.Strategy("places_detail"),
         PlacesAutocompleteRender: new window.com.xomena.mapRenderer.Strategy("places_autocomplete"),
         RoadsRender: new window.com.xomena.mapRenderer.Strategy("roads"),
@@ -388,7 +410,7 @@
      * @param {Object} data Data from the web service (JSON object)
      * @returns {Object} GeoJSON object
      */
-    function m_parseGeocodeJSON (data, map) {
+    function m_parseGeocodeJSON (data, map, id) {
         var res = {
             "type": "FeatureCollection",
             "features": []
@@ -433,7 +455,7 @@
      * @param {Object} data Data from the web service (JSON object)
      * @returns {Object} GeoJSON object
      */
-    function m_parseDirectionsJSON (data, map) {
+    function m_parseDirectionsJSON (data, map, id) {
         var res = {
             "type": "FeatureCollection",
             "features": []
@@ -494,7 +516,7 @@
      * @param {Object} data Data from the web service (JSON object)
      * @returns {Object} GeoJSON object
      */
-    function m_parsePlacesSearchJSON (data, map) {
+    function m_parsePlacesSearchJSON (data, map, id) {
         var res = {
             "type": "FeatureCollection",
             "features": []
@@ -509,13 +531,67 @@
         return res;
     }
 
+    /**
+     * Parse JSON data from Places radar search
+     * @param {Object} data Data from the web service (JSON object)
+     * @returns {Object} null (features will be add asyncronously on map)
+     */
+    function m_parsePlacesRadarJSON (data, map, id) {
+        if (_.isObject(data) && data.status && data.status === "OK") {
+            if (data.results && _.isArray(data.results) && data.results.length) {
+                var m_batch = [];
+                window.com.xomena.mapRenderer.clearMap(id);
+                _.each(data.results, function (place, index) {
+                    m_batch.push(place.place_id);
+                });
+                m_add_places_in_batch(m_batch, map, id);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Parse JSON data from Places detail
+     * @param {Object} data Data from the web service (JSON object)
+     * @returns {Object} GeoJSON object
+     */
+    function m_parsePlacesDetailJSON (data, map, id) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        };
+        if (_.isObject(data) && data.status && data.status === "OK" && data.result) {
+            m_add_place_to_geojson(data.result, res, false);
+        }
+        return res;
+    }
+
+    /**
+     * Parse JSON data from Places autocomplete
+     * @param {Object} data Data from the web service (JSON object)
+     * @returns {Object} null (features will be add asyncronously on map)
+     */
+    function m_parsePlacesAutocompleteJSON (data, map, id) {
+        if (_.isObject(data) && data.status && data.status === "OK") {
+            if (data.predictions && _.isArray(data.predictions) && data.predictions.length) {
+                var m_batch = [];
+                window.com.xomena.mapRenderer.clearMap(id);
+                _.each(data.predictions, function (place, index) {
+                    m_batch.push(place.place_id);
+                });
+                m_add_places_in_batch(m_batch, map, id);
+            }
+        }
+        return null;
+    }
+
 
     /**
      * Parse XML data from Geocoding API
      * @param {String} data Data from the web service (XML string)
      * @returns {Object} GeoJSON object
      */
-    function m_parseGeocodeXML (data, map) {
+    function m_parseGeocodeXML (data, map, id) {
         var xmlDoc = m_getXMLDoc($.trim(data)),
             res = {
                 "type": "FeatureCollection",
@@ -621,7 +697,7 @@
      * @param {String} data Data from the web service (XML string)
      * @returns {Object} GeoJSON object
      */
-    function m_parseDirectionsXML (data, map) {
+    function m_parseDirectionsXML (data, map, id) {
         var res = {
             "type": "FeatureCollection",
             "features": []
@@ -645,7 +721,7 @@
                         },
                         "properties": {
                             "color": ROUTE_COLORS[index],
-                            "summary": $(this).find("summary").text(),
+                            "summary": $(this).find(" > summary").text(),
                             "zIndex": $(xmlDoc).find("route").length - index
                         },
                         "id": $(xmlDoc).find("geocoded_waypoint > place_id").text() + "-" + index
@@ -682,7 +758,7 @@
      * @param {String} data Data from the web service (XML string)
      * @returns {Object} GeoJSON object
      */
-    function m_parsePlacesSearchXML (data, map) {
+    function m_parsePlacesSearchXML (data, map, id) {
         var res = {
             "type": "FeatureCollection",
             "features": []
@@ -707,7 +783,7 @@
                         place_id: $(this).find("place_id").text(),
                         formatted_address: $(this).find("formatted_address").text()
                     };
-                    $(this).find("type").each(function () {
+                    $(this).find(" > type").each(function () {
                         m_place.types.push($(this).text());
                     });
                     m_add_place_to_geojson(m_place, res, false);
@@ -715,6 +791,57 @@
             }
         }
         return res;
+    }
+
+    /**
+     * Parse XML data from Places API radar search
+     * @param {String} data Data from the web service (XML string)
+     * @returns {Object} null (features will be add asynchronously on map)
+     */
+    function m_parsePlacesRadarXML (data, map, id) {
+        var xmlDoc = m_getXMLDoc($.trim(data));
+        if (data && xmlDoc) {
+            var m_status = $(xmlDoc).find("status").text();
+            if(m_status === "OK") {
+                var m_batch = [];
+                window.com.xomena.mapRenderer.clearMap(id);
+                $(xmlDoc).find("result").each(function(index, elem){
+                    m_batch.push($(this).find("place_id").text());
+                });
+                m_add_places_in_batch(m_batch, map, id);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Parse XML data from Places API details
+     * @param {String} data Data from the web service (XML string)
+     * @returns {Object} GeoJSON object
+     */
+    function m_parsePlacesDetailXML (data, map, id) {
+        return m_parsePlacesSearchXML(data, map, id);
+    }
+
+    /**
+     * Parse XML data from Places autocomplete
+     * @param {String} data Data from the web service (XML string)
+     * @returns {Object} null (features will be add asynchronously on map)
+     */
+    function m_parsePlacesAutocompleteXML (data, map, id) {
+        var xmlDoc = m_getXMLDoc($.trim(data));
+        if (data && xmlDoc) {
+            var m_status = $(xmlDoc).find("status").text();
+            if(m_status === "OK") {
+                var m_batch = [];
+                window.com.xomena.mapRenderer.clearMap(id);
+                $(xmlDoc).find("prediction").each(function(index, elem){
+                    m_batch.push($(this).find("place_id").text());
+                });
+                m_add_places_in_batch(m_batch, map, id);
+            }
+        }
+        return null;
     }
 
     /**
@@ -749,10 +876,10 @@
         return  '<div id="infowindow" class="infowindow">' +
                 '<h2>' + elem.formatted_address + '</h2>' +
                 '<ul>' +
-                (elem.geometry.location_type ? '<li>Location type: ' + elem.geometry.location_type + '</li>' : '') +
-                '<li>Types: ' + elem.types.join(",") + '</li>' +
-                '<li>Place ID: ' + elem.place_id + '</li>' +
-                '<li>Location: ' + elem.geometry.location.lat + ',' + elem.geometry.location.lng + '</li>' +
+                (elem.geometry.location_type ? '<li><b>Location type:</b> ' + elem.geometry.location_type + '</li>' : '') +
+                '<li><b>Types:</b> ' + elem.types.join(", ") + '</li>' +
+                '<li><b>Place ID:</b> ' + elem.place_id + '</li>' +
+                '<li><b>Location:</b> ' + elem.geometry.location.lat + ',' + elem.geometry.location.lng + '</li>' +
                 '</ul>' +
                 '</div>';
     }
@@ -768,12 +895,12 @@
         return  '<div id="infowindow" class="infowindow">' +
                 '<h2>' + place.name + '</h2>' +
                 '<ul>' +
-                (place.formatted_address ? '<li>Address: ' + place.formatted_address + '</li>' : '') +
-                '<li>Types: ' + place.types.join(",") + '</li>' +
-                '<li>Place ID: ' + place.place_id + '</li>' +
-                (place.vicinity ? '<li>Vicinity: ' + place.vicinity + '</li>' : '') +
-                (place.rating ? '<li>Rating: ' + place.rating + '</li>' : '') +
-                '<li>Location: ' + m_lat + ',' + m_lng + '</li>' +
+                (place.formatted_address ? '<li><b>Address:</b> ' + place.formatted_address + '</li>' : '') +
+                '<li><b>Types:</b> ' + place.types.join(", ") + '</li>' +
+                '<li><b>Place ID:</b> ' + place.place_id + '</li>' +
+                (place.vicinity ? '<li><b>Vicinity:</b> ' + place.vicinity + '</li>' : '') +
+                (place.rating ? '<li><b>Rating:</b> ' + place.rating + '</li>' : '') +
+                '<li><b>Location:</b> ' + m_lat + ',' + m_lng + '</li>' +
                 '</ul>' +
                 '</div>';
     }
@@ -824,7 +951,7 @@
                 "vicinity": place.vicinity ? place.vicinity : '',
                 "website": place.website ? place.website : '',
                 "icon": place.icon,
-                "iconSize": ICON_SIZE_16,
+                "iconSize": place.icon===ICON_PLACE ? ICON_SIZE_32 : ICON_SIZE_16,
                 "content": renderAsAddress ? m_info_window_content_address({
                     formatted_address: place.formatted_address ? place.formatted_address : place.vicinity,
                     geometry: {
@@ -865,6 +992,7 @@
                 "vicinity": place.vicinity,
                 "website": place.website,
                 "icon": place.icon,
+                "iconSize": place.icon===ICON_PLACE ? ICON_SIZE_32 : ICON_SIZE_16,
                 "content": renderAsAddress ? m_info_window_content_address({
                     formatted_address: place.formatted_address,
                     geometry: {
@@ -895,5 +1023,83 @@
             }
         });
         map.fitBounds(bounds);
+    }
+
+    function m_add_center_and_radius (id, map) {
+        if (window.com.xomena.mapRenderer.instances[id] &&
+            window.com.xomena.mapRenderer.instances[id].model) {
+            var m_service = window.com.xomena.mapRenderer.instances[id].model.get("webservice");
+            if(m_service){
+                var m_services = window.com.xomena.mapRenderer.instances[id].model.get("services");
+                var service = m_services.filterById(parseInt(m_service));
+                if($.isArray(service) && service.length){
+                    switch(service[0].get("name")){
+                        case "Places Radar Search":
+                        case "Place Autocomplete":
+                        case "Query Autocomplete":
+                            var m_latlng = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("location");
+                            if($.isArray(m_latlng) && m_latlng.length) {
+                                var m_arr = m_latlng[0].split(",");
+                                var m_loc = new google.maps.LatLng(parseFloat(m_arr[0]), parseFloat(m_arr[1]));
+                                map.data.add(new google.maps.Data.Feature({
+                                    geometry: m_loc,
+                                    id: "arrow-"+id,
+                                    "properties": {
+                                        "address": m_latlng[0],
+                                        "icon": ICON_ARROW
+                                    }
+                                }));
+                                var m_radius = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("radius");
+                                if($.isArray(m_radius) && m_radius.length && m_radius[0]) {
+                                        window.com.xomena.mapRenderer.instances[id].circle.setCenter(m_loc);
+                                        window.com.xomena.mapRenderer.instances[id].circle.setRadius(parseInt(m_radius[0]));
+                                        window.com.xomena.mapRenderer.instances[id].circle.setVisible(true);
+                                }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    function m_add_places_in_batch(batch, map, id) {
+        var count = 0, progress = document.querySelector('#progress-' + id);
+        if (_.isArray(batch) && batch.length) {
+            function m_callback (place_res, status) {
+                count++;
+                console.log("Status: " + status);
+                progress.value = count;
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    m_add_place_to_map (place_res, map, false);
+                }
+                if (count === batch.length) {
+                    progress.value = progress.min;
+                }
+                if (count === Math.min(10, batch.length)) {
+                    m_adjust_bounds(map);
+                }
+            }
+
+            m_add_center_and_radius(id, map);
+            progress.min = 0;
+            progress.max = batch.length;
+            progress.value = progress.min;
+
+            _.each(batch, function(place_id, index) {
+                var m_req = {
+                    placeId: place_id
+                };
+                if (index < 10) {
+                    placesServices.getDetails(m_req, m_callback);
+                } else {
+                    window.setTimeout(function () {
+                       placesServices.getDetails(m_req, m_callback);
+                    }, (index-9)*1000);
+                }
+            });
+        }
     }
 })(window, jQuery, _);
