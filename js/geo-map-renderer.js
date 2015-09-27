@@ -6,7 +6,10 @@
         ICON_ARROW = "http://www.google.com/mapfiles/arrow.png",
         ICON_ARROW_SHADOW = "http://www.google.com/mapfiles/arrowshadow.png",
         ROUTE_COLORS = ['#C53929', '#0B8043', '#3367D6'],
-        infoWindow = null;
+        infoWindow = null,
+        placesServices = null,
+        ICON_SIZE_32 = null,
+        ICON_SIZE_16 = null;
 
     window.com = window.com || {};
     window.com.xomena = window.com.xomena || {};
@@ -35,6 +38,15 @@
                     disableAutoPan: false
                 });
             }
+            if (!placesServices) {
+                placesServices = new google.maps.places.PlacesService($("<div>").get(0));
+            }
+            if (!ICON_SIZE_16) {
+                ICON_SIZE_16 = new google.maps.Size(16, 16);
+            }
+            if (!ICON_SIZE_32) {
+                ICON_SIZE_32 = new google.maps.Size(32, 32);
+            }
             if (this.instances[model.get("id")].map) {
                 //Define styles for data layer features
                 this.instances[model.get("id")].map.data.setStyle(function (feature) {
@@ -42,15 +54,17 @@
                     switch (feature.getGeometry().getType()) {
                         case "Point":
                             var m_icon = feature.getProperty("icon"),
+                                m_size = feature.getProperty("iconSize"),
                                 m_address = feature.getProperty("address"),
-                                m_zindex = feature.getProperty("zIndex");
+                                m_zindex = feature.getProperty("zIndex"),
+                                m_name = feature.getProperty("name");
 
                             style = {
                                 icon: {
                                     url: m_icon ? m_icon : ICON_URL,
-                                    scaledSize: new google.maps.Size(32, 32)
+                                    scaledSize: m_size ? m_size : ICON_SIZE_32
                                 },
-                                title: m_address ? m_address : "",
+                                title: m_name? m_name : (m_address ? m_address : ""),
                                 visible: true,
                                 zIndex: m_zindex ? m_zindex : 0
                             };
@@ -84,6 +98,17 @@
                             break;
                         }
                     }
+                });
+                //Define a circle to use with places results
+                this.instances[model.get("id")].circle = new google.maps.Circle({
+                    center: this.instances[model.get("id")].map.getCenter(),
+                    map: this.instances[model.get("id")].map,
+                    radius: 1000,
+                    strokeColor: ROUTE_COLORS[0],
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillOpacity: 0.2,
+                    visible: false
                 });
             }
         },
@@ -126,13 +151,15 @@
                 m_format = this.getFormat(id),
                 m_geoJSON = null;
             if (m_strategy && m_map && m_data && m_format) {
-                m_geoJSON = m_strategy.getGeoJSON(m_data, m_format);
+                m_geoJSON = m_strategy.getGeoJSON(m_data, m_format, m_map);
                 if (m_geoJSON) {
                     //Lets add additional features
                     this.addAdditionalFeatures(id, m_geoJSON);
                     m_map.data.addGeoJson(m_geoJSON);
                     if(m_geoJSON.bounds && m_geoJSON.bounds instanceof google.maps.LatLngBounds){
                         m_map.fitBounds(m_geoJSON.bounds);
+                    } else {
+                        m_adjust_bounds(m_map);
                     }
                 }
             }
@@ -152,6 +179,7 @@
             if(infoWindow) {
                 infoWindow.close();
             }
+            this.instances[id].circle.setVisible(false);
         },
 
         /**
@@ -244,6 +272,20 @@
                                     m_add_arrow_point("arrow-"+id, parseFloat(m_arr[0]), parseFloat(m_arr[1]), geoJSON);
                                 }
                                 break;
+                            case "Places Nearby Search":
+                            case "Places Text Search":
+                                var m_latlng = this.instances[id].model.getParameterValue("location");
+                                if($.isArray(m_latlng) && m_latlng.length) {
+                                    var m_arr = m_latlng[0].split(",");
+                                    m_add_arrow_point("arrow-"+id, parseFloat(m_arr[0]), parseFloat(m_arr[1]), geoJSON);
+                                    var m_radius = this.instances[id].model.getParameterValue("radius");
+                                    if($.isArray(m_radius) && m_radius.length && m_radius[0]) {
+                                        this.instances[id].circle.setCenter(new google.maps.LatLng(parseFloat(m_arr[0]), parseFloat(m_arr[1])));
+                                        this.instances[id].circle.setRadius(parseInt(m_radius[0]));
+                                        this.instances[id].circle.setVisible(true);
+                                    }
+                                }
+                                break;
                         }
                     }
                 }
@@ -257,12 +299,12 @@
      * @param   {String} format Format ("json", "xml")
      * @returns {Object} GeoJSON object
      */
-    window.com.xomena.mapRenderer.Strategy.prototype.getGeoJSON = function (data, format) {
+    window.com.xomena.mapRenderer.Strategy.prototype.getGeoJSON = function (data, format, map) {
         switch (format) {
         case "json":
-            return this.m_getGeoJSON_JSON(data);
+            return this.m_getGeoJSON_JSON(data, map);
         case "xml":
-            return this.m_getGeoJSON_XML(data);
+            return this.m_getGeoJSON_XML(data, map);
         }
     };
 
@@ -271,12 +313,12 @@
      * @param   {Object} data Data from the web service (JSON object)
      * @returns {Object} GeoJSON object
      */
-    window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_JSON = function (data) {
+    window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_JSON = function (data, map) {
         switch (this.type) {
         case "geocode":
-            return m_parseGeocodeJSON(data);
+            return m_parseGeocodeJSON(data, map);
         case "directions":
-            return m_parseDirectionsJSON(data);
+            return m_parseDirectionsJSON(data, map);
         case "distancematrix":
             break;
         case "elevation":
@@ -284,7 +326,7 @@
         case "timezone":
             break;
         case "places_search":
-            break;
+            return m_parsePlacesSearchJSON(data, map);
         case "places_detail":
             break;
         case "places_autocomplete":
@@ -302,12 +344,12 @@
      * @param   {String} data Data from the web service (XML string)
      * @returns {Object} GeoJSON object
      */
-    window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_XML = function (data) {
+    window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_XML = function (data, map) {
         switch (this.type) {
         case "geocode":
-            return m_parseGeocodeXML(data);
+            return m_parseGeocodeXML(data, map);
         case "directions":
-            return m_parseDirectionsXML(data);
+            return m_parseDirectionsXML(data, map);
         case "distancematrix":
             break;
         case "elevation":
@@ -315,7 +357,7 @@
         case "timezone":
             break;
         case "places_search":
-            break;
+            return m_parsePlacesSearchXML(data, map);
         case "places_detail":
             break;
         case "places_autocomplete":
@@ -346,7 +388,7 @@
      * @param {Object} data Data from the web service (JSON object)
      * @returns {Object} GeoJSON object
      */
-    function m_parseGeocodeJSON (data) {
+    function m_parseGeocodeJSON (data, map) {
         var res = {
             "type": "FeatureCollection",
             "features": []
@@ -386,7 +428,12 @@
         return res;
     }
 
-    function m_parseDirectionsJSON (data) {
+    /**
+     * Parse JSON data from Directions API
+     * @param {Object} data Data from the web service (JSON object)
+     * @returns {Object} GeoJSON object
+     */
+    function m_parseDirectionsJSON (data, map) {
         var res = {
             "type": "FeatureCollection",
             "features": []
@@ -423,15 +470,52 @@
                 res.bounds = bounds;
             }
         }
+        if (data.geocoded_waypoints && _.isArray(data.geocoded_waypoints) && data.geocoded_waypoints.length) {
+            var count = 0;
+            _.each(data.geocoded_waypoints, function (wp, index) {
+                placesServices.getDetails({
+                    placeId: wp.place_id
+                }, function(place_res, status){
+                    count++;
+                    if (status === google.maps.places.PlacesServiceStatus.OK) {
+                       m_add_place_to_map (place_res, map, true);
+                    }
+                    if (count === data.geocoded_waypoints.length && data.status !== "OK") {
+                        m_adjust_bounds(map);
+                    }
+                });
+            });
+        }
         return res;
     }
+
+    /**
+     * Parse JSON data from Places search (nearby and text searches)
+     * @param {Object} data Data from the web service (JSON object)
+     * @returns {Object} GeoJSON object
+     */
+    function m_parsePlacesSearchJSON (data, map) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        };
+        if (_.isObject(data) && data.status && data.status === "OK") {
+            if (data.results && _.isArray(data.results) && data.results.length) {
+                _.each(data.results, function (place, index) {
+                    m_add_place_to_geojson(place, res, false);
+                });
+            }
+        }
+        return res;
+    }
+
 
     /**
      * Parse XML data from Geocoding API
      * @param {String} data Data from the web service (XML string)
      * @returns {Object} GeoJSON object
      */
-    function m_parseGeocodeXML (data) {
+    function m_parseGeocodeXML (data, map) {
         var xmlDoc = m_getXMLDoc($.trim(data)),
             res = {
                 "type": "FeatureCollection",
@@ -532,7 +616,12 @@
         return res;
     }
 
-    function m_parseDirectionsXML (data) {
+    /**
+     * Parse XML data from Directions API
+     * @param {String} data Data from the web service (XML string)
+     * @returns {Object} GeoJSON object
+     */
+    function m_parseDirectionsXML (data, map) {
         var res = {
             "type": "FeatureCollection",
             "features": []
@@ -567,6 +656,62 @@
                     }
                 });
                 res.bounds = bounds;
+            }
+            if ($(xmlDoc).find("geocoded_waypoint").length) {
+                var count = 0;
+                $(xmlDoc).find("geocoded_waypoint").each(function (index, wp) {
+                    placesServices.getDetails({
+                        placeId: $(wp).find("place_id").text()
+                    }, function(place_res, status){
+                        count++;
+                        if (status === google.maps.places.PlacesServiceStatus.OK) {
+                            m_add_place_to_map (place_res, map, true);
+                        }
+                        if (count === $(xmlDoc).find("geocoded_waypoint").length && m_status !== "OK") {
+                            m_adjust_bounds(map);
+                        }
+                    });
+                });
+            }
+        }
+        return res;
+    }
+
+    /**
+     * Parse XML data from Places API (nearby and text searches)
+     * @param {String} data Data from the web service (XML string)
+     * @returns {Object} GeoJSON object
+     */
+    function m_parsePlacesSearchXML (data, map) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        },
+        xmlDoc = m_getXMLDoc($.trim(data));
+        if (data && xmlDoc) {
+            var m_status = $(xmlDoc).find("status").text();
+            if(m_status === "OK") {
+                $(xmlDoc).find("result").each(function(index, elem){
+                    var m_place = {
+                        geometry: {
+                            location: {
+                                lat: parseFloat($(this).find("geometry > location > lat").text()),
+                                lng: parseFloat($(this).find("geometry > location > lng").text())
+                            }
+                        },
+                        name: $(this).find("name").text(),
+                        vicinity: $(this).find("vicinity").text(),
+                        types: [],
+                        rating: parseFloat($(this).find("rating").text()),
+                        icon: $(this).find("icon").text(),
+                        place_id: $(this).find("place_id").text(),
+                        formatted_address: $(this).find("formatted_address").text()
+                    };
+                    $(this).find("type").each(function () {
+                        m_place.types.push($(this).text());
+                    });
+                    m_add_place_to_geojson(m_place, res, false);
+                });
             }
         }
         return res;
@@ -604,10 +749,31 @@
         return  '<div id="infowindow" class="infowindow">' +
                 '<h2>' + elem.formatted_address + '</h2>' +
                 '<ul>' +
-                '<li>Location type: ' + elem.geometry.location_type + '</li>' +
+                (elem.geometry.location_type ? '<li>Location type: ' + elem.geometry.location_type + '</li>' : '') +
                 '<li>Types: ' + elem.types.join(",") + '</li>' +
                 '<li>Place ID: ' + elem.place_id + '</li>' +
                 '<li>Location: ' + elem.geometry.location.lat + ',' + elem.geometry.location.lng + '</li>' +
+                '</ul>' +
+                '</div>';
+    }
+
+    /**
+     * Template for info window content of place
+     * @param {Object} place Object that represents place in web service response
+     */
+    function m_info_window_content_place (place) {
+        var m_isJsClass = place.geometry.location instanceof google.maps.LatLng;
+        var m_lat = m_isJsClass ? place.geometry.location.lat() : place.geometry.location.lat,
+            m_lng = m_isJsClass ? place.geometry.location.lng() : place.geometry.location.lng;
+        return  '<div id="infowindow" class="infowindow">' +
+                '<h2>' + place.name + '</h2>' +
+                '<ul>' +
+                (place.formatted_address ? '<li>Address: ' + place.formatted_address + '</li>' : '') +
+                '<li>Types: ' + place.types.join(",") + '</li>' +
+                '<li>Place ID: ' + place.place_id + '</li>' +
+                (place.vicinity ? '<li>Vicinity: ' + place.vicinity + '</li>' : '') +
+                (place.rating ? '<li>Rating: ' + place.rating + '</li>' : '') +
+                '<li>Location: ' + m_lat + ',' + m_lng + '</li>' +
                 '</ul>' +
                 '</div>';
     }
@@ -629,5 +795,105 @@
             xmlDoc.loadXML(txt);
         }
         return xmlDoc;
+    }
+
+    /**
+     * Creates a feature of type Point in GeoJSON for place
+     * @param {[[Type]]} place   Instance of the google.maps.places.PlaceResult
+     * @param {[[Type]]} geojson GeoJSON object
+     */
+    function m_add_place_to_geojson (place, geojson, renderAsAddress) {
+        var m_isJsClass = place.geometry.location instanceof google.maps.LatLng;
+        var m_lat = m_isJsClass ? place.geometry.location.lat() : place.geometry.location.lat,
+            m_lng = m_isJsClass ? place.geometry.location.lng() : place.geometry.location.lng;
+        geojson.features.push({
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [m_lng, m_lat]
+            },
+            "properties": {
+                "address": place.formatted_address ? place.formatted_address : '',
+                "types": place.types.join(","),
+                "phone": place.international_phone_number ? place.international_phone_number : '',
+                "name": place.name,
+                "place_id": place.place_id,
+                "price_level": place.price_level ? place.price_level : null,
+                "rating": place.rating,
+                "url": place.url ? place.url : '',
+                "vicinity": place.vicinity ? place.vicinity : '',
+                "website": place.website ? place.website : '',
+                "icon": place.icon,
+                "iconSize": ICON_SIZE_16,
+                "content": renderAsAddress ? m_info_window_content_address({
+                    formatted_address: place.formatted_address ? place.formatted_address : place.vicinity,
+                    geometry: {
+                        location: {
+                            lat: m_lat,
+                            lng: m_lng
+                        }
+                    },
+                    types: place.types,
+                    place_id: place.place_id
+                }) : m_info_window_content_place(place),
+                "zIndex": 2
+            },
+            "id": place.place_id
+        });
+    }
+
+    /**
+     * Adds a place on map as a Point feature
+     * @param {Object}   place           Place instance of google.maps.places.PlaceResult
+     * @param {Object}   map             Map instance
+     * @param {boolean} renderAsAddress Would you like to render it as address?
+     */
+    function m_add_place_to_map (place, map, renderAsAddress) {
+        map.data.add(new google.maps.Data.Feature({
+            geometry: place.geometry.location,
+            id: place.place_id,
+            "properties": {
+                "address": place.formatted_address,
+                "types": place.types.join(","),
+                "phone": place.international_phone_number,
+                "html_attributions": place.html_attributions,
+                "name": place.name,
+                "place_id": place.place_id,
+                "price_level": place.price_level,
+                "rating": place.rating,
+                "url": place.url,
+                "vicinity": place.vicinity,
+                "website": place.website,
+                "icon": place.icon,
+                "content": renderAsAddress ? m_info_window_content_address({
+                    formatted_address: place.formatted_address,
+                    geometry: {
+                        location: {
+                            lat: place.geometry.location.lat(),
+                            lng: place.geometry.location.lng()
+                        }
+                    },
+                    types: place.types,
+                    place_id: place.place_id
+                }) : m_info_window_content_place(place),
+                "zIndex": 2
+            }
+        }));
+    }
+
+    /**
+     * Adjusts bounds of the map according to the existing features
+     * @param {Object} map Map instance
+     */
+    function m_adjust_bounds (map) {
+        var bounds = new google.maps.LatLngBounds();
+        map.data.forEach(function (feature) {
+            switch (feature.getGeometry().getType()) {
+                case "Point":
+                    bounds.extend(feature.getGeometry().get());
+                    break;
+            }
+        });
+        map.fitBounds(bounds);
     }
 })(window, jQuery, _);
