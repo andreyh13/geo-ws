@@ -337,7 +337,7 @@
         case "places_autocomplete":
             return m_parsePlacesAutocompleteJSON(data, map, id);
         case "roads":
-            break;
+            return m_parseSnapToRoadsJSON(data, map, id);
         case "speed":
             break;
         }
@@ -385,6 +385,7 @@
         switch (this.type) {
             case "places_radar":
             case "places_autocomplete":
+            case "roads":
                 return true;
             default:
                 return false;
@@ -534,13 +535,13 @@
     /**
      * Parse JSON data from Places radar search
      * @param {Object} data Data from the web service (JSON object)
-     * @returns {Object} null (features will be add asyncronously on map)
+     * @returns {Object} null (features will be added asyncronously on map)
      */
     function m_parsePlacesRadarJSON (data, map, id) {
+        window.com.xomena.mapRenderer.clearMap(id);
         if (_.isObject(data) && data.status && data.status === "OK") {
             if (data.results && _.isArray(data.results) && data.results.length) {
                 var m_batch = [];
-                window.com.xomena.mapRenderer.clearMap(id);
                 _.each(data.results, function (place, index) {
                     m_batch.push(place.place_id);
                 });
@@ -569,13 +570,13 @@
     /**
      * Parse JSON data from Places autocomplete
      * @param {Object} data Data from the web service (JSON object)
-     * @returns {Object} null (features will be add asyncronously on map)
+     * @returns {Object} null (features will be added asyncronously on map)
      */
     function m_parsePlacesAutocompleteJSON (data, map, id) {
+        window.com.xomena.mapRenderer.clearMap(id);
         if (_.isObject(data) && data.status && data.status === "OK") {
             if (data.predictions && _.isArray(data.predictions) && data.predictions.length) {
                 var m_batch = [];
-                window.com.xomena.mapRenderer.clearMap(id);
                 _.each(data.predictions, function (place, index) {
                     m_batch.push(place.place_id);
                 });
@@ -585,6 +586,23 @@
         return null;
     }
 
+    /**
+     * Parse JSON data from Snap to Roads
+     * @param {Object} data Data from the web service (JSON object)
+     * @returns {Object} null (features will be added asyncronously on map)
+     */
+    function m_parseSnapToRoadsJSON (data, map, id) {
+        window.com.xomena.mapRenderer.clearMap(id);
+        m_add_original_points_for_snap(id, map);
+        if (_.isObject(data) && data.snappedPoints && _.isArray(data.snappedPoints) && data.snappedPoints.length) {
+            var m_batch = [];
+            _.each(data.snappedPoints, function (place, index) {
+                m_batch.push(place.placeId);
+            });
+            m_add_places_in_batch(m_batch, map, id);
+        }
+        return null;
+    }
 
     /**
      * Parse XML data from Geocoding API
@@ -796,15 +814,15 @@
     /**
      * Parse XML data from Places API radar search
      * @param {String} data Data from the web service (XML string)
-     * @returns {Object} null (features will be add asynchronously on map)
+     * @returns {Object} null (features will be added asynchronously on map)
      */
     function m_parsePlacesRadarXML (data, map, id) {
+        window.com.xomena.mapRenderer.clearMap(id);
         var xmlDoc = m_getXMLDoc($.trim(data));
         if (data && xmlDoc) {
             var m_status = $(xmlDoc).find("status").text();
             if(m_status === "OK") {
                 var m_batch = [];
-                window.com.xomena.mapRenderer.clearMap(id);
                 $(xmlDoc).find("result").each(function(index, elem){
                     m_batch.push($(this).find("place_id").text());
                 });
@@ -826,15 +844,15 @@
     /**
      * Parse XML data from Places autocomplete
      * @param {String} data Data from the web service (XML string)
-     * @returns {Object} null (features will be add asynchronously on map)
+     * @returns {Object} null (features will be added asynchronously on map)
      */
     function m_parsePlacesAutocompleteXML (data, map, id) {
+        window.com.xomena.mapRenderer.clearMap(id);
         var xmlDoc = m_getXMLDoc($.trim(data));
         if (data && xmlDoc) {
             var m_status = $(xmlDoc).find("status").text();
             if(m_status === "OK") {
                 var m_batch = [];
-                window.com.xomena.mapRenderer.clearMap(id);
                 $(xmlDoc).find("prediction").each(function(index, elem){
                     m_batch.push($(this).find("place_id").text());
                 });
@@ -1055,6 +1073,43 @@
                                         window.com.xomena.mapRenderer.instances[id].circle.setRadius(parseInt(m_radius[0]));
                                         window.com.xomena.mapRenderer.instances[id].circle.setVisible(true);
                                 }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    function m_add_original_points_for_snap (id, map) {
+        if (window.com.xomena.mapRenderer.instances[id] &&
+            window.com.xomena.mapRenderer.instances[id].model) {
+            var m_service = window.com.xomena.mapRenderer.instances[id].model.get("webservice");
+            if(m_service){
+                var m_services = window.com.xomena.mapRenderer.instances[id].model.get("services");
+                var service = m_services.filterById(parseInt(m_service));
+                if($.isArray(service) && service.length){
+                    switch(service[0].get("name")){
+                        case "Snap to Road":
+                            var m_latlng = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("path");
+                            if($.isArray(m_latlng) && m_latlng.length) {
+                                _.each(m_latlng, function(p, ind) {
+                                    if (p) {
+                                        var m_arr = p.split(",");
+                                        var m_loc = new google.maps.LatLng(parseFloat(m_arr[0]), parseFloat(m_arr[1]));
+                                        map.data.add(new google.maps.Data.Feature({
+                                            geometry: m_loc,
+                                            id: "point-" +ind + "-" +id,
+                                            "properties": {
+                                                "address": p,
+                                                "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                                (ind < ICON_LABELS.length ? ICON_LABELS.charAt(ind) : "blu-blank") + ".png"
+                                            }
+                                        }));
+                                    }
+                                });
                             }
                             break;
                         default:
