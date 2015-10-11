@@ -81,7 +81,8 @@
                         condVisibility: data[i][10],
                         m4wOnly: data[i][11],
                         condRequired: data[i][12],
-                        condRequiredOr: data[i][13]
+                        condRequiredOr: data[i][13],
+                        separator: data[i][14] ? data[i][14] : '|'
                     });
                     if(data[i][4]){
                         //Init parameter parts

@@ -300,6 +300,8 @@
      * Prototype function of the Strategy to get GeoJSON
      * @param   {Object} data  Data from the web service (JSON object or XML string)
      * @param   {String} format Format ("json", "xml")
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     window.com.xomena.mapRenderer.Strategy.prototype.getGeoJSON = function (data, format, map, id) {
@@ -314,6 +316,8 @@
     /**
      * Prototype function of the Strategy to get GeoJSON from JSON data
      * @param   {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_JSON = function (data, map, id) {
@@ -347,6 +351,8 @@
     /**
      * Prototype function of the Strategy to get GeoJSON from XML string
      * @param   {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_XML = function (data, map, id) {
@@ -409,6 +415,8 @@
     /**
      * Parse JSON data from Geocoding API
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parseGeocodeJSON (data, map, id) {
@@ -454,6 +462,8 @@
     /**
      * Parse JSON data from Directions API
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parseDirectionsJSON (data, map, id) {
@@ -515,6 +525,8 @@
     /**
      * Parse JSON data from Places search (nearby and text searches)
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parsePlacesSearchJSON (data, map, id) {
@@ -535,6 +547,8 @@
     /**
      * Parse JSON data from Places radar search
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} null (features will be added asyncronously on map)
      */
     function m_parsePlacesRadarJSON (data, map, id) {
@@ -554,6 +568,8 @@
     /**
      * Parse JSON data from Places detail
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parsePlacesDetailJSON (data, map, id) {
@@ -570,6 +586,8 @@
     /**
      * Parse JSON data from Places autocomplete
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} null (features will be added asyncronously on map)
      */
     function m_parsePlacesAutocompleteJSON (data, map, id) {
@@ -589,6 +607,8 @@
     /**
      * Parse JSON data from Snap to Roads
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} null (features will be added asyncronously on map)
      */
     function m_parseSnapToRoadsJSON (data, map, id) {
@@ -597,9 +617,13 @@
         if (_.isObject(data) && data.snappedPoints && _.isArray(data.snappedPoints) && data.snappedPoints.length) {
             var m_batch = [];
             _.each(data.snappedPoints, function (place, index) {
-                m_batch.push(place.placeId);
+                m_batch.push({
+                    placeId: place.placeId,
+                    location: new google.maps.LatLng(place.location.latitude, place.location.longitude),
+                    originalIndex: ("originalIndex" in place && place.originalIndex>=0) ? place.originalIndex : null
+                });
             });
-            m_add_places_in_batch(m_batch, map, id);
+            m_add_snappedpoints_in_batch(m_batch, map, id);
         }
         return null;
     }
@@ -607,6 +631,8 @@
     /**
      * Parse XML data from Geocoding API
      * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parseGeocodeXML (data, map, id) {
@@ -713,6 +739,8 @@
     /**
      * Parse XML data from Directions API
      * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parseDirectionsXML (data, map, id) {
@@ -774,6 +802,8 @@
     /**
      * Parse XML data from Places API (nearby and text searches)
      * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parsePlacesSearchXML (data, map, id) {
@@ -814,6 +844,8 @@
     /**
      * Parse XML data from Places API radar search
      * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} null (features will be added asynchronously on map)
      */
     function m_parsePlacesRadarXML (data, map, id) {
@@ -835,6 +867,8 @@
     /**
      * Parse XML data from Places API details
      * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parsePlacesDetailXML (data, map, id) {
@@ -844,6 +878,8 @@
     /**
      * Parse XML data from Places autocomplete
      * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} null (features will be added asynchronously on map)
      */
     function m_parsePlacesAutocompleteXML (data, map, id) {
@@ -924,6 +960,20 @@
     }
 
     /**
+     * Template for info window content of snapped point
+     * @param {Object} point Objects that represents snapped point in web service response
+     */
+    function m_info_window_content_snappedpoint (point) {
+        return  '<div id="infowindow" class="infowindow">' +
+                '<h2>' + "Snapped point"+(point.originalIndex!==null ? " ("+(point.originalIndex+1)+")" : "") + '</h2>' +
+                '<ul>' +
+                '<li><b>Place ID:</b> ' + point.placeId + '</li>' +
+                '<li><b>Location:</b> ' + point.location.lat() + ',' + point.location.lng() + '</li>' +
+                '</ul>' +
+                '</div>';
+    }
+
+    /**
      * Retrieves an XML doc from the string value
      * @param   {String} txt The XML string
      * @returns {Object} xmlDoc object
@@ -944,8 +994,9 @@
 
     /**
      * Creates a feature of type Point in GeoJSON for place
-     * @param {[[Type]]} place   Instance of the google.maps.places.PlaceResult
-     * @param {[[Type]]} geojson GeoJSON object
+     * @param {google.maps.places.PlaceResult} place   Instance of the google.maps.places.PlaceResult
+     * @param {Object} geojson GeoJSON object
+     * @param {Boolean} renderAsAddress Render the place like ordinary street address?
      */
     function m_add_place_to_geojson (place, geojson, renderAsAddress) {
         var m_isJsClass = place.geometry.location instanceof google.maps.LatLng;
@@ -1120,6 +1171,13 @@
         }
     }
 
+    /**
+     * Adds a batch of places on the map
+     *
+     * @param {Array} batch Array of place IDs to add to the map
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     */
     function m_add_places_in_batch(batch, map, id) {
         var count = 0, progress = document.querySelector('#progress-' + id);
         if (_.isArray(batch) && batch.length) {
@@ -1156,5 +1214,49 @@
                 }
             });
         }
+    }
+
+    /**
+     * Adds a batch of snapped points on the map
+     *
+     * @param {Array} batch Array of snapped points to add to the map
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     */
+    function m_add_snappedpoints_in_batch(batch, map, id) {
+        var progress = document.querySelector('#progress-' + id);
+        if (_.isArray(batch) && batch.length) {
+            progress.min = 0;
+            progress.max = batch.length;
+            progress.value = progress.min;
+
+            _.each(batch, function(point, index) {
+                progress.value = index + 1;
+                m_add_snappedpoint_to_map(point, map);
+            });
+            progress.value = progress.min;
+            m_adjust_bounds(map);
+        }
+    }
+
+    /**
+     * Adds a snapped point on a map as a Point feature
+     * @param {Object}   point           The snapped point from response
+     * @param {Object}   map             Map instance
+     */
+    function m_add_snappedpoint_to_map (point, map) {
+        map.data.add(new google.maps.Data.Feature({
+            geometry: point.location,
+            id: point.placeId,
+            "properties": {
+                "address": "Snapped point"+(point.originalIndex!==null ? " ("+(point.originalIndex+1)+")" : ""),
+                "name": "Snapped point"+(point.originalIndex!==null ? " ("+(point.originalIndex+1)+")" : ""),
+                "place_id": point.placeId,
+                "icon": ICON_URL,
+                "iconSize": ICON_SIZE_32,
+                "content": m_info_window_content_snappedpoint(point),
+                "zIndex": 4
+            }
+        }));
     }
 })(window, jQuery, _);
