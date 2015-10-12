@@ -343,7 +343,7 @@
         case "roads":
             return m_parseSnapToRoadsJSON(data, map, id);
         case "speed":
-            break;
+            return m_parseSpeedLimitsJSON(data, map, id);
         }
         return null;
     };
@@ -392,6 +392,7 @@
             case "places_radar":
             case "places_autocomplete":
             case "roads":
+            case "speed":
                 return true;
             default:
                 return false;
@@ -627,6 +628,36 @@
         }
         return null;
     }
+
+     /**
+     * Parse JSON data from Speed Limits
+     * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} null (features will be added asyncronously on map)
+     */
+    function m_parseSpeedLimitsJSON (data, map, id) {
+        window.com.xomena.mapRenderer.clearMap(id);
+        if (_.isObject(data)) {
+            if (data.snappedPoints && _.isArray(data.snappedPoints) && data.snappedPoints.length) {
+                m_add_original_points_for_snap(id, map);
+                var m_batch = [];
+                _.each(data.snappedPoints, function (place, index) {
+                    m_batch.push({
+                        placeId: place.placeId,
+                        location: new google.maps.LatLng(place.location.latitude, place.location.longitude),
+                        originalIndex: ("originalIndex" in place && place.originalIndex>=0) ? place.originalIndex : null
+                    });
+                });
+                m_add_snappedpoints_in_batch(m_batch, map, id);
+            }
+            if (data.speedLimits && _.isArray(data.speedLimits) && data.speedLimits.length) {
+                m_add_speedlimits_in_batch(data.speedLimits, map, id);
+            }
+        }
+        return null;
+    }
+
 
     /**
      * Parse XML data from Geocoding API
@@ -1259,4 +1290,78 @@
             }
         }));
     }
+
+    /**
+     * Adds a batch of speed limits on the map
+     *
+     * @param {Array} batch Array of speed limits to add to the map
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     */
+    function m_add_speedlimits_in_batch(batch, map, id) {
+        var count = 0, progress = document.querySelector('#progress-' + id),
+            m_hash = {};
+        if (_.isArray(batch) && batch.length) {
+            function m_callback (place_res, status) {
+                count++;
+                console.log("Status: " + status);
+                progress.value = count;
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    if (m_hash[place_res.place_id]) {
+                        m_hash[place_res.place_id]["place"] = place_res;
+                    }
+                }
+                if (count === batch.length) {
+                    progress.value = progress.min;
+                    for(var key in m_hash) {
+                       m_add_speedlimit_to_map(m_hash[key], map);
+                    }
+                    m_adjust_bounds(map);
+                }
+            }
+
+            m_add_center_and_radius(id, map);
+            progress.min = 0;
+            progress.max = batch.length;
+            progress.value = progress.min;
+
+            _.each(batch, function(speedlimit, index) {
+                var m_req = {
+                    placeId: speedlimit.placeId
+                };
+                m_hash[speedlimit.placeId] = speedlimit;
+                if (index < 10) {
+                    placesServices.getDetails(m_req, m_callback);
+                } else {
+                    window.setTimeout(function () {
+                       placesServices.getDetails(m_req, m_callback);
+                    }, (index-9)*1000);
+                }
+            });
+        }
+    }
+
+    /**
+     * Adds a speed limit on map as a Point feature
+     * @param {Object}   place           Place instance of google.maps.places.PlaceResult
+     * @param {Object}   map             Map instance
+     */
+    function m_add_speedlimit_to_map (speedlimit, map) {
+        map.data.add(new google.maps.Data.Feature({
+            geometry: speedlimit.place.geometry.location,
+            id: speedlimit.placeId,
+            "properties": {
+                "address": speedlimit.place.formatted_address,
+                "types": speedlimit.place.types.join(","),
+                "name": speedlimit.place.name,
+                "place_id": speedlimit.placeId,
+                "vicinity": speedlimit.place.vicinity,
+                "icon": speedlimit.place.icon,
+                "iconSize": speedlimit.place.icon===ICON_PLACE ? ICON_SIZE_32 : ICON_SIZE_16,
+                "content": m_info_window_content_speedlimit(speedlimit),
+                "zIndex": 6
+            }
+        }));
+    }
+
 })(window, jQuery, _);
