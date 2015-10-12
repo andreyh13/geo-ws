@@ -639,15 +639,25 @@
     function m_parseSpeedLimitsJSON (data, map, id) {
         window.com.xomena.mapRenderer.clearMap(id);
         if (_.isObject(data)) {
+            var m_hash = {};
+            if (data.speedLimits && _.isArray(data.speedLimits) && data.speedLimits.length) {
+              _.each(data.speedLimits, function (speed, index) {
+                m_hash[speed.placeId] = speed.speedLimit + ' ' + speed.units;
+              });
+            }
             if (data.snappedPoints && _.isArray(data.snappedPoints) && data.snappedPoints.length) {
                 m_add_original_points_for_snap(id, map);
                 var m_batch = [];
                 _.each(data.snappedPoints, function (place, index) {
-                    m_batch.push({
+                    var m_obj = {
                         placeId: place.placeId,
                         location: new google.maps.LatLng(place.location.latitude, place.location.longitude),
                         originalIndex: ("originalIndex" in place && place.originalIndex>=0) ? place.originalIndex : null
-                    });
+                    };
+                    if (m_hash[place.placeId]) {
+                      m_obj.speedLimit = m_hash[place.placeId];
+                    }
+                    m_batch.push(m_obj);
                 });
                 m_add_snappedpoints_in_batch(m_batch, map, id);
             }
@@ -998,8 +1008,29 @@
         return  '<div id="infowindow" class="infowindow">' +
                 '<h2>' + "Snapped point"+(point.originalIndex!==null ? " ("+(point.originalIndex+1)+")" : "") + '</h2>' +
                 '<ul>' +
+                (point.speedLimit ? '<li><b>Speed limit:</b> ' + point.speedLimit + '</li>' : '')+
                 '<li><b>Place ID:</b> ' + point.placeId + '</li>' +
                 '<li><b>Location:</b> ' + point.location.lat() + ',' + point.location.lng() + '</li>' +
+                '</ul>' +
+                '</div>';
+    }
+    
+    /**
+     * Template for info window content of speed limit
+     * @param {Object} speed limit Object that represents place in web service response
+     */
+    function m_info_window_content_speedlimit (speedlimit) {
+        var m_lat = speedlimit.place.geometry.location.lat(),
+            m_lng = speedlimit.place.geometry.location.lng();
+        return  '<div id="infowindow" class="infowindow">' +
+                '<h2>' + speedlimit.place.name + '</h2>' +
+                '<ul>' +
+                '<li><b>Speed limit:</b> ' + speedlimit.speedLimit + ' ' + speedlimit.units + '</li>' +
+                (speedlimit.place.formatted_address ? '<li><b>Address:</b> ' + speedlimit.place.formatted_address + '</li>' : '') +
+                '<li><b>Types:</b> ' + speedlimit.place.types.join(", ") + '</li>' +
+                '<li><b>Place ID:</b> ' + speedlimit.placeId + '</li>' +
+                (speedlimit.place.vicinity ? '<li><b>Vicinity:</b> ' + speedlimit.place.vicinity + '</li>' : '') +
+                '<li><b>Location:</b> ' + m_lat + ',' + m_lng + '</li>' +
                 '</ul>' +
                 '</div>';
     }
@@ -1175,6 +1206,7 @@
                 if($.isArray(service) && service.length){
                     switch(service[0].get("name")){
                         case "Snap to Road":
+                        case "Speed Limits":  
                             var m_latlng = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("path");
                             if($.isArray(m_latlng) && m_latlng.length) {
                                 _.each(m_latlng, function(p, ind) {
@@ -1314,13 +1346,14 @@
                 if (count === batch.length) {
                     progress.value = progress.min;
                     for(var key in m_hash) {
-                       m_add_speedlimit_to_map(m_hash[key], map);
+                      if (m_hash[key].place) {
+                        m_add_speedlimit_to_map(m_hash[key], map);
+                      }  
                     }
                     m_adjust_bounds(map);
                 }
             }
 
-            m_add_center_and_radius(id, map);
             progress.min = 0;
             progress.max = batch.length;
             progress.value = progress.min;
