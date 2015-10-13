@@ -2,12 +2,14 @@
     'use strict';
 
     var ICON_URL = "http://maps.google.com/mapfiles/kml/paddle/blu-blank.png",
+        ICON_URL_PINK = "http://maps.google.com/mapfiles/kml/paddle/pink-blank.png",
         ICON_LABELS = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         ICON_ARROW = "http://www.google.com/mapfiles/arrow.png",
         ICON_ARROW_SHADOW = "http://www.google.com/mapfiles/arrowshadow.png",
         ROUTE_COLORS = ['#C53929', '#0B8043', '#3367D6'],
         infoWindow = null,
         placesServices = null,
+        geocoder = null,
         ICON_SIZE_32 = null,
         ICON_SIZE_16 = null,
         ICON_PLACE = "https://maps.gstatic.com/mapfiles/place_api/icons/geocode-71.png";
@@ -41,6 +43,9 @@
             }
             if (!placesServices) {
                 placesServices = new google.maps.places.PlacesService($("<div>").get(0));
+            }
+            if (!geocoder) {
+                geocoder = new google.maps.Geocoder();
             }
             if (!ICON_SIZE_16) {
                 ICON_SIZE_16 = new google.maps.Size(16, 16);
@@ -327,11 +332,11 @@
         case "directions":
             return m_parseDirectionsJSON(data, map, id);
         case "distancematrix":
-            break;
+            return m_parseDistanceMatrixJSON(data, map, id);
         case "elevation":
-            break;
+            return m_parseElevationJSON(data, map, id);
         case "timezone":
-            break;
+            return m_parseTimezoneJSON(data, map, id);
         case "places_search":
             return m_parsePlacesSearchJSON(data, map, id);
         case "places_radar":
@@ -362,11 +367,11 @@
         case "directions":
             return m_parseDirectionsXML(data, map, id);
         case "distancematrix":
-            break;
+            return m_parseDistanceMatrixXML(data, map, id);
         case "elevation":
-            break;
+            return m_parseElevationXML(data, map, id);
         case "timezone":
-            break;
+            return m_parseTimezoneXML(data, map, id);
         case "places_search":
             return m_parsePlacesSearchXML(data, map, id);
         case "places_radar":
@@ -393,6 +398,7 @@
             case "places_autocomplete":
             case "roads":
             case "speed":
+            case "distancematrix":  
                 return true;
             default:
                 return false;
@@ -519,6 +525,162 @@
                     }
                 });
             });
+        }
+        return res;
+    }
+    
+    /**
+     * Parse JSON data from Distance Matrix API
+     * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} null (features will be added asyncronously on map)
+     */
+    function m_parseDistanceMatrixJSON (data, map, id) {
+        var total = 0;
+        var respCount = 0;
+      
+        function m_callback_o (results, status) {
+          respCount++;
+          if (status === google.maps.GeocoderStatus.OK) {
+            m_add_address_to_map(results[0], map, ICON_URL);
+          }
+          if (respCount === total) {
+            m_adjust_bounds(map);            
+          }
+        }
+        
+        function m_callback_d (results, status) {
+          respCount++;
+          if (status === google.maps.GeocoderStatus.OK) {
+            m_add_address_to_map(results[0], map, ICON_URL_PINK);
+          }
+          if (respCount === total) {
+            m_adjust_bounds(map);            
+          }
+        }
+      
+        window.com.xomena.mapRenderer.clearMap(id);  
+        if (_.isObject(data) && data.status && data.status === "OK") {
+            var counter = 0;
+            if (data.origin_addresses && _.isArray(data.origin_addresses) && data.origin_addresses.length) {
+                total += data.origin_addresses.length;
+                _.each(data.origin_addresses, function (addr, index) {
+                    var m_req = {
+                      address: addr
+                    };
+                    if (counter < 10) {
+                      geocoder.geocode(m_req, m_callback_o);
+                    } else {
+                      window.setTimeout(function () {
+                        geocoder.geocode(m_req, m_callback_o);
+                      }, (counter-9)*1000);
+                    }
+                    counter++;
+                });
+            }
+            if (data.destination_addresses && _.isArray(data.destination_addresses) && data.destination_addresses.length) {
+                total += data.destination_addresses.length;
+                _.each(data.destination_addresses, function (addr, index) {
+                    var m_req = {
+                      address: addr
+                    };
+                    if (counter < 10) {
+                      geocoder.geocode(m_req, m_callback_d);
+                    } else {
+                      window.setTimeout(function () {
+                        geocoder.geocode(m_req, m_callback_d);
+                      }, (counter-9)*1000);
+                    }
+                    counter++;
+                });
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Parse JSON data from Elevation API
+     * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} GeoJSON object
+     */
+    function m_parseElevationJSON (data, map, id) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        };
+        if (_.isObject(data) && data.status && data.status === "OK") {
+            if (data.results && _.isArray(data.results) && data.results.length) {
+                _.each(data.results, function (elem, index) {
+                    res.features.push({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [elem.location.lng, elem.location.lat]
+                        },
+                        "properties": {
+                            "elevation": elem.elevation,
+                            "resolution": elem.resolution ? elem.resolution : null,
+                            "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                            "content": m_info_window_content_elevation(elem),
+                            "zIndex": 2
+                        },
+                        "id": id + "-elevation-" + index
+                    });
+                });
+            }
+        }
+        return res;
+    }
+    
+    /**
+     * Parse JSON data from Timezone API
+     * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} GeoJSON object
+     */
+    function m_parseTimezoneJSON (data, map, id) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        };
+        if (_.isObject(data) && data.status && data.status === "OK") {
+            if (window.com.xomena.mapRenderer.instances[id] && window.com.xomena.mapRenderer.instances[id].model) {
+                var m_service = window.com.xomena.mapRenderer.instances[id].model.get("webservice");
+                if(m_service){
+                    var m_services = window.com.xomena.mapRenderer.instances[id].model.get("services");
+                    var service = m_services.filterById(parseInt(m_service));
+                    if($.isArray(service) && service.length){
+                        if(service[0].get("name") === "Timezone"){
+                            var m_latlng = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("location");
+                            if($.isArray(m_latlng) && m_latlng.length) {
+                                var m_arr = m_latlng[0].split(",");
+                                res.features.push({
+                                  "type": "Feature",
+                                  "geometry": {
+                                    "type": "Point",
+                                    "coordinates": [parseFloat(m_arr[1]), parseFloat(m_arr[0])]
+                                  },
+                                  "properties": {
+                                    "timeZoneName": data.timeZoneName,
+                                    "timeZoneId": data.timeZoneId,
+                                    "rawOffset": data.rawOffset,
+                                    "dstOffset": data.dstOffset,
+                                    "icon": ICON_URL,
+                                    "content": m_info_window_content_timezone(data, parseFloat(m_arr[0]), parseFloat(m_arr[1])),
+                                    "zIndex": 2
+                                  },
+                                  "id": id + "-timezone"
+                                });                
+                            }
+                        }
+                    }
+                }
+            }
         }
         return res;
     }
@@ -839,6 +1001,176 @@
         }
         return res;
     }
+    
+    /**
+     * Parse XML data from Distance Matrix API
+     * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} null (features will be added asyncronously on map)
+     */
+    function m_parseDistanceMatrixXML (data, map, id) {
+        var total = 0, respCount = 0, xmlDoc = m_getXMLDoc($.trim(data));
+        
+        function m_callback_o (results, status) {
+          respCount++;
+          if (status === google.maps.GeocoderStatus.OK) {
+            m_add_address_to_map(results[0], map, ICON_URL);
+          }
+          if (respCount === total) {
+            m_adjust_bounds(map);            
+          }
+        }
+        
+        function m_callback_d (results, status) {
+          respCount++;
+          if (status === google.maps.GeocoderStatus.OK) {
+            m_add_address_to_map(results[0], map, ICON_URL_PINK);
+          }
+          if (respCount === total) {
+            m_adjust_bounds(map);            
+          }
+        }
+
+        window.com.xomena.mapRenderer.clearMap(id);  
+        if (data && xmlDoc) {
+            var m_status = $(xmlDoc).find("DistanceMatrixResponse > status").text();
+            var counter = 0;
+            total = $(xmlDoc).find("DistanceMatrixResponse > origin_address").length + $(xmlDoc).find("DistanceMatrixResponse > destination_address").length;
+            if(m_status === "OK") {
+                $(xmlDoc).find("DistanceMatrixResponse > origin_address").each(function(index, elem){
+                    var m_req = {
+                      address: $(elem).text()
+                    };
+                    if (counter < 10) {
+                      geocoder.geocode(m_req, m_callback_o);
+                    } else {
+                      window.setTimeout(function () {
+                        geocoder.geocode(m_req, m_callback_o);
+                      }, (counter-9)*1000);
+                    }
+                    counter++;
+                });
+                $(xmlDoc).find("DistanceMatrixResponse > destination_address").each(function(index, elem){
+                    var m_req = {
+                      address: $(elem).text()
+                    };
+                    if (counter < 10) {
+                      geocoder.geocode(m_req, m_callback_d);
+                    } else {
+                      window.setTimeout(function () {
+                        geocoder.geocode(m_req, m_callback_d);
+                      }, (counter-9)*1000);
+                    }
+                    counter++;
+                });
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Parse XML data from Elevation API
+     * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} GeoJSON object
+     */
+    function m_parseElevationXML (data, map, id) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        }, xmlDoc = m_getXMLDoc($.trim(data));
+
+        if (data && xmlDoc) {
+            var m_status = $(xmlDoc).find("ElevationResponse > status").text();
+            if(m_status === "OK") {
+                $(xmlDoc).find("ElevationResponse > result").each(function(index, elem){
+                    res.features.push({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [parseFloat($(elem).find("location > lng").text()), parseFloat($(elem).find("location > lat").text())]
+                        },
+                        "properties": {
+                            "elevation": $(elem).find("elevation").text(),
+                            "resolution": $(elem).find("resolution").text(),
+                            "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                            "content": m_info_window_content_elevation({
+                              elevation: $(elem).find("elevation").text(),
+                              location: {
+                                lat: parseFloat($(elem).find("location > lat").text()),
+                                lng: parseFloat($(elem).find("location > lng").text())
+                              },
+                              resolution: $(elem).find("resolution").text()
+                            }),
+                            "zIndex": 2
+                        },
+                        "id": id + "-elevation-" + index
+                    });
+                });
+            }
+        }
+        return res;
+    }
+    
+    /**
+     * Parse XML data from Timezone API
+     * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} GeoJSON object
+     */
+    function m_parseTimezoneXML (data, map, id) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        }, xmlDoc = m_getXMLDoc($.trim(data));
+        if (data && xmlDoc) {
+          var m_status = $(xmlDoc).find("TimeZoneResponse > status").text();
+          if (m_status === "OK") {
+              if (window.com.xomena.mapRenderer.instances[id] && window.com.xomena.mapRenderer.instances[id].model) {
+                  var m_service = window.com.xomena.mapRenderer.instances[id].model.get("webservice");
+                  if(m_service){
+                      var m_services = window.com.xomena.mapRenderer.instances[id].model.get("services");
+                      var service = m_services.filterById(parseInt(m_service));
+                      if($.isArray(service) && service.length){
+                          if(service[0].get("name") === "Timezone"){
+                              var m_latlng = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("location");
+                              if($.isArray(m_latlng) && m_latlng.length) {
+                                  var m_arr = m_latlng[0].split(",");
+                                  res.features.push({
+                                    "type": "Feature",
+                                    "geometry": {
+                                      "type": "Point",
+                                      "coordinates": [parseFloat(m_arr[1]), parseFloat(m_arr[0])]
+                                    },
+                                    "properties": {
+                                      "timeZoneName": $(xmlDoc).find("TimeZoneResponse > time_zone_name").text(),
+                                      "timeZoneId": $(xmlDoc).find("TimeZoneResponse > time_zone_id").text(),
+                                      "rawOffset": $(xmlDoc).find("TimeZoneResponse > raw_offset").text(),
+                                      "dstOffset": $(xmlDoc).find("TimeZoneResponse > dst_offset").text(),
+                                      "icon": ICON_URL,
+                                      "content": m_info_window_content_timezone({
+                                        "dstOffset": $(xmlDoc).find("TimeZoneResponse > dst_offset").text(),
+                                        "rawOffset": $(xmlDoc).find("TimeZoneResponse > raw_offset").text(),
+                                        "timeZoneId": $(xmlDoc).find("TimeZoneResponse > time_zone_id").text(),
+                                        "timeZoneName": $(xmlDoc).find("TimeZoneResponse > time_zone_name").text()
+                                      }, parseFloat(m_arr[0]), parseFloat(m_arr[1])),
+                                      "zIndex": 2
+                                    },
+                                    "id": id + "-timezone"
+                                  });                
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+        }  
+        return res;
+    }
 
     /**
      * Parse XML data from Places API (nearby and text searches)
@@ -978,6 +1310,36 @@
                 '</ul>' +
                 '</div>';
     }
+    
+    /**
+     * Template for info window content of elevation
+     * @param {Object} elem Objects that represents elevation in web service response
+     */
+    function m_info_window_content_elevation (elem) {
+        return  '<div id="infowindow" class="infowindow">' +
+                '<ul>' +
+                '<li><b>Elevation (in meters):</b> ' + elem.elevation + '</li>' +
+                '<li><b>Location:</b> ' + elem.location.lat + ',' + elem.location.lng + '</li>' +
+                (elem.resolution ? '<li><b>Resolution (in meters):</b> ' + elem.resolution + '</li>' : '') +
+                '</ul>' +
+                '</div>';
+    }
+    
+    /**
+     * Template for info window content of elevation
+     * @param {Object} elem Objects that represents elevation in web service response
+     */
+    function m_info_window_content_timezone (elem, lat, lng) {
+        return  '<div id="infowindow" class="infowindow">' +
+                '<ul>' +
+                '<h2>' + elem.timeZoneName + '</h2>' +
+                '<li><b>Time zone Id:</b> ' + elem.timeZoneId + '</li>' +
+                '<li><b>Offset from UTC (in seconds):</b> ' + elem.rawOffset + '</li>' +
+                '<li><b>Offset for daylight-savings (in seconds):</b> ' + elem.dstOffset + '</li>' +
+                '<li><b>Location:</b> ' + lat + ',' + lng + '</li>' +
+                '</ul>' +
+                '</div>';
+    }
 
     /**
      * Template for info window content of place
@@ -1098,6 +1460,38 @@
             },
             "id": place.place_id
         });
+    }
+    
+    /**
+     * Adds geocoded address on map as a Point feature
+     * @param {google.maps.GeocoderResult}  address Address instance of google.maps.GeocoderResult
+     * @param {google.maps.Map}   map   Map instance
+     */
+    function m_add_address_to_map (address, map, icon) {
+        map.data.add(new google.maps.Data.Feature({
+            geometry: address.geometry.location,
+            id: address.place_id,
+            "properties": {
+                "address": address.formatted_address,
+                "types": address.types.join(", "),
+                "partial_match": address.partial_match,
+                "place_id": address.place_id,
+                "icon": icon ? icon : ICON_URL,
+                "iconSize": ICON_SIZE_32,
+                "content": m_info_window_content_address({
+                    formatted_address: address.formatted_address,
+                    geometry: {
+                        location: {
+                            lat: address.geometry.location.lat(),
+                            lng: address.geometry.location.lng()
+                        }
+                    },
+                    types: address.types,
+                    place_id: address.place_id
+                }),
+                "zIndex": 2
+            }
+        }));
     }
 
     /**

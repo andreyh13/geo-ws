@@ -182,7 +182,7 @@ window.com.xomena.geo = {
         .replace(/,\"place_id\":/ig, ",\n\"place_id\":").replace(/,\"short_name\":/ig, ",\n\"short_name\":").replace(/,\"rating\":/ig, ",\n\"rating\":")
         .replace(/,\"longitude\":/ig, ",\n\"longitude\":").replace(/,\"placeId\":/ig, ",\n\"placeId\":").replace(/,\"message\":/ig, ",\n\"message\":")
         .replace(/,\"price_level\":/ig, ",\n\"price_level\":").replace(/,\"status\":/ig, ",\n\"status\":").replace(/,\"speedLimit\":/ig, ",\n\"speedLimit\":")
-        .replace(/,\"units\":/ig, ",\n\"units\":");
+        .replace(/,\"units\":/ig, ",\n\"units\":").replace(/,\"rawOffset\":/ig, ",\n\"rawOffset\":").replace(/,\"timeZoneName\":/ig, ",\n\"timeZoneName\":");
       
       
       var arr = m_res.split("\n");
