@@ -10,7 +10,7 @@ window.com.xomena.geo = {
   services: null,
   instanceViewsMap: {},    
   config: {},  
-  storedValues: {},    
+  storedValues: {},
   getNewId: function(){
     window.com.xomena.geo.getNewId.count = ++window.com.xomena.geo.getNewId.count || 1;
     return window.com.xomena.geo.getNewId.count;
@@ -181,7 +181,8 @@ window.com.xomena.geo = {
         .replace(/,\"vicinity\":/ig, ",\n\"vicinity\":").replace(/,\"website\":/ig, ",\n\"website\":").replace(/,\"offset\":/ig, ",\n\"offset\":").replace(/,\"value\":/ig, ",\n\"value\":")
         .replace(/,\"place_id\":/ig, ",\n\"place_id\":").replace(/,\"short_name\":/ig, ",\n\"short_name\":").replace(/,\"rating\":/ig, ",\n\"rating\":")
         .replace(/,\"longitude\":/ig, ",\n\"longitude\":").replace(/,\"placeId\":/ig, ",\n\"placeId\":").replace(/,\"message\":/ig, ",\n\"message\":")
-        .replace(/,\"price_level\":/ig, ",\n\"price_level\":").replace(/,\"status\":/ig, ",\n\"status\":");
+        .replace(/,\"price_level\":/ig, ",\n\"price_level\":").replace(/,\"status\":/ig, ",\n\"status\":").replace(/,\"speedLimit\":/ig, ",\n\"speedLimit\":")
+        .replace(/,\"units\":/ig, ",\n\"units\":").replace(/,\"rawOffset\":/ig, ",\n\"rawOffset\":").replace(/,\"timeZoneName\":/ig, ",\n\"timeZoneName\":");
       
       
       var arr = m_res.split("\n");

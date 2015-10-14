@@ -2,12 +2,14 @@
     'use strict';
 
     var ICON_URL = "http://maps.google.com/mapfiles/kml/paddle/blu-blank.png",
+        ICON_URL_PINK = "http://maps.google.com/mapfiles/kml/paddle/pink-blank.png",
         ICON_LABELS = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         ICON_ARROW = "http://www.google.com/mapfiles/arrow.png",
         ICON_ARROW_SHADOW = "http://www.google.com/mapfiles/arrowshadow.png",
         ROUTE_COLORS = ['#C53929', '#0B8043', '#3367D6'],
         infoWindow = null,
         placesServices = null,
+        geocoder = null,
         ICON_SIZE_32 = null,
         ICON_SIZE_16 = null,
         ICON_PLACE = "https://maps.gstatic.com/mapfiles/place_api/icons/geocode-71.png";
@@ -42,6 +44,9 @@
             if (!placesServices) {
                 placesServices = new google.maps.places.PlacesService($("<div>").get(0));
             }
+            if (!geocoder) {
+                geocoder = new google.maps.Geocoder();
+            }
             if (!ICON_SIZE_16) {
                 ICON_SIZE_16 = new google.maps.Size(16, 16);
             }
@@ -59,12 +64,17 @@
                                 m_address = feature.getProperty("address"),
                                 m_zindex = feature.getProperty("zIndex"),
                                 m_name = feature.getProperty("name");
+                            
+                            var m_iconDef = {
+                                url: m_icon ? m_icon : ICON_URL,
+                                scaledSize: m_size ? m_size : ICON_SIZE_32
+                            };  
+                            if (m_icon === ICON_ARROW) {
+                                m_iconDef.anchor = new google.maps.Point(12, 34);
+                            }
 
                             style = {
-                                icon: {
-                                    url: m_icon ? m_icon : ICON_URL,
-                                    scaledSize: m_size ? m_size : ICON_SIZE_32
-                                },
+                                icon: m_iconDef,
                                 title: m_name? m_name : (m_address ? m_address : ""),
                                 visible: true,
                                 zIndex: m_zindex ? m_zindex : 0
@@ -165,6 +175,10 @@
                         m_adjust_bounds(m_map);
                     }
                 }
+                var m_div = m_map.getDiv();
+                if (!$(m_div).is(":visible")) {
+                  this.instances[id].pendingFitBounds = true;
+                }
             }
         },
 
@@ -183,6 +197,17 @@
                 infoWindow.close();
             }
             this.instances[id].circle.setVisible(false);
+        },
+        
+        /**
+         * Fit bound of the map related to this web service instance 
+         * @param {String} id The ID of Web Service instance
+         */
+        adjustBounds: function (id) {
+            var m_map = this.getMap(id);
+            if (m_map) {
+              m_adjust_bounds(m_map); 
+            }
         },
 
         /**
@@ -300,6 +325,8 @@
      * Prototype function of the Strategy to get GeoJSON
      * @param   {Object} data  Data from the web service (JSON object or XML string)
      * @param   {String} format Format ("json", "xml")
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     window.com.xomena.mapRenderer.Strategy.prototype.getGeoJSON = function (data, format, map, id) {
@@ -314,6 +341,8 @@
     /**
      * Prototype function of the Strategy to get GeoJSON from JSON data
      * @param   {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_JSON = function (data, map, id) {
@@ -323,11 +352,11 @@
         case "directions":
             return m_parseDirectionsJSON(data, map, id);
         case "distancematrix":
-            break;
+            return m_parseDistanceMatrixJSON(data, map, id);
         case "elevation":
-            break;
+            return m_parseElevationJSON(data, map, id);
         case "timezone":
-            break;
+            return m_parseTimezoneJSON(data, map, id);
         case "places_search":
             return m_parsePlacesSearchJSON(data, map, id);
         case "places_radar":
@@ -339,7 +368,7 @@
         case "roads":
             return m_parseSnapToRoadsJSON(data, map, id);
         case "speed":
-            break;
+            return m_parseSpeedLimitsJSON(data, map, id);
         }
         return null;
     };
@@ -347,6 +376,8 @@
     /**
      * Prototype function of the Strategy to get GeoJSON from XML string
      * @param   {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_XML = function (data, map, id) {
@@ -356,11 +387,11 @@
         case "directions":
             return m_parseDirectionsXML(data, map, id);
         case "distancematrix":
-            break;
+            return m_parseDistanceMatrixXML(data, map, id);
         case "elevation":
-            break;
+            return m_parseElevationXML(data, map, id);
         case "timezone":
-            break;
+            return m_parseTimezoneXML(data, map, id);
         case "places_search":
             return m_parsePlacesSearchXML(data, map, id);
         case "places_radar":
@@ -386,6 +417,8 @@
             case "places_radar":
             case "places_autocomplete":
             case "roads":
+            case "speed":
+            case "distancematrix":  
                 return true;
             default:
                 return false;
@@ -409,6 +442,8 @@
     /**
      * Parse JSON data from Geocoding API
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parseGeocodeJSON (data, map, id) {
@@ -430,6 +465,7 @@
                             "types": elem.types.join(","),
                             "location_type": elem.geometry.location_type,
                             "place_id": elem.place_id,
+                            "partial_match": elem.partial_match ? elem.partial_match : false, 
                             "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
                                 (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
                             "content": m_info_window_content_address(elem),
@@ -454,6 +490,8 @@
     /**
      * Parse JSON data from Directions API
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parseDirectionsJSON (data, map, id) {
@@ -511,10 +549,168 @@
         }
         return res;
     }
+    
+    /**
+     * Parse JSON data from Distance Matrix API
+     * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} null (features will be added asyncronously on map)
+     */
+    function m_parseDistanceMatrixJSON (data, map, id) {
+        var total = 0;
+        var respCount = 0;
+      
+        function m_callback_o (results, status) {
+          respCount++;
+          if (status === google.maps.GeocoderStatus.OK) {
+            m_add_address_to_map(results[0], map, ICON_URL);
+          }
+          if (respCount === total) {
+            m_adjust_bounds(map);            
+          }
+        }
+        
+        function m_callback_d (results, status) {
+          respCount++;
+          if (status === google.maps.GeocoderStatus.OK) {
+            m_add_address_to_map(results[0], map, ICON_URL_PINK);
+          }
+          if (respCount === total) {
+            m_adjust_bounds(map);            
+          }
+        }
+      
+        window.com.xomena.mapRenderer.clearMap(id);  
+        if (_.isObject(data) && data.status && data.status === "OK") {
+            var counter = 0;
+            if (data.origin_addresses && _.isArray(data.origin_addresses) && data.origin_addresses.length) {
+                total += data.origin_addresses.length;
+                _.each(data.origin_addresses, function (addr, index) {
+                    var m_req = {
+                      address: addr
+                    };
+                    if (counter < 10) {
+                      geocoder.geocode(m_req, m_callback_o);
+                    } else {
+                      window.setTimeout(function () {
+                        geocoder.geocode(m_req, m_callback_o);
+                      }, (counter-9)*1000);
+                    }
+                    counter++;
+                });
+            }
+            if (data.destination_addresses && _.isArray(data.destination_addresses) && data.destination_addresses.length) {
+                total += data.destination_addresses.length;
+                _.each(data.destination_addresses, function (addr, index) {
+                    var m_req = {
+                      address: addr
+                    };
+                    if (counter < 10) {
+                      geocoder.geocode(m_req, m_callback_d);
+                    } else {
+                      window.setTimeout(function () {
+                        geocoder.geocode(m_req, m_callback_d);
+                      }, (counter-9)*1000);
+                    }
+                    counter++;
+                });
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Parse JSON data from Elevation API
+     * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} GeoJSON object
+     */
+    function m_parseElevationJSON (data, map, id) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        };
+        if (_.isObject(data) && data.status && data.status === "OK") {
+            if (data.results && _.isArray(data.results) && data.results.length) {
+                _.each(data.results, function (elem, index) {
+                    res.features.push({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [elem.location.lng, elem.location.lat]
+                        },
+                        "properties": {
+                            "elevation": elem.elevation,
+                            "resolution": elem.resolution ? elem.resolution : null,
+                            "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                            "content": m_info_window_content_elevation(elem),
+                            "zIndex": 2
+                        },
+                        "id": id + "-elevation-" + index
+                    });
+                });
+            }
+        }
+        return res;
+    }
+    
+    /**
+     * Parse JSON data from Timezone API
+     * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} GeoJSON object
+     */
+    function m_parseTimezoneJSON (data, map, id) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        };
+        if (_.isObject(data) && data.status && data.status === "OK") {
+            if (window.com.xomena.mapRenderer.instances[id] && window.com.xomena.mapRenderer.instances[id].model) {
+                var m_service = window.com.xomena.mapRenderer.instances[id].model.get("webservice");
+                if(m_service){
+                    var m_services = window.com.xomena.mapRenderer.instances[id].model.get("services");
+                    var service = m_services.filterById(parseInt(m_service));
+                    if($.isArray(service) && service.length){
+                        if(service[0].get("name") === "Timezone"){
+                            var m_latlng = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("location");
+                            if($.isArray(m_latlng) && m_latlng.length) {
+                                var m_arr = m_latlng[0].split(",");
+                                res.features.push({
+                                  "type": "Feature",
+                                  "geometry": {
+                                    "type": "Point",
+                                    "coordinates": [parseFloat(m_arr[1]), parseFloat(m_arr[0])]
+                                  },
+                                  "properties": {
+                                    "timeZoneName": data.timeZoneName,
+                                    "timeZoneId": data.timeZoneId,
+                                    "rawOffset": data.rawOffset,
+                                    "dstOffset": data.dstOffset,
+                                    "icon": ICON_URL,
+                                    "content": m_info_window_content_timezone(data, parseFloat(m_arr[0]), parseFloat(m_arr[1])),
+                                    "zIndex": 2
+                                  },
+                                  "id": id + "-timezone"
+                                });                
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return res;
+    }
 
     /**
      * Parse JSON data from Places search (nearby and text searches)
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parsePlacesSearchJSON (data, map, id) {
@@ -535,6 +731,8 @@
     /**
      * Parse JSON data from Places radar search
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} null (features will be added asyncronously on map)
      */
     function m_parsePlacesRadarJSON (data, map, id) {
@@ -554,6 +752,8 @@
     /**
      * Parse JSON data from Places detail
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parsePlacesDetailJSON (data, map, id) {
@@ -570,6 +770,8 @@
     /**
      * Parse JSON data from Places autocomplete
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} null (features will be added asyncronously on map)
      */
     function m_parsePlacesAutocompleteJSON (data, map, id) {
@@ -589,6 +791,8 @@
     /**
      * Parse JSON data from Snap to Roads
      * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} null (features will be added asyncronously on map)
      */
     function m_parseSnapToRoadsJSON (data, map, id) {
@@ -597,16 +801,62 @@
         if (_.isObject(data) && data.snappedPoints && _.isArray(data.snappedPoints) && data.snappedPoints.length) {
             var m_batch = [];
             _.each(data.snappedPoints, function (place, index) {
-                m_batch.push(place.placeId);
+                m_batch.push({
+                    placeId: place.placeId,
+                    location: new google.maps.LatLng(place.location.latitude, place.location.longitude),
+                    originalIndex: ("originalIndex" in place && place.originalIndex>=0) ? place.originalIndex : null
+                });
             });
-            m_add_places_in_batch(m_batch, map, id);
+            m_add_snappedpoints_in_batch(m_batch, map, id);
         }
         return null;
     }
 
+     /**
+     * Parse JSON data from Speed Limits
+     * @param {Object} data Data from the web service (JSON object)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} null (features will be added asyncronously on map)
+     */
+    function m_parseSpeedLimitsJSON (data, map, id) {
+        window.com.xomena.mapRenderer.clearMap(id);
+        if (_.isObject(data)) {
+            var m_hash = {};
+            if (data.speedLimits && _.isArray(data.speedLimits) && data.speedLimits.length) {
+              _.each(data.speedLimits, function (speed, index) {
+                m_hash[speed.placeId] = speed.speedLimit + ' ' + speed.units;
+              });
+            }
+            if (data.snappedPoints && _.isArray(data.snappedPoints) && data.snappedPoints.length) {
+                m_add_original_points_for_snap(id, map);
+                var m_batch = [];
+                _.each(data.snappedPoints, function (place, index) {
+                    var m_obj = {
+                        placeId: place.placeId,
+                        location: new google.maps.LatLng(place.location.latitude, place.location.longitude),
+                        originalIndex: ("originalIndex" in place && place.originalIndex>=0) ? place.originalIndex : null
+                    };
+                    if (m_hash[place.placeId]) {
+                      m_obj.speedLimit = m_hash[place.placeId];
+                    }
+                    m_batch.push(m_obj);
+                });
+                m_add_snappedpoints_in_batch(m_batch, map, id);
+            }
+            if (data.speedLimits && _.isArray(data.speedLimits) && data.speedLimits.length) {
+                m_add_speedlimits_in_batch(data.speedLimits, map, id);
+            }
+        }
+        return null;
+    }
+
+
     /**
      * Parse XML data from Geocoding API
      * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parseGeocodeXML (data, map, id) {
@@ -623,10 +873,11 @@
                 if(r && r.length) {
                     _.each(r, function (node, index) {
                         var m_address, m_types, m_location_type, m_place_id, m_lat, m_lng,
-                            m_sw_lat, m_sw_lng, m_ne_lat, m_ne_lng,
+                            m_sw_lat, m_sw_lng, m_ne_lat, m_ne_lng, m_partial_match,
                             fa_node = node.getElementsByTagName("formatted_address"),
                             t_nodes = node.getElementsByTagName("type"),
                             pl_node = node.getElementsByTagName("place_id"),
+                            pm_node = node.getElementsByTagName("partial_match"),
                             geo_node = node.getElementsByTagName("geometry");
 
                         if (fa_node && fa_node.length) {
@@ -643,6 +894,9 @@
                         }
                         if (pl_node && pl_node.length) {
                             m_place_id = pl_node[0].firstChild.nodeValue;
+                        }
+                        if (pm_node && pm_node.length) {
+                            m_partial_match = Boolean(pm_node[0].firstChild.nodeValue);  
                         }
                         if (geo_node && geo_node.length) {
                             var loc_node = geo_node[0].getElementsByTagName("location"),
@@ -675,6 +929,7 @@
                                     "types": m_types ? m_types : "",
                                     "location_type": m_location_type ? m_location_type : "",
                                     "place_id": m_place_id,
+                                    "partial_match": m_partial_match ? m_partial_match : false,
                                     "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
                                         (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
                                     "content": m_info_window_content_address({
@@ -687,7 +942,8 @@
                                             }
                                         },
                                         types: [m_types ? m_types : ""],
-                                        place_id: m_place_id
+                                        place_id: m_place_id,
+                                        partial_match: m_partial_match ? m_partial_match : false
                                     })
                                 },
                                 "id": m_place_id
@@ -713,6 +969,8 @@
     /**
      * Parse XML data from Directions API
      * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parseDirectionsXML (data, map, id) {
@@ -770,10 +1028,182 @@
         }
         return res;
     }
+    
+    /**
+     * Parse XML data from Distance Matrix API
+     * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} null (features will be added asyncronously on map)
+     */
+    function m_parseDistanceMatrixXML (data, map, id) {
+        var total = 0, respCount = 0, xmlDoc = m_getXMLDoc($.trim(data));
+        
+        function m_callback_o (results, status) {
+          respCount++;
+          if (status === google.maps.GeocoderStatus.OK) {
+            m_add_address_to_map(results[0], map, ICON_URL);
+          }
+          if (respCount === total) {
+            m_adjust_bounds(map);            
+          }
+        }
+        
+        function m_callback_d (results, status) {
+          respCount++;
+          if (status === google.maps.GeocoderStatus.OK) {
+            m_add_address_to_map(results[0], map, ICON_URL_PINK);
+          }
+          if (respCount === total) {
+            m_adjust_bounds(map);            
+          }
+        }
+
+        window.com.xomena.mapRenderer.clearMap(id);  
+        if (data && xmlDoc) {
+            var m_status = $(xmlDoc).find("DistanceMatrixResponse > status").text();
+            var counter = 0;
+            total = $(xmlDoc).find("DistanceMatrixResponse > origin_address").length + $(xmlDoc).find("DistanceMatrixResponse > destination_address").length;
+            if(m_status === "OK") {
+                $(xmlDoc).find("DistanceMatrixResponse > origin_address").each(function(index, elem){
+                    var m_req = {
+                      address: $(elem).text()
+                    };
+                    if (counter < 10) {
+                      geocoder.geocode(m_req, m_callback_o);
+                    } else {
+                      window.setTimeout(function () {
+                        geocoder.geocode(m_req, m_callback_o);
+                      }, (counter-9)*1000);
+                    }
+                    counter++;
+                });
+                $(xmlDoc).find("DistanceMatrixResponse > destination_address").each(function(index, elem){
+                    var m_req = {
+                      address: $(elem).text()
+                    };
+                    if (counter < 10) {
+                      geocoder.geocode(m_req, m_callback_d);
+                    } else {
+                      window.setTimeout(function () {
+                        geocoder.geocode(m_req, m_callback_d);
+                      }, (counter-9)*1000);
+                    }
+                    counter++;
+                });
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Parse XML data from Elevation API
+     * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} GeoJSON object
+     */
+    function m_parseElevationXML (data, map, id) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        }, xmlDoc = m_getXMLDoc($.trim(data));
+
+        if (data && xmlDoc) {
+            var m_status = $(xmlDoc).find("ElevationResponse > status").text();
+            if(m_status === "OK") {
+                $(xmlDoc).find("ElevationResponse > result").each(function(index, elem){
+                    res.features.push({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [parseFloat($(elem).find("location > lng").text()), parseFloat($(elem).find("location > lat").text())]
+                        },
+                        "properties": {
+                            "elevation": $(elem).find("elevation").text(),
+                            "resolution": $(elem).find("resolution").text(),
+                            "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                            "content": m_info_window_content_elevation({
+                              elevation: $(elem).find("elevation").text(),
+                              location: {
+                                lat: parseFloat($(elem).find("location > lat").text()),
+                                lng: parseFloat($(elem).find("location > lng").text())
+                              },
+                              resolution: $(elem).find("resolution").text()
+                            }),
+                            "zIndex": 2
+                        },
+                        "id": id + "-elevation-" + index
+                    });
+                });
+            }
+        }
+        return res;
+    }
+    
+    /**
+     * Parse XML data from Timezone API
+     * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} GeoJSON object
+     */
+    function m_parseTimezoneXML (data, map, id) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        }, xmlDoc = m_getXMLDoc($.trim(data));
+        if (data && xmlDoc) {
+          var m_status = $(xmlDoc).find("TimeZoneResponse > status").text();
+          if (m_status === "OK") {
+              if (window.com.xomena.mapRenderer.instances[id] && window.com.xomena.mapRenderer.instances[id].model) {
+                  var m_service = window.com.xomena.mapRenderer.instances[id].model.get("webservice");
+                  if(m_service){
+                      var m_services = window.com.xomena.mapRenderer.instances[id].model.get("services");
+                      var service = m_services.filterById(parseInt(m_service));
+                      if($.isArray(service) && service.length){
+                          if(service[0].get("name") === "Timezone"){
+                              var m_latlng = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("location");
+                              if($.isArray(m_latlng) && m_latlng.length) {
+                                  var m_arr = m_latlng[0].split(",");
+                                  res.features.push({
+                                    "type": "Feature",
+                                    "geometry": {
+                                      "type": "Point",
+                                      "coordinates": [parseFloat(m_arr[1]), parseFloat(m_arr[0])]
+                                    },
+                                    "properties": {
+                                      "timeZoneName": $(xmlDoc).find("TimeZoneResponse > time_zone_name").text(),
+                                      "timeZoneId": $(xmlDoc).find("TimeZoneResponse > time_zone_id").text(),
+                                      "rawOffset": $(xmlDoc).find("TimeZoneResponse > raw_offset").text(),
+                                      "dstOffset": $(xmlDoc).find("TimeZoneResponse > dst_offset").text(),
+                                      "icon": ICON_URL,
+                                      "content": m_info_window_content_timezone({
+                                        "dstOffset": $(xmlDoc).find("TimeZoneResponse > dst_offset").text(),
+                                        "rawOffset": $(xmlDoc).find("TimeZoneResponse > raw_offset").text(),
+                                        "timeZoneId": $(xmlDoc).find("TimeZoneResponse > time_zone_id").text(),
+                                        "timeZoneName": $(xmlDoc).find("TimeZoneResponse > time_zone_name").text()
+                                      }, parseFloat(m_arr[0]), parseFloat(m_arr[1])),
+                                      "zIndex": 2
+                                    },
+                                    "id": id + "-timezone"
+                                  });                
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+        }  
+        return res;
+    }
 
     /**
      * Parse XML data from Places API (nearby and text searches)
      * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parsePlacesSearchXML (data, map, id) {
@@ -814,6 +1244,8 @@
     /**
      * Parse XML data from Places API radar search
      * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} null (features will be added asynchronously on map)
      */
     function m_parsePlacesRadarXML (data, map, id) {
@@ -835,6 +1267,8 @@
     /**
      * Parse XML data from Places API details
      * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} GeoJSON object
      */
     function m_parsePlacesDetailXML (data, map, id) {
@@ -844,6 +1278,8 @@
     /**
      * Parse XML data from Places autocomplete
      * @param {String} data Data from the web service (XML string)
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
      * @returns {Object} null (features will be added asynchronously on map)
      */
     function m_parsePlacesAutocompleteXML (data, map, id) {
@@ -898,6 +1334,37 @@
                 '<li><b>Types:</b> ' + elem.types.join(", ") + '</li>' +
                 '<li><b>Place ID:</b> ' + elem.place_id + '</li>' +
                 '<li><b>Location:</b> ' + elem.geometry.location.lat + ',' + elem.geometry.location.lng + '</li>' +
+                (elem.partial_match ? '<li><b style="color:red;">Partial match!</b></li>' : '') +
+                '</ul>' +
+                '</div>';
+    }
+    
+    /**
+     * Template for info window content of elevation
+     * @param {Object} elem Objects that represents elevation in web service response
+     */
+    function m_info_window_content_elevation (elem) {
+        return  '<div id="infowindow" class="infowindow">' +
+                '<ul>' +
+                '<li><b>Elevation (in meters):</b> ' + elem.elevation + '</li>' +
+                '<li><b>Location:</b> ' + elem.location.lat + ',' + elem.location.lng + '</li>' +
+                (elem.resolution ? '<li><b>Resolution (in meters):</b> ' + elem.resolution + '</li>' : '') +
+                '</ul>' +
+                '</div>';
+    }
+    
+    /**
+     * Template for info window content of elevation
+     * @param {Object} elem Objects that represents elevation in web service response
+     */
+    function m_info_window_content_timezone (elem, lat, lng) {
+        return  '<div id="infowindow" class="infowindow">' +
+                '<ul>' +
+                '<h2>' + elem.timeZoneName + '</h2>' +
+                '<li><b>Time zone Id:</b> ' + elem.timeZoneId + '</li>' +
+                '<li><b>Offset from UTC (in seconds):</b> ' + elem.rawOffset + '</li>' +
+                '<li><b>Offset for daylight-savings (in seconds):</b> ' + elem.dstOffset + '</li>' +
+                '<li><b>Location:</b> ' + lat + ',' + lng + '</li>' +
                 '</ul>' +
                 '</div>';
     }
@@ -924,6 +1391,41 @@
     }
 
     /**
+     * Template for info window content of snapped point
+     * @param {Object} point Objects that represents snapped point in web service response
+     */
+    function m_info_window_content_snappedpoint (point) {
+        return  '<div id="infowindow" class="infowindow">' +
+                '<h2>' + "Snapped point"+(point.originalIndex!==null ? " ("+(point.originalIndex+1)+")" : "") + '</h2>' +
+                '<ul>' +
+                (point.speedLimit ? '<li><b>Speed limit:</b> ' + point.speedLimit + '</li>' : '')+
+                '<li><b>Place ID:</b> ' + point.placeId + '</li>' +
+                '<li><b>Location:</b> ' + point.location.lat() + ',' + point.location.lng() + '</li>' +
+                '</ul>' +
+                '</div>';
+    }
+    
+    /**
+     * Template for info window content of speed limit
+     * @param {Object} speed limit Object that represents place in web service response
+     */
+    function m_info_window_content_speedlimit (speedlimit) {
+        var m_lat = speedlimit.place.geometry.location.lat(),
+            m_lng = speedlimit.place.geometry.location.lng();
+        return  '<div id="infowindow" class="infowindow">' +
+                '<h2>' + speedlimit.place.name + '</h2>' +
+                '<ul>' +
+                '<li><b>Speed limit:</b> ' + speedlimit.speedLimit + ' ' + speedlimit.units + '</li>' +
+                (speedlimit.place.formatted_address ? '<li><b>Address:</b> ' + speedlimit.place.formatted_address + '</li>' : '') +
+                '<li><b>Types:</b> ' + speedlimit.place.types.join(", ") + '</li>' +
+                '<li><b>Place ID:</b> ' + speedlimit.placeId + '</li>' +
+                (speedlimit.place.vicinity ? '<li><b>Vicinity:</b> ' + speedlimit.place.vicinity + '</li>' : '') +
+                '<li><b>Location:</b> ' + m_lat + ',' + m_lng + '</li>' +
+                '</ul>' +
+                '</div>';
+    }
+
+    /**
      * Retrieves an XML doc from the string value
      * @param   {String} txt The XML string
      * @returns {Object} xmlDoc object
@@ -944,8 +1446,9 @@
 
     /**
      * Creates a feature of type Point in GeoJSON for place
-     * @param {[[Type]]} place   Instance of the google.maps.places.PlaceResult
-     * @param {[[Type]]} geojson GeoJSON object
+     * @param {google.maps.places.PlaceResult} place   Instance of the google.maps.places.PlaceResult
+     * @param {Object} geojson GeoJSON object
+     * @param {Boolean} renderAsAddress Render the place like ordinary street address?
      */
     function m_add_place_to_geojson (place, geojson, renderAsAddress) {
         var m_isJsClass = place.geometry.location instanceof google.maps.LatLng;
@@ -985,6 +1488,38 @@
             },
             "id": place.place_id
         });
+    }
+    
+    /**
+     * Adds geocoded address on map as a Point feature
+     * @param {google.maps.GeocoderResult}  address Address instance of google.maps.GeocoderResult
+     * @param {google.maps.Map}   map   Map instance
+     */
+    function m_add_address_to_map (address, map, icon) {
+        map.data.add(new google.maps.Data.Feature({
+            geometry: address.geometry.location,
+            id: address.place_id,
+            "properties": {
+                "address": address.formatted_address,
+                "types": address.types.join(", "),
+                "partial_match": address.partial_match,
+                "place_id": address.place_id,
+                "icon": icon ? icon : ICON_URL,
+                "iconSize": ICON_SIZE_32,
+                "content": m_info_window_content_address({
+                    formatted_address: address.formatted_address,
+                    geometry: {
+                        location: {
+                            lat: address.geometry.location.lat(),
+                            lng: address.geometry.location.lng()
+                        }
+                    },
+                    types: address.types,
+                    place_id: address.place_id
+                }),
+                "zIndex": 2
+            }
+        }));
     }
 
     /**
@@ -1093,6 +1628,7 @@
                 if($.isArray(service) && service.length){
                     switch(service[0].get("name")){
                         case "Snap to Road":
+                        case "Speed Limits":  
                             var m_latlng = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("path");
                             if($.isArray(m_latlng) && m_latlng.length) {
                                 _.each(m_latlng, function(p, ind) {
@@ -1120,6 +1656,13 @@
         }
     }
 
+    /**
+     * Adds a batch of places on the map
+     *
+     * @param {Array} batch Array of place IDs to add to the map
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     */
     function m_add_places_in_batch(batch, map, id) {
         var count = 0, progress = document.querySelector('#progress-' + id);
         if (_.isArray(batch) && batch.length) {
@@ -1157,4 +1700,123 @@
             });
         }
     }
+
+    /**
+     * Adds a batch of snapped points on the map
+     *
+     * @param {Array} batch Array of snapped points to add to the map
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     */
+    function m_add_snappedpoints_in_batch(batch, map, id) {
+        var progress = document.querySelector('#progress-' + id);
+        if (_.isArray(batch) && batch.length) {
+            progress.min = 0;
+            progress.max = batch.length;
+            progress.value = progress.min;
+
+            _.each(batch, function(point, index) {
+                progress.value = index + 1;
+                m_add_snappedpoint_to_map(point, map);
+            });
+            progress.value = progress.min;
+            m_adjust_bounds(map);
+        }
+    }
+
+    /**
+     * Adds a snapped point on a map as a Point feature
+     * @param {Object}   point           The snapped point from response
+     * @param {Object}   map             Map instance
+     */
+    function m_add_snappedpoint_to_map (point, map) {
+        map.data.add(new google.maps.Data.Feature({
+            geometry: point.location,
+            id: point.placeId,
+            "properties": {
+                "address": "Snapped point"+(point.originalIndex!==null ? " ("+(point.originalIndex+1)+")" : ""),
+                "name": "Snapped point"+(point.originalIndex!==null ? " ("+(point.originalIndex+1)+")" : ""),
+                "place_id": point.placeId,
+                "icon": ICON_URL,
+                "iconSize": ICON_SIZE_32,
+                "content": m_info_window_content_snappedpoint(point),
+                "zIndex": 4
+            }
+        }));
+    }
+
+    /**
+     * Adds a batch of speed limits on the map
+     *
+     * @param {Array} batch Array of speed limits to add to the map
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     */
+    function m_add_speedlimits_in_batch(batch, map, id) {
+        var count = 0, progress = document.querySelector('#progress-' + id),
+            m_hash = {};
+        if (_.isArray(batch) && batch.length) {
+            function m_callback (place_res, status) {
+                count++;
+                console.log("Status: " + status);
+                progress.value = count;
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    if (m_hash[place_res.place_id]) {
+                        m_hash[place_res.place_id]["place"] = place_res;
+                    }
+                }
+                if (count === batch.length) {
+                    progress.value = progress.min;
+                    for(var key in m_hash) {
+                      if (m_hash[key].place) {
+                        m_add_speedlimit_to_map(m_hash[key], map);
+                      }  
+                    }
+                    m_adjust_bounds(map);
+                }
+            }
+
+            progress.min = 0;
+            progress.max = batch.length;
+            progress.value = progress.min;
+
+            _.each(batch, function(speedlimit, index) {
+                var m_req = {
+                    placeId: speedlimit.placeId
+                };
+                m_hash[speedlimit.placeId] = speedlimit;
+                if (index < 10) {
+                    placesServices.getDetails(m_req, m_callback);
+                } else {
+                    window.setTimeout(function () {
+                       placesServices.getDetails(m_req, m_callback);
+                    }, (index-9)*1000);
+                }
+            });
+        }
+    }
+
+    /**
+     * Adds a speed limit on map as a Point feature
+     * @param {Object}   place           Place instance of google.maps.places.PlaceResult
+     * @param {Object}   map             Map instance
+     */
+    function m_add_speedlimit_to_map (speedlimit, map) {
+        map.data.add(new google.maps.Data.Feature({
+            geometry: speedlimit.place.geometry.location,
+            id: speedlimit.placeId,
+            "properties": {
+                "address": speedlimit.place.formatted_address,
+                "types": speedlimit.place.types.join(","),
+                "name": speedlimit.place.name,
+                "place_id": speedlimit.placeId,
+                "vicinity": speedlimit.place.vicinity,
+                "icon": speedlimit.place.icon,
+                "iconSize": speedlimit.place.icon===ICON_PLACE ? ICON_SIZE_32 : ICON_SIZE_16,
+                "content": m_info_window_content_speedlimit(speedlimit),
+                "zIndex": 6
+            }
+        }));
+    }
+
 })(window, jQuery, _);

@@ -81,7 +81,8 @@
                         condVisibility: data[i][10],
                         m4wOnly: data[i][11],
                         condRequired: data[i][12],
-                        condRequiredOr: data[i][13]
+                        condRequiredOr: data[i][13],
+                        separator: data[i][14] ? data[i][14] : '|'
                     });
                     if(data[i][4]){
                         //Init parameter parts
@@ -238,6 +239,19 @@
             var m_id = $(this).attr("id").replace(/add-parameter-/ig,"");
             $("<br/>").appendTo("#multiple-container-"+m_id);
             $("#multiple-container-"+m_id+" > #parameter-"+m_id).clone().attr("id","parameter-"+m_id+"-"+com.xomena.geo.getNewId()).appendTo("#multiple-container-"+m_id);
+        });
+        
+        $(document).delegate("paper-tab", "click", function(ev){
+          //console.log(ev);
+          if (ev.target.innerText === "Map") {
+            for (var id in window.com.xomena.mapRenderer.instances) {
+              var m_map = window.com.xomena.mapRenderer.getMap(id);
+              if (m_map && $(m_map.getDiv()).is(":visible") && window.com.xomena.mapRenderer.instances[id].pendingFitBounds) {
+                window.com.xomena.mapRenderer.adjustBounds(id);
+                window.com.xomena.mapRenderer.instances[id].pendingFitBounds = false;
+              }
+            }
+          }
         });
         
         $("#edit-config").on("click", function(ev) {
