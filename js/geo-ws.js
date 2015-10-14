@@ -241,6 +241,19 @@
             $("#multiple-container-"+m_id+" > #parameter-"+m_id).clone().attr("id","parameter-"+m_id+"-"+com.xomena.geo.getNewId()).appendTo("#multiple-container-"+m_id);
         });
         
+        $(document).delegate("paper-tab", "click", function(ev){
+          //console.log(ev);
+          if (ev.target.innerText === "Map") {
+            for (var id in window.com.xomena.mapRenderer.instances) {
+              var m_map = window.com.xomena.mapRenderer.getMap(id);
+              if (m_map && $(m_map.getDiv()).is(":visible") && window.com.xomena.mapRenderer.instances[id].pendingFitBounds) {
+                window.com.xomena.mapRenderer.adjustBounds(id);
+                window.com.xomena.mapRenderer.instances[id].pendingFitBounds = false;
+              }
+            }
+          }
+        });
+        
         $("#edit-config").on("click", function(ev) {
             ev.preventDefault();
             var dialog = document.getElementById("config");

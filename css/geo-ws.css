@@ -108,6 +108,17 @@ ul.ws-params > li.ws-param {
     vertical-align: middle;
 }
 
+.infowindow h2 {
+  font-size: 14px;
+  margin: 0 0 4px;
+}
+
+.infowindow ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+
 @media screen and (min-width: 568px){
     #instances-container li.ws-instance {
         width:90%;

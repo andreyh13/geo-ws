@@ -10,7 +10,7 @@ window.com.xomena.geo = {
   services: null,
   instanceViewsMap: {},    
   config: {},  
-  storedValues: {},    
+  storedValues: {},
   getNewId: function(){
     window.com.xomena.geo.getNewId.count = ++window.com.xomena.geo.getNewId.count || 1;
     return window.com.xomena.geo.getNewId.count;

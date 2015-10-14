@@ -64,12 +64,17 @@
                                 m_address = feature.getProperty("address"),
                                 m_zindex = feature.getProperty("zIndex"),
                                 m_name = feature.getProperty("name");
+                            
+                            var m_iconDef = {
+                                url: m_icon ? m_icon : ICON_URL,
+                                scaledSize: m_size ? m_size : ICON_SIZE_32
+                            };  
+                            if (m_icon === ICON_ARROW) {
+                                m_iconDef.anchor = new google.maps.Point(12, 34);
+                            }
 
                             style = {
-                                icon: {
-                                    url: m_icon ? m_icon : ICON_URL,
-                                    scaledSize: m_size ? m_size : ICON_SIZE_32
-                                },
+                                icon: m_iconDef,
                                 title: m_name? m_name : (m_address ? m_address : ""),
                                 visible: true,
                                 zIndex: m_zindex ? m_zindex : 0
@@ -170,6 +175,10 @@
                         m_adjust_bounds(m_map);
                     }
                 }
+                var m_div = m_map.getDiv();
+                if (!$(m_div).is(":visible")) {
+                  this.instances[id].pendingFitBounds = true;
+                }
             }
         },
 
@@ -188,6 +197,17 @@
                 infoWindow.close();
             }
             this.instances[id].circle.setVisible(false);
+        },
+        
+        /**
+         * Fit bound of the map related to this web service instance 
+         * @param {String} id The ID of Web Service instance
+         */
+        adjustBounds: function (id) {
+            var m_map = this.getMap(id);
+            if (m_map) {
+              m_adjust_bounds(m_map); 
+            }
         },
 
         /**
@@ -445,6 +465,7 @@
                             "types": elem.types.join(","),
                             "location_type": elem.geometry.location_type,
                             "place_id": elem.place_id,
+                            "partial_match": elem.partial_match ? elem.partial_match : false, 
                             "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
                                 (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
                             "content": m_info_window_content_address(elem),
@@ -852,10 +873,11 @@
                 if(r && r.length) {
                     _.each(r, function (node, index) {
                         var m_address, m_types, m_location_type, m_place_id, m_lat, m_lng,
-                            m_sw_lat, m_sw_lng, m_ne_lat, m_ne_lng,
+                            m_sw_lat, m_sw_lng, m_ne_lat, m_ne_lng, m_partial_match,
                             fa_node = node.getElementsByTagName("formatted_address"),
                             t_nodes = node.getElementsByTagName("type"),
                             pl_node = node.getElementsByTagName("place_id"),
+                            pm_node = node.getElementsByTagName("partial_match"),
                             geo_node = node.getElementsByTagName("geometry");
 
                         if (fa_node && fa_node.length) {
@@ -872,6 +894,9 @@
                         }
                         if (pl_node && pl_node.length) {
                             m_place_id = pl_node[0].firstChild.nodeValue;
+                        }
+                        if (pm_node && pm_node.length) {
+                            m_partial_match = Boolean(pm_node[0].firstChild.nodeValue);  
                         }
                         if (geo_node && geo_node.length) {
                             var loc_node = geo_node[0].getElementsByTagName("location"),
@@ -904,6 +929,7 @@
                                     "types": m_types ? m_types : "",
                                     "location_type": m_location_type ? m_location_type : "",
                                     "place_id": m_place_id,
+                                    "partial_match": m_partial_match ? m_partial_match : false,
                                     "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
                                         (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
                                     "content": m_info_window_content_address({
@@ -916,7 +942,8 @@
                                             }
                                         },
                                         types: [m_types ? m_types : ""],
-                                        place_id: m_place_id
+                                        place_id: m_place_id,
+                                        partial_match: m_partial_match ? m_partial_match : false
                                     })
                                 },
                                 "id": m_place_id
@@ -1288,7 +1315,7 @@
                     },
                     "properties": {
                         "address": lat + "," + lng,
-                        "icon": ICON_ARROW
+                        "icon": ICON_ARROW,
                     },
                     "id": id
             });
@@ -1307,6 +1334,7 @@
                 '<li><b>Types:</b> ' + elem.types.join(", ") + '</li>' +
                 '<li><b>Place ID:</b> ' + elem.place_id + '</li>' +
                 '<li><b>Location:</b> ' + elem.geometry.location.lat + ',' + elem.geometry.location.lng + '</li>' +
+                (elem.partial_match ? '<li><b style="color:red;">Partial match!</b></li>' : '') +
                 '</ul>' +
                 '</div>';
     }
