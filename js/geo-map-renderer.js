@@ -1315,7 +1315,7 @@
                     },
                     "properties": {
                         "address": lat + "," + lng,
-                        "icon": ICON_ARROW,
+                        "icon": ICON_ARROW
                     },
                     "id": id
             });
