@@ -1,0 +1,6 @@
+{
+    "jscodehints.detectedExclusions": [
+        "/home/andriy/geoworkspace/geo-ws/bower_components/highlight/tools/node.js",
+        "/home/andriy/geoworkspace/geo-ws/bower_components/highlight/tools/tasks.js"
+    ]
+}
