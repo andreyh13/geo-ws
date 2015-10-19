@@ -360,7 +360,8 @@
                 });
                 var m_s = JSON.stringify(a);
                 //console.log(m_s);
-                download(m_s, "maps-webservices-requests-"+(new Date().getTime()), 'text/plain');
+                var file_name = prompt('Please specify the file name', "maps-webservices-requests-"+(new Date().getTime()));
+                download(m_s, file_name, 'text/plain');
             } else {
                alert("Please select requests for export");
             }
@@ -398,12 +399,62 @@
                             alert("Cannot parse JSON data. Check your file please!");
                         }
                         if (m_obj) {
-                            console.log(m_obj);
+                            //console.log(m_obj);
+                            //debugger;
+                            for (var key in m_obj) {
+                              var inst = null;
+                              try {
+                                inst = JSON.parse(m_obj[key]);
+                              } catch (m_err) {
+                                console.log("Cannot parse JSON data for instance.");
+                              }  
+                              if(inst && inst.id && ("webservice" in inst) && ("output" in inst) && ("version" in inst) && ("parameters" in inst)) {
+                                var m_id = guid();
+                                var m_instance = new com.xomena.geo.Models.Instance({id: m_id, services: com.xomena.geo.services});
+                                //restore parameters
+                                m_instance.set("webservice", inst.webservice);
+                                m_instance.set("version", inst.version);
+                                m_instance.set("output", inst.output);
+                        
+                                com.xomena.geo.storedValues[m_id] = {};
+                                if(inst.webservice){
+                                  com.xomena.geo.storedValues[m_id][inst.webservice] = {};
+                                  _.each(inst.parameters, function(param){
+                                    com.xomena.geo.storedValues[m_id][inst.webservice][param.name] = param.value;
+                                  });
+                                }
+                        
+                                instance_col.add(m_instance);
+                                var m_instanceView = new com.xomena.geo.Views.InstanceView({model: m_instance});
+                                Backbone.Validation.bind(m_instanceView);
+                                $("#instances-container").append(m_instanceView.el);
+                                com.xomena.geo.instanceViewsMap[m_instance.get("id")] = m_instanceView;
+                                document.querySelector('#t-'+m_instance.get("id")).selected = 0;
+                                $("#ws-result-"+m_instance.get("id")).width(function (ind, val) {
+                                    return $($(this).parents("div.pure-g").get(0)).width();
+                                });
+                                m_instanceView.chooseWebService({
+                                  target: {
+                                    value: inst.webservice
+                                  }
+                                });
+                                jem.fire('VisibilityDependence', {
+                                  instanceId: m_id
+                                });
+                                jem.fire('RequiredDependence', {
+                                  instanceId: m_id
+                                });
+                                jem.fire('RequiredOrDependence', {
+                                  instanceId: m_id
+                                });   
+                              }
+                            }
+                            $("#instances-container > li:last").get(0).scrollIntoView(true);
                         }
                     };
                     reader.onerror = function (evt) {
                         if(evt.target.error.name == "NotReadableError") {
-                            // The file could not be read
+                            alert('The file could not be read'); 
                         }
                     };
                 }
