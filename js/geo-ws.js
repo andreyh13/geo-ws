@@ -319,9 +319,13 @@
 
         //Import requests
         $(document).delegate("#app-menu-item-import", "click", function(ev) {
-
+            ev.preventDefault();
+            var dialog = document.getElementById("import-requests");
+            if (dialog) {
+                dialog.open();
+            }
+            return false;
         });
-
 
         $(document).delegate("#export-instances paper-icon-item paper-checkbox", "click", function (ev) {
             if (this.checked) {
@@ -359,6 +363,52 @@
                 download(m_s, "maps-webservices-requests-"+(new Date().getTime()), 'text/plain');
             } else {
                alert("Please select requests for export");
+            }
+        });
+
+        $(document).delegate("#import-requests paper-button.import-save", "click", function () {
+            console.log("Importing requests...");
+            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                var m_file = document.getElementById('import-file-inp').files[0];
+                if(m_file){
+                    var reader = new FileReader();
+                    var progress = document.querySelector('#import-file-progress');
+                    progress.min = 0;
+                    progress.max = 100;
+                    progress.value = 0;
+
+                    // Read file into memory as UTF-16
+                    reader.readAsText(m_file, "UTF-8");
+
+                    // Handle progress, success, and errors
+                    reader.onprogress = function (evt) {
+                        if (evt.lengthComputable) {
+                            progress.max = evt.total;
+                            progress.value = evt.loaded;
+                        }
+                    };
+                    reader.onload = function (evt) {
+                        progress.value = 0;
+                        // Obtain the read file data
+                        var fileString = evt.target.result;
+                        var m_obj = null;
+                        try {
+                            m_obj = JSON.parse(fileString);
+                        } catch (m_err) {
+                            alert("Cannot parse JSON data. Check your file please!");
+                        }
+                        if (m_obj) {
+                            console.log(m_obj);
+                        }
+                    };
+                    reader.onerror = function (evt) {
+                        if(evt.target.error.name == "NotReadableError") {
+                            // The file could not be read
+                        }
+                    };
+                }
+            } else {
+                alert('The File APIs are not fully supported by your browser.');
             }
         });
 

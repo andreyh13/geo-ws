@@ -207,6 +207,27 @@
         <paper-button class="export-save" dialog-confirm autofocus>Save</paper-button>
       </div>
     </paper-dialog>
+    <paper-dialog id="import-requests" entry-animation="scale-up-animation" exit-animation="fade-out-animation" modal>
+      <h2>Import requests</h2>
+      <paper-dialog-scrollable>
+          <div id="import-instances" class="list short" role="list">
+              <paper-icon-item>
+                  <div class="flex">
+                    Select the file
+                  </div>
+                  <iron-icon icon="maps:map"></iron-icon>
+                  <input id="import-file-inp" type="file" accept="text/plain"/>
+              </paper-icon-item>
+              <paper-icon-item>
+                <paper-progress id="import-file-progress"></paper-progress>
+              </paper-icon-item>
+          </div>
+      </paper-dialog-scrollable>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button class="import-save" dialog-confirm autofocus>Import</paper-button>
+      </div>
+    </paper-dialog>
 
     <div id="validation-dialog" title="Validation" class="hidden">
         <p class="validation-content"></p>
