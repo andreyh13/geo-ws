@@ -680,13 +680,17 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     'click .ws-toggle': 'toggleWs',
     'click .ws-version-fs [type="radio"]': 'toggleVersion'  
   },
-  newTemplate: _.template($('#instanceTemplate').html()), // external template    
+  newTemplate: _.template($('#instanceTemplate').html()), // external template
+  exportTemplate: _.template($('#instanceExportTemplate').html()),
   initialize: function() {
     this.render(); // render is an optional function that defines the logic for rendering a template
     this.model.on('destroy', this.remove, this); // calls remove function once model deleted  
   },
   render: function() {
     this.$el.html(this.newTemplate(this.model.toJSON())); // calls the template
+  },
+  renderExport: function () {
+    $("#export-instances").append(this.exportTemplate(this.model.toJSON()));
   },
   remove: function(){
     this.$el.remove(); // removes the HTML element from view when delete button clicked/model deleted
@@ -992,7 +996,15 @@ com.xomena.geo.Views.InstancesView = Backbone.View.extend({
         return id === c.get("id"); 
       }
     );
-  }          
+  },
+  renderExport: function () {
+     this.collection.each(function(instance){
+        var instanceView = com.xomena.geo.instanceViewsMap[instance.get("id")];
+        if (instanceView) {
+            instanceView.renderExport();
+        }
+    });
+  }
 });
 
 

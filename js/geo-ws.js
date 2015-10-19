@@ -29,6 +29,46 @@
         return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
     }
     
+    function download(strData, strFileName, strMimeType) {
+        var D = document,
+            A = arguments,
+            a = D.createElement("a"),
+            d = A[0],
+            n = A[1],
+            t = A[2] || "text/plain";
+
+        //build download link:
+        a.href = "data:" + strMimeType + "charset=utf-8," + encodeURIComponent(strData);
+
+        if (window.MSBlobBuilder) { // IE10
+            var bb = new MSBlobBuilder();
+            bb.append(strData);
+            return navigator.msSaveBlob(bb, strFileName);
+        } /* end if(window.MSBlobBuilder) */
+
+        if ('download' in a) { //FF20, CH19
+            a.setAttribute("download", n);
+            a.innerHTML = "downloading...";
+            D.body.appendChild(a);
+            setTimeout(function() {
+                var e = D.createEvent("MouseEvents");
+                e.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                a.dispatchEvent(e);
+                D.body.removeChild(a);
+            }, 66);
+            return true;
+        }; /* end if('download' in a) */
+
+        //do iframe dataURL download: (older W3)
+        var f = D.createElement("iframe");
+        D.body.appendChild(f);
+        f.src = "data:" + (A[2] ? A[2] : "application/octet-stream") + (window.btoa ? ";base64" : "") + "," + (window.btoa ? window.btoa : encodeURIComponent)(strData);
+        setTimeout(function() {
+            D.body.removeChild(f);
+        }, 333);
+        return true;
+    }
+
     function initParameterParts (par, parts_url) {
         $.ajax({
             url: parts_url,
@@ -261,6 +301,65 @@
                 dialog.open();
             }
             return false;
+        });
+
+        //Export requests
+        $(document).delegate("#app-menu-item-export", "click", function(ev) {
+            ev.preventDefault();
+            var dialog = document.getElementById("export-requests");
+            if (dialog) {
+                $("#export-instances").html("");
+                if (instancesView) {
+                   instancesView.renderExport();
+                }
+                dialog.open();
+            }
+            return false;
+        });
+
+        //Import requests
+        $(document).delegate("#app-menu-item-import", "click", function(ev) {
+
+        });
+
+
+        $(document).delegate("#export-instances paper-icon-item paper-checkbox", "click", function (ev) {
+            if (this.checked) {
+                var instanceView = com.xomena.geo.instanceViewsMap[this.value];
+                if (instanceView) {
+                    instanceView.syncParameters();
+                    instanceView.model.set("version", instanceView.$("input[name='ws-version-val-" + this.value + "']:checked").val());
+                    instanceView.model.set("output", instanceView.$("input[name='output-" + this.value + "']:checked").val());
+                    jem.fire('InstanceUpdated', {
+                        instance: instanceView.model
+                    });
+                    var m_url = instanceView.model.getURL();
+                    var ta = $(this).parents("paper-icon-item").find(" > iron-autogrow-textarea").get(0);
+                    ta.textarea.value = m_url;
+                }
+            }
+        });
+
+        $(document).delegate("#export-requests paper-button.export-save", "click", function () {
+            console.log("Exporting requests...");
+            var m_arr = [];
+            $("#export-instances paper-icon-item paper-checkbox").each(function () {
+               if (this.checked) {
+                   m_arr.push(this.value);
+               }
+            });
+            if (m_arr.length) {
+                var a = {};
+                _.each(m_arr, function (id) {
+                    var m_k = "com.xomena.geo.Collections.Instances-" + id;
+                    a[id] = localStorage.getItem(m_k);
+                });
+                var m_s = JSON.stringify(a);
+                //console.log(m_s);
+                download(m_s, "maps-webservices-requests-"+(new Date().getTime()), 'text/plain');
+            } else {
+               alert("Please select requests for export");
+            }
         });
 
         //Initialize validation dialog
