@@ -257,6 +257,7 @@
         $("#config > paper-dialog-scrollable").append(m_config_view.el);
         $(document).delegate("paper-button.config-save", "click", function () {
             console.log("Saving config...");
+            //debugger;
             com.xomena.geo.config.set("API_KEY", $("#app-config-api-key").val());
             com.xomena.geo.config.set("CLIENT_ID", $("#app-config-client-id").val());
             com.xomena.geo.config.set("CRYPTO_KEY", $("#app-config-crypto-key").val());

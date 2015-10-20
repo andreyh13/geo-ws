@@ -118,6 +118,10 @@ ul.ws-params > li.ws-param {
   padding: 0;
 }
 
+.app-config {
+    padding: 0 16px;
+}
+
 @media screen and (min-width: 568px){
     #instances-container li.ws-instance {
         width:90%;
