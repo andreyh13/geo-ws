@@ -55,6 +55,7 @@
     "paper-progress": "PolymerElements/paper-progress#~1.0.7",
     "paper-styles": "PolymerElements/paper-styles#~1.0.11",
     "paper-tabs": "PolymerElements/paper-tabs#~1.0.4",
+    "paper-toast": "PolymerElements/paper-toast#~1.0.0",
     "paper-toolbar": "PolymerElements/paper-toolbar#~1.0.4",
     "polymer": "Polymer/polymer#^1.0.0",
     "underscore": "^1.8.0"

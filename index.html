@@ -45,6 +45,7 @@
     <link rel="import" href="bower_components/paper-menu/paper-menu.html">
     <link rel="import" href="bower_components/paper-checkbox/paper-checkbox.html">
     <link rel="import" href="bower_components/paper-input/paper-input.html">
+    <link rel="import" href="bower_components/paper-toast/paper-toast.html">
 
     <style is="custom-style">
       paper-header-panel {
@@ -193,6 +194,8 @@
       </paper-dialog-scrollable>
       <div class="buttons">
         <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button id="config-export">Save to file</paper-button>
+        <paper-button id="config-import">Load from file</paper-button>
         <paper-button class="config-save" dialog-confirm autofocus>Save</paper-button>
       </div>
     </paper-dialog>
@@ -229,6 +232,7 @@
         <paper-button class="import-save" dialog-confirm autofocus>Import</paper-button>
       </div>
     </paper-dialog>
+    <paper-toast id="geo-ws-toast" text=""></paper-toast>
 
     <div id="validation-dialog" title="Validation" class="hidden">
         <p class="validation-content"></p>
@@ -364,16 +368,17 @@
     <!-- external template -->
     <script id="instanceExportTemplate" type="text/template">
         <paper-icon-item>
-          <paper-checkbox item-icon value="<%= id %>"></paper-checkbox>
+          <paper-checkbox item-icon value="<%= id %>">
+            <iron-icon icon="maps:map"></iron-icon>
+          </paper-checkbox>
           <div class="flex">
           <% services.forEach(function(model) {
                 if(model.get('id')==webservice) {
                     print(model.get('name'));
                 }
             });
-          %>
+          %>&nbsp;
           </div>
-          <iron-icon icon="maps:map"></iron-icon>
           <iron-autogrow-textarea readonly></iron-autogrow-textarea>
         </paper-icon-item>
     </script>
