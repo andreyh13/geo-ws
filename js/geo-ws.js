@@ -299,9 +299,9 @@
             var m_s = JSON.stringify(a);
             var file_name = prompt('Please specify the file name', "geo-ws-settings-"+(new Date().getTime()));
             var m_res = download(m_s, file_name, 'text/plain');
-            if (m_res) {
+            /*if (m_res) {
                 toast('Your settings are saved successfully.');
-            }
+            }*/
         });
         
         $(document).delegate("#config-import", "click", function () {
@@ -319,7 +319,7 @@
                         try {
                             m_obj = JSON.parse(fileString);
                         } catch (m_err) {
-                            alert("Cannot parse JSON data. Check your file please!");
+                            toast("Cannot parse JSON data. Check your file please!", 6000);
                         }
                         if (m_obj) {
                             for (var key in m_obj) {
@@ -360,7 +360,7 @@
                     
                     reader.onerror = function (evt) {
                         if(evt.target.error.name == "NotReadableError") {
-                            alert('The file could not be read'); 
+                            toast('The file could not be read', 6000);
                         }
                     };
 
@@ -369,7 +369,7 @@
     
                 file.click();
             } else {
-                alert('The File APIs are not fully supported by your browser.');
+                toast('The File APIs are not fully supported by your browser.', 6000);
             }
         });
         
@@ -461,9 +461,9 @@
                 //console.log(m_s);
                 var file_name = prompt('Please specify the file name', "maps-webservices-requests-"+(new Date().getTime()));
                 var m_res = download(m_s, file_name, 'text/plain');
-                if (m_res) {
+                /*if (m_res) {
                   toast("Export requests finished");
-                }
+                }*/
             } else {
                toast("Please select requests for export");
             }
@@ -498,7 +498,7 @@
                         try {
                             m_obj = JSON.parse(fileString);
                         } catch (m_err) {
-                            alert("Cannot parse JSON data. Check your file please!");
+                            toast("Cannot parse JSON data. Check your file please!", 6000);
                         }
                         if (m_obj) {
                             //console.log(m_obj);

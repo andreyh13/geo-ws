@@ -93,7 +93,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     */
     // polymer/issues/2493
     value = parseFloat(value);
-    return this.step ? (Math.round((value + this.min) / this.step) / (1 / this.step)) - this.min : value;
+    return this.step ? (Math.round((value + this.min) / this.step) -
+        (this.min / this.step)) / (1 / this.step) : value;
   },
 
   _validateValue: function() {
