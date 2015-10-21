@@ -8,6 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Maps Web Services Requests Builder</title>
 
+    <script src="bower_components/fontfaceobserver/fontfaceobserver.js"></script>
     <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
 
     <link rel="stylesheet" href="css/geo-ws.css">
@@ -20,6 +21,8 @@
     <link rel="import" href="bower_components/paper-styles/paper-styles.html">
     <link rel="import" href="bower_components/paper-header-panel/paper-header-panel.html">
     <link rel="import" href="bower_components/iron-icons/iron-icons.html">
+    <link rel="import" href="bower_components/iron-icons/communication-icons.html">
+    <link rel="import" href="bower_components/iron-icons/maps-icons.html">
     <link rel="import" href="bower_components/paper-fab/paper-fab.html">
     <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
     <link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
@@ -37,7 +40,13 @@
     <link rel="import" href="bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
     <link rel="import" href="bower_components/neon-animation/neon-animations.html">
     <link rel="import" href="bower_components/paper-progress/paper-progress.html">
-
+    <link rel="import" href="bower_components/paper-drawer-panel/paper-drawer-panel.html">
+    <link rel="import" href="bower_components/paper-item/paper-item.html">
+    <link rel="import" href="bower_components/paper-item/paper-icon-item.html">
+    <link rel="import" href="bower_components/paper-menu/paper-menu.html">
+    <link rel="import" href="bower_components/paper-checkbox/paper-checkbox.html">
+    <link rel="import" href="bower_components/paper-input/paper-input.html">
+    <link rel="import" href="bower_components/paper-toast/paper-toast.html">
 
     <style is="custom-style">
       paper-header-panel {
@@ -121,39 +130,140 @@
         --paper-progress-active-color: var(--paper-red-500);
         --paper-progress-secondary-color: var(--paper-red-100);
       }
+
+      .ws-instance paper-button {
+        width: auto;
+        float: left;
+      }
+
+      paper-item {
+        --paper-item: {
+            cursor: pointer;
+        };
+      }
+
+        paper-toolbar.left-drawer-toolbar {
+            height: 70px;
+        }
     </style>
+    
+    <script>
+      WebFontConfig = {
+        google: { families: [ 'Roboto::greek,latin,vietnamese,cyrillic' ] }
+      };
+      (function() {
+        var wf = document.createElement('script');
+        wf.src = ('https:' == document.location.protocol ? 'https' : 'http') +
+          '://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
+        wf.type = 'text/javascript';
+        wf.async = 'true';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(wf, s);
+      })();
+    
+      var observer = new FontFaceObserver('Roboto', {
+        weight: 400
+      });
+
+      observer.check().then(function () {
+        console.log('Roboto font is available');
+        document.documentElement.classList.add('webfont-loaded');
+      }, function () {
+        console.log('Roboto font is not available. Fallback to default system fonts.');
+      });
+    </script>
 </head>
 
 <body class="yui3-normalized fullbleed layout vertical">
-    <paper-header-panel class="blue" mode="waterfall">
-        <paper-toolbar class="paper-header">
-            <header class="title">
-                <h1>
-                    <div class="devsite-product-logo-container">
-                        <img class="devsite-product-logo"  src="https://www.gstatic.com/images/branding/product/1x/maps_64dp.png" alt="Google Maps Web Services Requests Builder">
-                    </div>
-                    G<span class="red">o</span><span class="yellow">o</span>g<span class="green">l</span><span class="red">e</span> Maps Web Services Requests Builder
-                </h1>
-            </header>
-            <paper-icon-button icon="settings" title="Settings" id="edit-config"></paper-icon-button>
-        </paper-toolbar>
-        <div class="content fill">
-            <form id="form-ws" class="pure-form pure-form-aligned">
-                <ol id="instances-container">
-                </ol>
-            </form>
-            <paper-fab mini icon="add" title="Add new" tabindex="0" id="add-instance"></paper-fab>
-        </div>
-    </paper-header-panel>
+    <paper-drawer-panel responsive-width="10000px">
+        <paper-header-panel drawer>
+            <paper-toolbar class="left-drawer-toolbar">
+                <div>Application</div>
+            </paper-toolbar>
+            <div style="width:256px;">
+                <paper-menu id="app-menu">
+                    <paper-item id="app-menu-item-export">
+                        <paper-item-body>
+                            <iron-icon icon="communication:import-export"></iron-icon>
+                            Export requests...
+                        </paper-item-body>
+                    </paper-item>
+                    <paper-item id="app-menu-item-import">
+                        <paper-item-body>
+                            <iron-icon icon="communication:import-export"></iron-icon>
+                            Import requests...
+                        </paper-item-body>
+                    </paper-item>
+                </paper-menu>
+            </div>
+        </paper-header-panel>
+        <paper-header-panel class="blue" mode="waterfall" main style="width:100%;">
+            <paper-toolbar class="paper-header">
+                <paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
+                <header class="title">
+                    <h1>
+                        <div class="devsite-product-logo-container">
+                            <img class="devsite-product-logo"  src="https://www.gstatic.com/images/branding/product/1x/maps_64dp.png" alt="Google Maps Web Services Requests Builder">
+                        </div>
+                        G<span class="red">o</span><span class="yellow">o</span>g<span class="green">l</span><span class="red">e</span> Maps Web Services Requests Builder
+                    </h1>
+                </header>
+                <paper-icon-button icon="settings" title="Settings" id="edit-config"></paper-icon-button>
+            </paper-toolbar>
+            <div class="content fill">
+                <form id="form-ws" class="pure-form pure-form-aligned">
+                    <ol id="instances-container">
+                    </ol>
+                </form>
+                <paper-fab mini icon="add" title="Add new" tabindex="0" id="add-instance"></paper-fab>
+            </div>
+        </paper-header-panel>
+    </paper-drawer-panel>
     <paper-dialog id="config" entry-animation="scale-up-animation" exit-animation="fade-out-animation" modal>
       <h2>Settings</h2>
       <paper-dialog-scrollable>
       </paper-dialog-scrollable>
       <div class="buttons">
         <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button id="config-export">Save to file</paper-button>
+        <paper-button id="config-import">Load from file</paper-button>
         <paper-button class="config-save" dialog-confirm autofocus>Save</paper-button>
       </div>
     </paper-dialog>
+    <paper-dialog id="export-requests" entry-animation="scale-up-animation" exit-animation="fade-out-animation" modal>
+      <h2>Export requests</h2>
+      <paper-dialog-scrollable>
+          <div id="export-instances" class="list short" role="list">
+
+          </div>
+      </paper-dialog-scrollable>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button class="export-save" dialog-confirm autofocus>Save</paper-button>
+      </div>
+    </paper-dialog>
+    <paper-dialog id="import-requests" entry-animation="scale-up-animation" exit-animation="fade-out-animation" modal>
+      <h2>Import requests</h2>
+      <paper-dialog-scrollable>
+          <div id="import-instances" class="list short" role="list">
+              <paper-icon-item>
+                  <iron-icon icon="maps:map"></iron-icon>
+                  <div class="flex">
+                    Select the file &nbsp;
+                  </div>
+                  <input id="import-file-inp" type="file" accept="text/plain"/>
+              </paper-icon-item>
+              <paper-icon-item>
+                <paper-progress id="import-file-progress"></paper-progress>
+              </paper-icon-item>
+          </div>
+      </paper-dialog-scrollable>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button class="import-save" dialog-confirm autofocus>Import</paper-button>
+      </div>
+    </paper-dialog>
+    <paper-toast id="geo-ws-toast" text=""></paper-toast>
 
     <div id="validation-dialog" title="Validation" class="hidden">
         <p class="validation-content"></p>
@@ -275,24 +385,35 @@
     
     <!-- external template -->
     <script id="configTemplate" type="text/template">
-        <fieldset class="app-config-fs">
-            <label for="app-config-api-key">API key</label><br/>
-            <input type="text" name="app-config-api-key" id="app-config-api-key" value="<%= API_KEY %>" placeholder="Please enter your API key" size="40" /><br/>
-            <label for="app-config-client-id">Client ID</label><br/>
-            <input type="text" name="app-config-client-id" id="app-config-client-id" value="<%= CLIENT_ID %>" placeholder="Please enter your client ID" size="40" /><br/>
-            <label for="app-config-crypto-key">Crypto Key</label><br/>
-            <input type="text" name="app-config-crypto-key" id="app-config-crypto-key" value="<%= CRYPTO_KEY %>" placeholder="Please enter your Crypto Key" size="40" /><br/>
-            <label for="app-config-places-api-key">Places for Work API key</label><br/>
-            <input type="text" name="app-config-places-api-key" id="app-config-places-api-key" value="<%= PLACES_API_KEY %>" placeholder="Please enter your Places for Work API key" size="40" /><br/>
-            <label for="app-config-roads-api-key">Roads for Work API key</label><br/>
-            <input type="text" name="app-config-roads-api-key" id="app-config-roads-api-key" value="<%= ROADS_API_KEY %>" placeholder="Please enter your Roads for Work API key" size="40" /><br/>
-            <label for="app-config-server-url">Server URL</label><br/>
-            <input type="text" name="app-config-server-url" id="app-config-server-url" value="<%= SERVER_URL %>" placeholder="Please enter URL for server-side" size="40" /><br/>
-            <label for="app-config-sign-url">Sign URL</label><br/>
-            <input type="text" name="app-config-sign-url" id="app-config-sign-url" value="<%= SIGN_URL %>" placeholder="Please enter URL for digital sign" size="40" />
-        </fieldset>
+        <div class="vertical-section app-config-fs">
+            <paper-input label="API key" type="text" name="app-config-api-key" id="app-config-api-key" value="<%= API_KEY %>" size="40"></paper-input>
+            <paper-input label="Client ID" type="text" name="app-config-client-id" id="app-config-client-id" value="<%= CLIENT_ID %>" size="40"></paper-input>
+            <paper-input label="Crypto Key" type="text" name="app-config-crypto-key" id="app-config-crypto-key" value="<%= CRYPTO_KEY %>" size="40"></paper-input>
+            <paper-input label="Places for Work API key" type="text" name="app-config-places-api-key" id="app-config-places-api-key" value="<%= PLACES_API_KEY %>" size="40"></paper-input>
+            <paper-input label="Roads for Work API key" type="text" name="app-config-roads-api-key" id="app-config-roads-api-key" value="<%= ROADS_API_KEY %>" size="40"></paper-input>
+            <paper-input label="Server URL" type="text" name="app-config-server-url" id="app-config-server-url" value="<%= SERVER_URL %>" size="40"></paper-input>
+            <paper-input label="Digital Signature URL" type="text" name="app-config-sign-url" id="app-config-sign-url" value="<%= SIGN_URL %>" size="40"></paper-input>
+        </div>
     </script>
     
+    <!-- external template -->
+    <script id="instanceExportTemplate" type="text/template">
+        <paper-icon-item>
+          <paper-checkbox item-icon value="<%= id %>">
+            <iron-icon icon="maps:map"></iron-icon>
+          </paper-checkbox>
+          <div class="flex">
+          <% services.forEach(function(model) {
+                if(model.get('id')==webservice) {
+                    print(model.get('name'));
+                }
+            });
+          %>&nbsp;
+          </div>
+          <iron-autogrow-textarea readonly></iron-autogrow-textarea>
+        </paper-icon-item>
+    </script>
+
     <script src="js/geo-ws-model.js"></script>
     <script src="js/geo-map-renderer.js"></script>
     <script src="js/geo-ws.js"></script>

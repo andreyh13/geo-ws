@@ -29,6 +29,56 @@
         return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
     }
     
+    function download(strData, strFileName, strMimeType) {
+        var D = document,
+            A = arguments,
+            a = D.createElement("a"),
+            d = A[0],
+            n = A[1],
+            t = A[2] || "text/plain";
+
+        //build download link:
+        a.href = "data:" + strMimeType + "charset=utf-8," + encodeURIComponent(strData);
+
+        if (window.MSBlobBuilder) { // IE10
+            var bb = new MSBlobBuilder();
+            bb.append(strData);
+            return navigator.msSaveBlob(bb, strFileName);
+        } /* end if(window.MSBlobBuilder) */
+
+        if ('download' in a) { //FF20, CH19
+            a.setAttribute("download", n);
+            a.innerHTML = "downloading...";
+            D.body.appendChild(a);
+            setTimeout(function() {
+                var e = D.createEvent("MouseEvents");
+                e.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                a.dispatchEvent(e);
+                D.body.removeChild(a);
+            }, 66);
+            return true;
+        }; /* end if('download' in a) */
+
+        //do iframe dataURL download: (older W3)
+        var f = D.createElement("iframe");
+        D.body.appendChild(f);
+        f.src = "data:" + (A[2] ? A[2] : "application/octet-stream") + (window.btoa ? ";base64" : "") + "," + (window.btoa ? window.btoa : encodeURIComponent)(strData);
+        setTimeout(function() {
+            D.body.removeChild(f);
+        }, 333);
+        return true;
+    }
+    
+    function toast(msg, delay) {
+      delay = delay || 3000;
+      var m_toast = document.getElementById("geo-ws-toast");
+      if(m_toast) {
+        m_toast.duration = delay;
+        m_toast.text = msg;
+        m_toast.show();
+      }
+    }
+
     function initParameterParts (par, parts_url) {
         $.ajax({
             url: parts_url,
@@ -217,6 +267,7 @@
         $("#config > paper-dialog-scrollable").append(m_config_view.el);
         $(document).delegate("paper-button.config-save", "click", function () {
             console.log("Saving config...");
+            //debugger;
             com.xomena.geo.config.set("API_KEY", $("#app-config-api-key").val());
             com.xomena.geo.config.set("CLIENT_ID", $("#app-config-client-id").val());
             com.xomena.geo.config.set("CRYPTO_KEY", $("#app-config-crypto-key").val());
@@ -232,6 +283,94 @@
             localStorage.setItem("com.xomena.geo.Models.Config.PLACES_API_KEY", com.xomena.geo.config.get("PLACES_API_KEY"));
             localStorage.setItem("com.xomena.geo.Models.Config.ROADS_API_KEY", com.xomena.geo.config.get("ROADS_API_KEY"));
             console.log("Config saved");
+            toast('Settings saved successfully.');
+        });
+        
+        $(document).delegate("#config-export", "click", function () {
+            var a = {
+              "com.xomena.geo.Models.Config.API_KEY": com.xomena.geo.config.get("API_KEY"),
+              "com.xomena.geo.Models.Config.CLIENT_ID": com.xomena.geo.config.get("CLIENT_ID"),
+              "com.xomena.geo.Models.Config.CRYPTO_KEY": com.xomena.geo.config.get("CRYPTO_KEY"),
+              "com.xomena.geo.Models.Config.SERVER_URL": com.xomena.geo.config.get("SERVER_URL"),
+              "com.xomena.geo.Models.Config.SIGN_URL": com.xomena.geo.config.get("SIGN_URL"),
+              "com.xomena.geo.Models.Config.PLACES_API_KEY": com.xomena.geo.config.get("PLACES_API_KEY"),
+              "com.xomena.geo.Models.Config.ROADS_API_KEY": com.xomena.geo.config.get("ROADS_API_KEY")
+            };
+            var m_s = JSON.stringify(a);
+            var file_name = prompt('Please specify the file name', "geo-ws-settings-"+(new Date().getTime()));
+            var m_res = download(m_s, file_name, 'text/plain');
+            /*if (m_res) {
+                toast('Your settings are saved successfully.');
+            }*/
+        });
+        
+        $(document).delegate("#config-import", "click", function () {
+            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                var file = document.createElement('input');
+                file.type = 'file';
+  
+                $(file).on("change", function(){
+                    var reader = new FileReader();
+    
+                    reader.onload = function (evt) {
+                        // Obtain the read file data
+                        var fileString = evt.target.result;
+                        var m_obj = null;
+                        try {
+                            m_obj = JSON.parse(fileString);
+                        } catch (m_err) {
+                            toast("Cannot parse JSON data. Check your file please!", 6000);
+                        }
+                        if (m_obj) {
+                            for (var key in m_obj) {
+                              var elemId = null;
+                              switch (key) {
+                                case "com.xomena.geo.Models.Config.API_KEY":
+                                  elemId = "app-config-api-key";
+                                  break;
+                                case "com.xomena.geo.Models.Config.CLIENT_ID":
+                                  elemId = "app-config-client-id";
+                                  break;
+                                case "com.xomena.geo.Models.Config.CRYPTO_KEY":
+                                  elemId = "app-config-crypto-key";
+                                  break;
+                                case "com.xomena.geo.Models.Config.SERVER_URL":
+                                  elemId = "app-config-server-url";
+                                  break;
+                                case "com.xomena.geo.Models.Config.SIGN_URL":
+                                  elemId = "app-config-sign-url";
+                                  break;
+                                case "com.xomena.geo.Models.Config.PLACES_API_KEY":
+                                  elemId = "app-config-places-api-key";
+                                  break;
+                                case "com.xomena.geo.Models.Config.ROADS_API_KEY":
+                                  elemId = "app-config-roads-api-key";
+                                  break;  
+                              } 
+                              if (elemId) {
+                                var elem = document.getElementById(elemId);
+                                if (elem) {
+                                  elem.value = m_obj[key];
+                                }
+                              }
+                            }
+                            toast('Settings loaded from file successfully. Please save them.');
+                        }
+                    };
+                    
+                    reader.onerror = function (evt) {
+                        if(evt.target.error.name == "NotReadableError") {
+                            toast('The file could not be read', 6000);
+                        }
+                    };
+
+                    reader.readAsText(file.files[0], "UTF-8");
+                });
+    
+                file.click();
+            } else {
+                toast('The File APIs are not fully supported by your browser.', 6000);
+            }
         });
         
         $(document).delegate("button.add-parameter", "click", function(){
@@ -261,6 +400,170 @@
                 dialog.open();
             }
             return false;
+        });
+
+        //Export requests
+        $(document).delegate("#app-menu-item-export", "click", function(ev) {
+            ev.preventDefault();
+            var dialog = document.getElementById("export-requests");
+            if (dialog) {
+                $("#export-instances").html("");
+                if (instancesView) {
+                   instancesView.renderExport();
+                }
+                dialog.open();
+            }
+            return false;
+        });
+
+        //Import requests
+        $(document).delegate("#app-menu-item-import", "click", function(ev) {
+            ev.preventDefault();
+            var dialog = document.getElementById("import-requests");
+            if (dialog) {
+                dialog.open();
+            }
+            return false;
+        });
+
+        $(document).delegate("#export-instances paper-icon-item paper-checkbox", "click", function (ev) {
+            if (this.checked) {
+                var instanceView = com.xomena.geo.instanceViewsMap[this.value];
+                if (instanceView) {
+                    instanceView.syncParameters();
+                    instanceView.model.set("version", instanceView.$("input[name='ws-version-val-" + this.value + "']:checked").val());
+                    instanceView.model.set("output", instanceView.$("input[name='output-" + this.value + "']:checked").val());
+                    jem.fire('InstanceUpdated', {
+                        instance: instanceView.model
+                    });
+                    var m_url = instanceView.model.getURL();
+                    var ta = $(this).parents("paper-icon-item").find(" > iron-autogrow-textarea").get(0);
+                    ta.textarea.value = m_url;
+                }
+            }
+        });
+
+        $(document).delegate("#export-requests paper-button.export-save", "click", function () {
+            console.log("Exporting requests...");
+            var m_arr = [];
+            $("#export-instances paper-icon-item paper-checkbox").each(function () {
+               if (this.checked) {
+                   m_arr.push(this.value);
+               }
+            });
+            if (m_arr.length) {
+                var a = {};
+                _.each(m_arr, function (id) {
+                    var m_k = "com.xomena.geo.Collections.Instances-" + id;
+                    a[id] = localStorage.getItem(m_k);
+                });
+                var m_s = JSON.stringify(a);
+                //console.log(m_s);
+                var file_name = prompt('Please specify the file name', "maps-webservices-requests-"+(new Date().getTime()));
+                var m_res = download(m_s, file_name, 'text/plain');
+                /*if (m_res) {
+                  toast("Export requests finished");
+                }*/
+            } else {
+               toast("Please select requests for export");
+            }
+        });
+
+        $(document).delegate("#import-requests paper-button.import-save", "click", function () {
+            console.log("Importing requests...");
+            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                var m_file = document.getElementById('import-file-inp').files[0];
+                if(m_file){
+                    var reader = new FileReader();
+                    var progress = document.querySelector('#import-file-progress');
+                    progress.min = 0;
+                    progress.max = 100;
+                    progress.value = 0;
+
+                    // Read file into memory as UTF-16
+                    reader.readAsText(m_file, "UTF-8");
+
+                    // Handle progress, success, and errors
+                    reader.onprogress = function (evt) {
+                        if (evt.lengthComputable) {
+                            progress.max = evt.total;
+                            progress.value = evt.loaded;
+                        }
+                    };
+                    reader.onload = function (evt) {
+                        progress.value = 0;
+                        // Obtain the read file data
+                        var fileString = evt.target.result;
+                        var m_obj = null;
+                        try {
+                            m_obj = JSON.parse(fileString);
+                        } catch (m_err) {
+                            toast("Cannot parse JSON data. Check your file please!", 6000);
+                        }
+                        if (m_obj) {
+                            //console.log(m_obj);
+                            //debugger;
+                            for (var key in m_obj) {
+                              var inst = null;
+                              try {
+                                inst = JSON.parse(m_obj[key]);
+                              } catch (m_err) {
+                                console.log("Cannot parse JSON data for instance.");
+                              }  
+                              if(inst && inst.id && ("webservice" in inst) && ("output" in inst) && ("version" in inst) && ("parameters" in inst)) {
+                                var m_id = guid();
+                                var m_instance = new com.xomena.geo.Models.Instance({id: m_id, services: com.xomena.geo.services});
+                                //restore parameters
+                                m_instance.set("webservice", inst.webservice);
+                                m_instance.set("version", inst.version);
+                                m_instance.set("output", inst.output);
+                        
+                                com.xomena.geo.storedValues[m_id] = {};
+                                if(inst.webservice){
+                                  com.xomena.geo.storedValues[m_id][inst.webservice] = {};
+                                  _.each(inst.parameters, function(param){
+                                    com.xomena.geo.storedValues[m_id][inst.webservice][param.name] = param.value;
+                                  });
+                                }
+                        
+                                instance_col.add(m_instance);
+                                var m_instanceView = new com.xomena.geo.Views.InstanceView({model: m_instance});
+                                Backbone.Validation.bind(m_instanceView);
+                                $("#instances-container").append(m_instanceView.el);
+                                com.xomena.geo.instanceViewsMap[m_instance.get("id")] = m_instanceView;
+                                document.querySelector('#t-'+m_instance.get("id")).selected = 0;
+                                $("#ws-result-"+m_instance.get("id")).width(function (ind, val) {
+                                    return $($(this).parents("div.pure-g").get(0)).width();
+                                });
+                                m_instanceView.chooseWebService({
+                                  target: {
+                                    value: inst.webservice
+                                  }
+                                });
+                                jem.fire('VisibilityDependence', {
+                                  instanceId: m_id
+                                });
+                                jem.fire('RequiredDependence', {
+                                  instanceId: m_id
+                                });
+                                jem.fire('RequiredOrDependence', {
+                                  instanceId: m_id
+                                });   
+                              }
+                            }
+                            $("#instances-container > li:last").get(0).scrollIntoView(true);
+                            toast("Import requests finished");
+                        }
+                    };
+                    reader.onerror = function (evt) {
+                        if(evt.target.error.name == "NotReadableError") {
+                            toast('The file could not be read', 6000); 
+                        }
+                    };
+                }
+            } else {
+                toast('The File APIs are not fully supported by your browser.', 6000);
+            }
         });
 
         //Initialize validation dialog
