@@ -126,6 +126,10 @@ ul.ws-params > li.ws-param {
   font-family: 'Roboto', sans-serif;
 }
 
+#infowindow-moreinfo a {
+  float: right;
+}
+
 @media screen and (min-width: 568px){
     #instances-container li.ws-instance {
         width:90%;

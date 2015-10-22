@@ -318,6 +318,25 @@
                     }
                 }
             }
+        },
+        
+        showAdditionalInfo: function (placeId) {
+          if (placesServices) {
+            placesServices.getDetails({
+              placeId: placeId
+            }, function(place_res, status){
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    var m_res = ["<ul>"];
+                    m_res.push('<li><b>Address:</b> ' + place_res.formatted_address + '</li>');
+                    m_res.push('<li><b>Types:</b> ' + place_res.types.join(", ") + '</li>');
+                    if (place_res.vicinity) {
+                        m_res.push('<li><b>Vicinity:</b> ' + place_res.vicinity + '</li>');
+                    }
+                    m_res.push("</ul>");
+                    $("#infowindow-moreinfo").html(m_res.join(""));
+                }
+            });
+          }      
         }
     };
 
@@ -843,8 +862,7 @@
                     m_batch.push(m_obj);
                 });
                 m_add_snappedpoints_in_batch(m_batch, map, id);
-            }
-            if (data.speedLimits && _.isArray(data.speedLimits) && data.speedLimits.length) {
+            } else if (data.speedLimits && _.isArray(data.speedLimits) && data.speedLimits.length) {
                 m_add_speedlimits_in_batch(data.speedLimits, map, id);
             }
         }
@@ -1402,6 +1420,9 @@
                 '<li><b>Place ID:</b> ' + point.placeId + '</li>' +
                 '<li><b>Location:</b> ' + point.location.lat() + ',' + point.location.lng() + '</li>' +
                 '</ul>' +
+                '<div id="infowindow-moreinfo">' +
+                '<a href="#" title="More info" onclick="window.com.xomena.mapRenderer.showAdditionalInfo(\'' + point.placeId + '\');">More info</a>' +
+                '</div>' +
                 '</div>';
     }
     

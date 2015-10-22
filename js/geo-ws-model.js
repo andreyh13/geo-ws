@@ -495,7 +495,8 @@ com.xomena.geo.Models.Config = Backbone.Model.extend({
         SERVER_URL: null, 
         SIGN_URL: null,
         PLACES_API_KEY: null,
-        ROADS_API_KEY: null
+        ROADS_API_KEY: null,
+        AUTO_EXEC_ONLOAD: false
     }
 }); 
 
@@ -604,6 +605,13 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
         document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = "Please set valid parameters";
     }
     return false;  
+  },
+  execInstanceWithDelay: function(delay) {
+    delay = delay || 500;
+    var self = this;
+    setTimeout(function () {
+      self.execInstance();
+    }, delay);
   },
   deleteInstance: function(ev){
     ev.preventDefault();  
