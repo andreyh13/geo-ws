@@ -1775,28 +1775,29 @@
      */
     function m_add_speedlimits_in_batch(batch, map, id) {
         var count = 0, progress = document.querySelector('#progress-' + id),
-            m_hash = {};
-        if (_.isArray(batch) && batch.length) {
-            function m_callback (place_res, status) {
-                count++;
-                console.log("Status: " + status);
-                progress.value = count;
-                if (status === google.maps.places.PlacesServiceStatus.OK) {
-                    if (m_hash[place_res.place_id]) {
-                        m_hash[place_res.place_id]["place"] = place_res;
-                    }
-                }
-                if (count === batch.length) {
-                    progress.value = progress.min;
-                    for(var key in m_hash) {
-                      if (m_hash[key].place) {
-                        m_add_speedlimit_to_map(m_hash[key], map);
-                      }  
-                    }
-                    m_adjust_bounds(map);
+            m_hash = [];
+
+        function m_callback (place_res, status) {
+            console.log("Status: " + status);
+            progress.value = count + 1;
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                if (m_hash[count]) {
+                    m_hash[count]["place"] = place_res;
                 }
             }
+            count++;
+            if (count === batch.length) {
+                progress.value = progress.min;
+                _.each(m_hash, function (speedlimit, index) {
+                    if(speedlimit.place) {
+                        m_add_speedlimit_to_map(speedlimit, map);
+                    }
+                });
+                m_adjust_bounds(map);
+            }
+        }
 
+        if (_.isArray(batch) && batch.length) {
             progress.min = 0;
             progress.max = batch.length;
             progress.value = progress.min;
@@ -1805,14 +1806,10 @@
                 var m_req = {
                     placeId: speedlimit.placeId
                 };
-                m_hash[speedlimit.placeId] = speedlimit;
-                if (index < 10) {
-                    placesServices.getDetails(m_req, m_callback);
-                } else {
-                    window.setTimeout(function () {
-                       placesServices.getDetails(m_req, m_callback);
-                    }, (index-9)*1000);
-                }
+                m_hash.push(speedlimit);
+                window.setTimeout(function () {
+                   placesServices.getDetails(m_req, m_callback);
+                }, index*1000);
             });
         }
     }

@@ -245,7 +245,7 @@
                                 instanceId: key
                            });  
                            
-                           if (localStorage.getItem("com.xomena.geo.Models.Config.AUTO_EXEC_ONLOAD")) {
+                           if (localStorage.getItem("com.xomena.geo.Models.Config.AUTO_EXEC_ONLOAD") === "true") {
                              m_counter++;
                              com.xomena.geo.instanceViewsMap[key].execInstanceWithDelay(m_counter*100);
                            }

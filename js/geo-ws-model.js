@@ -147,6 +147,11 @@ window.com.xomena.geo = {
             }
             output += '</ul>';
             break;
+        case 'timestamp':
+            output += '<input class="pure-input-2-3'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
+                (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
+                '" type="text" id="parameter-'+id+'" name="'+name+'" value="'+(sv.length?sv[0]:'')+'" size="60"'+(p?' pattern="'+p+'"':'')+(h?' placeholder="'+h+'"':'')+(r?' required':'')+'title="'+d+'"/>';
+            break;
         default:
             output += '<input class="pure-input-2-3'+(t_vis?' trigger-visibility':'')+(l_vis?' listen-visibility':'')+
                 (t_req?' trigger-required':'')+(l_req?' listen-required':'')+(t_reqOr?' trigger-requiredOr':'')+(l_reqOr?' listen-requiredOr':'')+
