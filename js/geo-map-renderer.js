@@ -318,6 +318,25 @@
                     }
                 }
             }
+        },
+        
+        showAdditionalInfo: function (placeId) {
+          if (placesServices) {
+            placesServices.getDetails({
+              placeId: placeId
+            }, function(place_res, status){
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    var m_res = ["<ul>"];
+                    m_res.push('<li><b>Address:</b> ' + place_res.formatted_address + '</li>');
+                    m_res.push('<li><b>Types:</b> ' + place_res.types.join(", ") + '</li>');
+                    if (place_res.vicinity) {
+                        m_res.push('<li><b>Vicinity:</b> ' + place_res.vicinity + '</li>');
+                    }
+                    m_res.push("</ul>");
+                    $("#infowindow-moreinfo").html(m_res.join(""));
+                }
+            });
+          }      
         }
     };
 
@@ -843,8 +862,7 @@
                     m_batch.push(m_obj);
                 });
                 m_add_snappedpoints_in_batch(m_batch, map, id);
-            }
-            if (data.speedLimits && _.isArray(data.speedLimits) && data.speedLimits.length) {
+            } else if (data.speedLimits && _.isArray(data.speedLimits) && data.speedLimits.length) {
                 m_add_speedlimits_in_batch(data.speedLimits, map, id);
             }
         }
@@ -1402,6 +1420,9 @@
                 '<li><b>Place ID:</b> ' + point.placeId + '</li>' +
                 '<li><b>Location:</b> ' + point.location.lat() + ',' + point.location.lng() + '</li>' +
                 '</ul>' +
+                '<div id="infowindow-moreinfo">' +
+                '<a href="#" title="More info" onclick="window.com.xomena.mapRenderer.showAdditionalInfo(\'' + point.placeId + '\');">More info</a>' +
+                '</div>' +
                 '</div>';
     }
     
@@ -1754,28 +1775,29 @@
      */
     function m_add_speedlimits_in_batch(batch, map, id) {
         var count = 0, progress = document.querySelector('#progress-' + id),
-            m_hash = {};
-        if (_.isArray(batch) && batch.length) {
-            function m_callback (place_res, status) {
-                count++;
-                console.log("Status: " + status);
-                progress.value = count;
-                if (status === google.maps.places.PlacesServiceStatus.OK) {
-                    if (m_hash[place_res.place_id]) {
-                        m_hash[place_res.place_id]["place"] = place_res;
-                    }
-                }
-                if (count === batch.length) {
-                    progress.value = progress.min;
-                    for(var key in m_hash) {
-                      if (m_hash[key].place) {
-                        m_add_speedlimit_to_map(m_hash[key], map);
-                      }  
-                    }
-                    m_adjust_bounds(map);
+            m_hash = [];
+
+        function m_callback (place_res, status) {
+            console.log("Status: " + status);
+            progress.value = count + 1;
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                if (m_hash[count]) {
+                    m_hash[count]["place"] = place_res;
                 }
             }
+            count++;
+            if (count === batch.length) {
+                progress.value = progress.min;
+                _.each(m_hash, function (speedlimit, index) {
+                    if(speedlimit.place) {
+                        m_add_speedlimit_to_map(speedlimit, map);
+                    }
+                });
+                m_adjust_bounds(map);
+            }
+        }
 
+        if (_.isArray(batch) && batch.length) {
             progress.min = 0;
             progress.max = batch.length;
             progress.value = progress.min;
@@ -1784,14 +1806,10 @@
                 var m_req = {
                     placeId: speedlimit.placeId
                 };
-                m_hash[speedlimit.placeId] = speedlimit;
-                if (index < 10) {
-                    placesServices.getDetails(m_req, m_callback);
-                } else {
-                    window.setTimeout(function () {
-                       placesServices.getDetails(m_req, m_callback);
-                    }, (index-9)*1000);
-                }
+                m_hash.push(speedlimit);
+                window.setTimeout(function () {
+                   placesServices.getDetails(m_req, m_callback);
+                }, index*1000);
             });
         }
     }
