@@ -32,6 +32,7 @@
     "backbone.validation": "backbone-validation#^0.11.0",
     "blockUI": "malsup/blockui",
     "chosen": "^1.2.0",
+    "datetimepicker": "~2.4.5",
     "fontfaceobserver": "~1.5.4",
     "google-apis": "GoogleWebComponents/google-apis#~1.1.2",
     "google-map": "GoogleWebComponents/google-map#~1.1.4",
@@ -58,6 +59,7 @@
     "paper-tabs": "PolymerElements/paper-tabs#~1.0.4",
     "paper-toast": "PolymerElements/paper-toast#~1.0.0",
     "paper-toolbar": "PolymerElements/paper-toolbar#~1.0.4",
+    "paper-tooltip": "PolymerElements/paper-tooltip#~1.1.1",
     "polymer": "Polymer/polymer#^1.0.0",
     "underscore": "^1.8.0"
   }
