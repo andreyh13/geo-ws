@@ -589,21 +589,6 @@
             }
         });
 
-        //Initialize validation dialog
-        $("#validation-dialog").dialog({
-            autoOpen: false,
-            modal: true,
-            minWidth: 580,
-            show: {
-                effect: "blind",
-                duration: 1000
-            },
-            hide: {
-                effect: "explode",
-                duration: 1000
-            }
-        });
-        
         //Define custom events listeners
         jem.on('VisibilityDependence', function (eventName, eventAttributes) {
             // Handle the event

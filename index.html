@@ -11,12 +11,13 @@
     <script src="bower_components/fontfaceobserver/fontfaceobserver.js"></script>
     <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
 
-    <link rel="stylesheet" href="css/geo-ws.css">
     <link rel="stylesheet" href="bower_components/chosen/chosen.min.css">
     <link rel="stylesheet" href="bower_components/jquery-ui/themes/smoothness/jquery-ui.min.css" />
     <link rel="stylesheet" href="bower_components/highlight/src/styles/googlecode.css">
     <link rel="stylesheet" href="bower_components/highlight/src/styles/github.css">
+    <link rel="stylesheet" href="bower_components/datetimepicker/jquery.datetimepicker.css">
     <link rel="stylesheet" href="http://yui.yahooapis.com/combo?pure/0.5.0/base-min.css&pure/0.5.0/grids-responsive-min.css&pure/0.5.0/forms-min.css">
+    <link rel="stylesheet" href="css/geo-ws.css">
 
     <link rel="import" href="bower_components/paper-styles/paper-styles.html">
     <link rel="import" href="bower_components/paper-header-panel/paper-header-panel.html">
@@ -47,6 +48,7 @@
     <link rel="import" href="bower_components/paper-checkbox/paper-checkbox.html">
     <link rel="import" href="bower_components/paper-input/paper-input.html">
     <link rel="import" href="bower_components/paper-toast/paper-toast.html">
+    <link rel="import" href="bower_components/paper-tooltip/paper-tooltip.html">
 
     <style is="custom-style">
       paper-header-panel {
@@ -144,6 +146,12 @@
 
         paper-toolbar.left-drawer-toolbar {
             height: 70px;
+        }
+
+        paper-tooltip {
+            --paper-tooltip-background: black;
+            --paper-tooltip-text-color: var(--paper-pink-100);
+            width: 260px;
         }
     </style>
     
@@ -270,9 +278,16 @@
     </paper-dialog>
     <paper-toast id="geo-ws-toast" text=""></paper-toast>
 
-    <div id="validation-dialog" title="Validation" class="hidden">
-        <p class="validation-content"></p>
-    </div>
+    <paper-dialog id="validation-dialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" modal>
+        <h2>Validation</h2>
+        <paper-dialog-scrollable>
+            <p class="validation-content"></p>
+        </paper-dialog-scrollable>
+        <div class="buttons">
+            <paper-button dialog-dismiss autofocus>Close</paper-button>
+        </div>
+    </paper-dialog>
+
     <script src="bower_components/jquery/dist/jquery.min.js"></script>
     <script src="bower_components/jquery-ui/jquery-ui.min.js"></script>
     <script src="bower_components/underscore/underscore-min.js"></script>
@@ -283,6 +298,7 @@
     <script src="bower_components/blockUI/jquery.blockUI.js"></script>
     <script src="bower_components/highlight/build/highlight.pack.js"></script>
     <script src="bower_components/jem.js/jem.js"></script>
+    <script src="bower_components/datetimepicker/jquery.datetimepicker.js"></script>
     
     <!-- external template -->
     <script id="instanceTemplate" type="text/template">

@@ -130,6 +130,11 @@ ul.ws-params > li.ws-param {
   float: right;
 }
 
+.pure-form label.pure-checkbox,
+.pure-form label.pure-radio {
+    max-width: 250px;
+}
+
 @media screen and (min-width: 568px){
     #instances-container li.ws-instance {
         width:90%;

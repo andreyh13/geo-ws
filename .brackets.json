@@ -6,6 +6,7 @@
         "/home/andriy/geoworkspace/geo-ws/bower_components/highlight/tools/cdn.js",
         "/home/andriy/geoworkspace/geo-ws/bower_components/fontfaceobserver/test/ruler-test.js",
         "/home/andriy/geoworkspace/geo-ws/bower_components/jquery/src/callbacks.js",
-        "/home/andriy/geoworkspace/geo-ws/bower_components/fontfaceobserver/test/observer-test.js"
+        "/home/andriy/geoworkspace/geo-ws/bower_components/fontfaceobserver/test/observer-test.js",
+        "/home/andriy/geoworkspace/geo-ws/bower_components/fontfaceobserver/test/deps.js"
     ]
 }
