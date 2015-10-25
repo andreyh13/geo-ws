@@ -83,7 +83,14 @@ Please put the following values:
  If you select import operation in the menu, you will see the following dialog where you can select a file and import requests.
  
  ![Import](/image/docs/geo-ws-import.png?raw=true "Maps WS Builder Import")
- 
+
+## Supported browsers
+
+This application works with the following browsers
+
+- Chrome / Chromium 45+
+- Opera 32+
+
  
 [Geocoding API]: https://developers.google.com/maps/documentation/geocoding 
 [Directions API]: https://developers.google.com/maps/documentation/directions
