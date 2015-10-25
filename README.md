@@ -28,8 +28,8 @@ Please put the following values:
  - **Client ID** and **Crypto Key**. If you have a Google Maps for Work license you should enter there the corresponding values of your client ID and cryptographic key. Please read [authenticate and authorize Maps for Work documentation](https://developers.google.com/maps/documentation/business/webservices/auth) for more details.
  - **Places for Work API key**. If you have a Places API for Work license please enter here the value of the API key from your locked Places API - Zagat Content project.
  - **Roads for Work API key**. If you have a Maps for Work license and enabled the Roads API, please enter here the value of the API key from your locked Roads API project.
- - **Server URL**. Please enter the [http://aux.xomena.elementfx.com/geows.php]
- - **Digital Signature URL**. Please enter the [http://aux.xomena.elementfx.com/geowssign.php]
+ - **Server URL**. Please enter the `http://aux.xomena.elementfx.com/geows.php`
+ - **Digital Signature URL**. Please enter the `http://aux.xomena.elementfx.com/geowssign.php`
  - If you would like to execute all stored requests on page load, please mark the corresponding checkbox.
  
  ### Select version and format
