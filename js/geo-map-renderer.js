@@ -1686,22 +1686,23 @@
      */
     function m_add_places_in_batch(batch, map, id) {
         var count = 0, progress = document.querySelector('#progress-' + id);
-        if (_.isArray(batch) && batch.length) {
-            function m_callback (place_res, status) {
-                count++;
-                console.log("Status: " + status);
-                progress.value = count;
-                if (status === google.maps.places.PlacesServiceStatus.OK) {
-                    m_add_place_to_map (place_res, map, false);
-                }
-                if (count === batch.length) {
-                    progress.value = progress.min;
-                }
-                if (count === Math.min(10, batch.length)) {
-                    m_adjust_bounds(map);
-                }
+        
+        function m_callback (place_res, status) {
+            count++;
+            console.log("Status: " + status);
+            progress.value = count;
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                m_add_place_to_map (place_res, map, false);
             }
-
+            if (count === batch.length) {
+                progress.value = progress.min;
+            }
+            if (count === Math.min(10, batch.length)) {
+                m_adjust_bounds(map);
+            }
+        }
+        
+        if (_.isArray(batch) && batch.length) {
             m_add_center_and_radius(id, map);
             progress.min = 0;
             progress.max = batch.length;
