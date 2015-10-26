@@ -135,6 +135,16 @@ ul.ws-params > li.ws-param {
     max-width: 250px;
 }
 
+.card-tooltip {
+  display: inline-block;
+  width: 18px;
+  margin-left: 4px;
+}
+
+ #tooltip.paper-tooltip {
+  font-size: 11px;
+}
+
 @media screen and (min-width: 568px){
     #instances-container li.ws-instance {
         width:90%;
