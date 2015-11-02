@@ -274,7 +274,7 @@
         });
         var m_config_view = new com.xomena.geo.Views.ConfigView({model: com.xomena.geo.config});
         $("#config > paper-dialog-scrollable").append(m_config_view.el);
-        $(document).delegate("paper-button.config-save", "click", function () {
+        $( "body" ).on("click", "paper-button.config-save", function () {
             console.log("Saving config...");
             //debugger;
             com.xomena.geo.config.set("API_KEY", $("#app-config-api-key").val());
@@ -297,7 +297,7 @@
             toast('Settings saved successfully.');
         });
         
-        $(document).delegate("#config-export", "click", function () {
+        $( "body" ).on("click", "#config-export", function () {
             var a = {
               "com.xomena.geo.Models.Config.API_KEY": com.xomena.geo.config.get("API_KEY"),
               "com.xomena.geo.Models.Config.CLIENT_ID": com.xomena.geo.config.get("CLIENT_ID"),
@@ -310,12 +310,9 @@
             var m_s = JSON.stringify(a);
             var file_name = prompt('Please specify the file name', "geo-ws-settings-"+(new Date().getTime()));
             var m_res = download(m_s, file_name, 'text/plain');
-            /*if (m_res) {
-                toast('Your settings are saved successfully.');
-            }*/
         });
         
-        $(document).delegate("#config-import", "click", function () {
+        $( "body" ).on("click", "#config-import", function () {
             if (window.File && window.FileReader && window.FileList && window.Blob) {
                 var file = document.createElement('input');
                 file.type = 'file';
@@ -384,24 +381,25 @@
             }
         });
         
-        $(document).delegate("button.add-parameter", "click", function(){
+        $( "body" ).on("click", "button.add-parameter", function(){
             console.log("Add parameter clicked");
             var m_id = $(this).attr("id").replace(/add-parameter-/ig,"");
             $("<br/>").appendTo("#multiple-container-"+m_id);
             $("#multiple-container-"+m_id+" > #parameter-"+m_id).clone().attr("id","parameter-"+m_id+"-"+com.xomena.geo.getNewId()).appendTo("#multiple-container-"+m_id);
         });
         
-        $(document).delegate("paper-tab", "click", function(ev){
-          //console.log(ev);
-          if (ev.target.innerText === "Map") {
-            for (var id in window.com.xomena.mapRenderer.instances) {
-              var m_map = window.com.xomena.mapRenderer.getMap(id);
-              if (m_map && $(m_map.getDiv()).is(":visible") && window.com.xomena.mapRenderer.instances[id].pendingFitBounds) {
-                window.com.xomena.mapRenderer.adjustBounds(id);
-                window.com.xomena.mapRenderer.instances[id].pendingFitBounds = false;
-              }
+        $( "body" ).on("click", "paper-tab", function (ev) {
+            //console.log(ev);
+            var m_target_text = ev.target.innerText ? ev.target.innerText : ev.target.textContent;
+            if ($.trim(m_target_text) === "Map") {
+                for (var id in window.com.xomena.mapRenderer.instances) {
+                    var m_map = window.com.xomena.mapRenderer.getMap(id);
+                    if (m_map && $(m_map.getDiv()).is(":visible") && window.com.xomena.mapRenderer.instances[id].pendingFitBounds) {
+                        window.com.xomena.mapRenderer.adjustBounds(id);
+                        window.com.xomena.mapRenderer.instances[id].pendingFitBounds = false;
+                    }
+                }
             }
-          }
         });
         
         $("#edit-config").on("click", function(ev) {
@@ -414,7 +412,7 @@
         });
 
         //Export requests
-        $(document).delegate("#app-menu-item-export", "click", function(ev) {
+        $( "body" ).on("click", "#app-menu-item-export", function(ev) {
             ev.preventDefault();
             var dialog = document.getElementById("export-requests");
             if (dialog) {
@@ -428,7 +426,7 @@
         });
 
         //Import requests
-        $(document).delegate("#app-menu-item-import", "click", function(ev) {
+        $( "body" ).on("click", "#app-menu-item-import", function(ev) {
             ev.preventDefault();
             var dialog = document.getElementById("import-requests");
             if (dialog) {
@@ -437,7 +435,7 @@
             return false;
         });
 
-        $(document).delegate("#export-instances paper-icon-item paper-checkbox", "click", function (ev) {
+        $( "body" ).on("click", "#export-instances paper-icon-item paper-checkbox", function (ev) {
             if (this.checked) {
                 var instanceView = com.xomena.geo.instanceViewsMap[this.value];
                 if (instanceView) {
@@ -454,7 +452,7 @@
             }
         });
 
-        $(document).delegate("#export-requests paper-button.export-save", "click", function () {
+        $( "body" ).on("click", "#export-requests paper-button.export-save", function () {
             console.log("Exporting requests...");
             var m_arr = [];
             $("#export-instances paper-icon-item paper-checkbox").each(function () {
@@ -480,7 +478,7 @@
             }
         });
 
-        $(document).delegate("#import-requests paper-button.import-save", "click", function () {
+        $( "body" ).on("click", "#import-requests paper-button.import-save", function () {
             console.log("Importing requests...");
             if (window.File && window.FileReader && window.FileList && window.Blob) {
                 var m_file = document.getElementById('import-file-inp').files[0];
