@@ -126,6 +126,14 @@ ul.ws-params > li.ws-param {
   font-family: 'Roboto', sans-serif;
 }
 
+body.wait-init {
+    visibility: hidden;
+}
+
+body.wait-init div.blockUI {
+    visibility: visible;
+}
+
 #infowindow-moreinfo a {
   float: right;
 }
