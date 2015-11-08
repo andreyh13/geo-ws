@@ -90,6 +90,7 @@ This application works with the following browsers
 
 - Chrome / Chromium 45+
 - Opera 32+
+- Firefox 42+
 
  
 [Geocoding API]: https://developers.google.com/maps/documentation/geocoding 
