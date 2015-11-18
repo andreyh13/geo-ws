@@ -4,7 +4,8 @@
         URL_SERVER_DEF = "http://aux.xomena.elementfx.com/geows.php",
 	    URL_SIGN_DEF = "http://aux.xomena.elementfx.com/geowssign.php",
 	    instance_col = new com.xomena.geo.Collections.InstanceCollection(),
-        instancesView = null;
+        instancesView = null,
+        isIE = /*@cc_on!@*/false;
     
     instance_col.on("add", function (inst) {
         console.log("The instance " + inst.get("id") + " has added to collection");
@@ -40,7 +41,7 @@
         //build download link:
         a.href = "data:" + strMimeType + "charset=utf-8," + encodeURIComponent(strData);
 
-        if (window.MSBlobBuilder) { // IE10
+        if (window.MSBlobBuilder && isIE) { // IE10
             var bb = new MSBlobBuilder();
             bb.append(strData);
             return navigator.msSaveBlob(bb, strFileName);
@@ -313,6 +314,7 @@
         });
         
         $( "body" ).on("click", "#config-import", function () {
+            //debugger;
             if (window.File && window.FileReader && window.FileList && window.Blob) {
                 var file = document.createElement('input');
                 file.type = 'file';
