@@ -434,9 +434,12 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                         var n = p.get("name");
                         var v = p.get("value");
                         if(v && $.isArray(v) && v.length){
+                            _.each(v, function(el, ind, arr) {
+                                arr[ind] = el.replace('&', '%26');
+                            });
                             res.push(aa);
                             res.push(n);
-                            var m_encval = encodeURI(v.join(sep));
+                            var m_encval = encodeURI(v.join(sep)).replace('%2526', '%26');
                             if(m_encval){
                                 res.push("=");
                                 res.push(m_encval);
