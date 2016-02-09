@@ -518,7 +518,8 @@ com.xomena.geo.Models.Config = Backbone.Model.extend({
         SIGN_URL: null,
         PLACES_API_KEY: null,
         ROADS_API_KEY: null,
-        AUTO_EXEC_ONLOAD: false
+        AUTO_EXEC_ONLOAD: false,
+        EXT_ID: null
     }
 }); 
 

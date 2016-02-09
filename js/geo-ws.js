@@ -269,6 +269,7 @@
 					  URL_SIGN_DEF,
             PLACES_API_KEY: localStorage.getItem("com.xomena.geo.Models.Config.PLACES_API_KEY"),
             ROADS_API_KEY: localStorage.getItem("com.xomena.geo.Models.Config.ROADS_API_KEY"),
+            EXT_ID: localStorage.getItem("com.xomena.geo.Models.Config.EXT_ID"),
             AUTO_EXEC_ONLOAD: localStorage.getItem("com.xomena.geo.Models.Config.AUTO_EXEC_ONLOAD") ?
                   localStorage.getItem("com.xomena.geo.Models.Config.AUTO_EXEC_ONLOAD"):
                   false
@@ -285,6 +286,7 @@
             com.xomena.geo.config.set("SIGN_URL", $("#app-config-sign-url").val());
             com.xomena.geo.config.set("PLACES_API_KEY", $("#app-config-places-api-key").val());
             com.xomena.geo.config.set("ROADS_API_KEY", $("#app-config-roads-api-key").val());
+            com.xomena.geo.config.set("EXT_ID", $("#app-config-ext-id").val());
             com.xomena.geo.config.set("AUTO_EXEC_ONLOAD", $("#app-config-exec-onload").get(0).checked);
             localStorage.setItem("com.xomena.geo.Models.Config.API_KEY", com.xomena.geo.config.get("API_KEY"));
             localStorage.setItem("com.xomena.geo.Models.Config.CLIENT_ID", com.xomena.geo.config.get("CLIENT_ID"));
@@ -293,6 +295,7 @@
             localStorage.setItem("com.xomena.geo.Models.Config.SIGN_URL", com.xomena.geo.config.get("SIGN_URL"));
             localStorage.setItem("com.xomena.geo.Models.Config.PLACES_API_KEY", com.xomena.geo.config.get("PLACES_API_KEY"));
             localStorage.setItem("com.xomena.geo.Models.Config.ROADS_API_KEY", com.xomena.geo.config.get("ROADS_API_KEY"));
+            localStorage.setItem("com.xomena.geo.Models.Config.EXT_ID", com.xomena.geo.config.get("EXT_ID"));
             localStorage.setItem("com.xomena.geo.Models.Config.AUTO_EXEC_ONLOAD", com.xomena.geo.config.get("AUTO_EXEC_ONLOAD"));
             console.log("Config saved");
             toast('Settings saved successfully.');
@@ -306,7 +309,8 @@
               "com.xomena.geo.Models.Config.SERVER_URL": com.xomena.geo.config.get("SERVER_URL"),
               "com.xomena.geo.Models.Config.SIGN_URL": com.xomena.geo.config.get("SIGN_URL"),
               "com.xomena.geo.Models.Config.PLACES_API_KEY": com.xomena.geo.config.get("PLACES_API_KEY"),
-              "com.xomena.geo.Models.Config.ROADS_API_KEY": com.xomena.geo.config.get("ROADS_API_KEY")
+              "com.xomena.geo.Models.Config.ROADS_API_KEY": com.xomena.geo.config.get("ROADS_API_KEY"),
+              "com.xomena.geo.Models.Config.EXT_ID": com.xomena.geo.config.get("EXT_ID")
             };
             var m_s = JSON.stringify(a);
             var file_name = prompt('Please specify the file name', "geo-ws-settings-"+(new Date().getTime()));
@@ -355,7 +359,10 @@
                                   break;
                                 case "com.xomena.geo.Models.Config.ROADS_API_KEY":
                                   elemId = "app-config-roads-api-key";
-                                  break;  
+                                  break;
+                                case "com.xomena.geo.Models.Config.EXT_ID":
+                                  elemId = "app-config-ext-id";
+                                  break;   
                               } 
                               if (elemId) {
                                 var elem = document.getElementById(elemId);
