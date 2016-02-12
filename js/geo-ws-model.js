@@ -11,6 +11,7 @@ window.com.xomena.geo = {
   instanceViewsMap: {},    
   config: {},  
   storedValues: {},
+  port: null,
   getNewId: function(){
     window.com.xomena.geo.getNewId.count = ++window.com.xomena.geo.getNewId.count || 1;
     return window.com.xomena.geo.getNewId.count;
@@ -618,6 +619,13 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
                     }
                     hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
                     self.renderMap(data);
+                    //Talk to external part
+                    if (window.com.xomena.geo.port) {
+                        window.com.xomena.geo.port.postMessage({
+                          type: "ws-exec",
+                          model: self.model.get("id")
+                        });                    
+                    }
                 },
                 error: function(jqXHR, textStatus, errorThrown){
                     console.log("Server side error: "+textStatus+" - "+ errorThrown);

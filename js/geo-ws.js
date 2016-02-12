@@ -713,6 +713,10 @@
             console.log('Components are ready');
             $("body").removeClass("wait-init");
         });
+        
+        if (chrome && chrome.runtime && com.xomena.geo.config.get("EXT_ID")) {
+            window.com.xomena.geo.port = chrome.runtime.connect(com.xomena.geo.config.get("EXT_ID"), {name: "sbtsupport"}); 
+        }
 
     });
 })(jQuery);
