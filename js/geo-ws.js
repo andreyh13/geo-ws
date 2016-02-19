@@ -102,7 +102,8 @@
                         condVisibility: data[i][9],
                         m4wOnly: data[i][10],
                         condRequired: data[i][11],
-                        condRequiredOr: data[i][12]
+                        condRequiredOr: data[i][12],
+                        deprecated: data[i][13]
                     });
                     partscol.add(part);
                 }
@@ -133,7 +134,8 @@
                         m4wOnly: data[i][11],
                         condRequired: data[i][12],
                         condRequiredOr: data[i][13],
-                        separator: data[i][14] ? data[i][14] : '|'
+                        separator: data[i][14] ? data[i][14] : '|',
+                        deprecated: data[i][15]
                     });
                     if(data[i][4]){
                         //Init parameter parts
@@ -168,7 +170,8 @@
                         xmlSuffix: data[i][6],
                         apiaryKeyFree: data[i][7],
                         apiaryKeyM4W: data[i][8],
-                        render: data[i][9]
+                        render: data[i][9],
+                        isImagery: data[i][10]
                     });
                     if(data[i][2]){
                         //Init parameters

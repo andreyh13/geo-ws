@@ -261,7 +261,8 @@ com.xomena.geo.Models.WebService = Backbone.Model.extend({
         xmlSuffix: 'xml',
         apiaryKeyFree: 'API_KEY',
         apiaryKeyM4W: '',
-        render: ''
+        render: '',
+        isImagery: false
     }
 });
     
@@ -282,7 +283,8 @@ com.xomena.geo.Models.Parameter = Backbone.Model.extend({
         condVisibility: '',
         m4wOnly: false,
         condRequired: '',
-        condRequiredOr: ''
+        condRequiredOr: '',
+        deprecated: false
     }
 });
 
@@ -320,7 +322,8 @@ com.xomena.geo.Models.ParameterPart = Backbone.Model.extend({
         condVisibility: '',
         m4wOnly: false,
         condRequired: '',
-        condRequiredOr: ''
+        condRequiredOr: '',
+        deprecated: false
     }
 });  
 

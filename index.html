@@ -344,7 +344,9 @@
                             <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>" class="ws-choose">
                                 <option value="">--Please select--</option>
                                 <% services.forEach(function(model){
-                                    print('<option value="'+model.get('id')+'"'+(model.get('id')==webservice?'  selected':'')+'>'+model.get('name')+'</option>');
+                                    if (!model.get('isImagery')) {
+                                        print('<option value="'+model.get('id')+'"'+(model.get('id')==webservice?'  selected':'')+'>'+model.get('name')+'</option>');
+                                    }
                                 });
                                 %>
                             </select>
@@ -393,7 +395,7 @@
     <!-- external template -->
     <script id="paramTemplate" type="text/template">
       <label for="parameter-<%= id %>"<%= model.get("required")?" class='parameter-required'":(model.get("requiredOrGroup")?" class='parameter-required-or'":"") %>>
-      <%= name %><%= model.get("required") || model.get("requiredOrGroup")?"<sup>*</sup>":"" %>
+      <%= name + (model.get("deprecated") ? " (deprecated)" : "") %><%= model.get("required") || model.get("requiredOrGroup")?"<sup>*</sup>":"" %>
       </label>
       <% 
             var triggers = {
