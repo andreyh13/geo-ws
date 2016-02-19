@@ -11,6 +11,7 @@ window.com.xomena.geo = {
   instanceViewsMap: {},    
   config: {},  
   storedValues: {},
+  port: null,
   getNewId: function(){
     window.com.xomena.geo.getNewId.count = ++window.com.xomena.geo.getNewId.count || 1;
     return window.com.xomena.geo.getNewId.count;
@@ -260,7 +261,8 @@ com.xomena.geo.Models.WebService = Backbone.Model.extend({
         xmlSuffix: 'xml',
         apiaryKeyFree: 'API_KEY',
         apiaryKeyM4W: '',
-        render: ''
+        render: '',
+        isImagery: false
     }
 });
     
@@ -281,7 +283,8 @@ com.xomena.geo.Models.Parameter = Backbone.Model.extend({
         condVisibility: '',
         m4wOnly: false,
         condRequired: '',
-        condRequiredOr: ''
+        condRequiredOr: '',
+        deprecated: false
     }
 });
 
@@ -319,7 +322,8 @@ com.xomena.geo.Models.ParameterPart = Backbone.Model.extend({
         condVisibility: '',
         m4wOnly: false,
         condRequired: '',
-        condRequiredOr: ''
+        condRequiredOr: '',
+        deprecated: false
     }
 });  
 
@@ -518,7 +522,8 @@ com.xomena.geo.Models.Config = Backbone.Model.extend({
         SIGN_URL: null,
         PLACES_API_KEY: null,
         ROADS_API_KEY: null,
-        AUTO_EXEC_ONLOAD: false
+        AUTO_EXEC_ONLOAD: false,
+        EXT_ID: null
     }
 }); 
 
@@ -617,6 +622,13 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
                     }
                     hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
                     self.renderMap(data);
+                    //Talk to external part
+                    if (window.com.xomena.geo.port) {
+                        window.com.xomena.geo.port.postMessage({
+                          type: "ws-exec",
+                          model: self.model.get("id")
+                        });                    
+                    }
                 },
                 error: function(jqXHR, textStatus, errorThrown){
                     console.log("Server side error: "+textStatus+" - "+ errorThrown);
