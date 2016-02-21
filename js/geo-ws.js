@@ -135,7 +135,8 @@
                         condRequired: data[i][12],
                         condRequiredOr: data[i][13],
                         separator: data[i][14] ? data[i][14] : '|',
-                        deprecated: data[i][15]
+                        deprecated: data[i][15],
+                        excludedGroup: data[i][16]
                     });
                     if(data[i][4]){
                         //Init parameter parts
