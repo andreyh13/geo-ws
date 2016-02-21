@@ -44,7 +44,9 @@ The `google-map` element renders a Google Map.
         start-address="San Francisco" end-address="Mountain View">
     </google-map-directions>
 
-@demo
+@demo demo/index.html
+@demo demo/polys.html
+@demo demo/kml.html
 -->
 
 <dom-module id="google-map">
@@ -95,7 +97,7 @@ The `google-map` element renders a Google Map.
      * @event google-map-ready
      */
     /**
-     * Fired when the when the user clicks on the map (but not when they click on a marker, infowindow, or
+     * Fired when the user clicks on the map (but not when they click on a marker, infowindow, or
      * other object). Requires the clickEvents attribute to be true.
      * @event google-map-click
      * @param {google.maps.MouseEvent} event The mouse event.
@@ -139,6 +141,10 @@ The `google-map` element renders a Google Map.
      * attribute to be true.
      * @event google-map-rightclick
      * @param {google.maps.MouseEvent} event The mouse event.
+     */
+
+    /**
+     * Polymer properties for the google-map custom element.
      */
     properties: {
       /**
@@ -330,6 +336,11 @@ The `google-map` element renders a Google Map.
        * Use to specify additional options we do not expose as
        * properties.
        * Ex: `<google-map additional-map-options='{"mapTypeId":"satellite"}'>`
+       *
+       * Note, you can't use API enums like `google.maps.ControlPosition.TOP_RIGHT`
+       * when using this property as an HTML attribute. Instead, use the actual
+       * value (e.g. `3`) or set `.additionalMapOptions` in JS rather than using
+       * the attribute.
        */
       additionalMapOptions: {
         type: Object,
@@ -554,7 +565,7 @@ The `google-map` element renders a Google Map.
     },
 
     _loadKml: function() {
-      if (this.kml) {
+      if (this.map && this.kml) {
         var kmlfile = new google.maps.KmlLayer({
           url: this.kml,
           map: this.map
@@ -681,7 +692,7 @@ The `google-map` element renders a Google Map.
       });
     },
 
-    attributeChanged: function(attrName, oldVal, newVal) {
+    attributeChanged: function(attrName) {
       if (!this.map) {
         return;
       }

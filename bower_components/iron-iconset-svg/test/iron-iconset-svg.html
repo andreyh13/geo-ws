@@ -78,6 +78,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           expect(meta.byKey('foo')).to.be.equal(iconset);
         });
 
+        test('it does not have a size', function () {
+          var rect = iconset.getBoundingClientRect();
+          expect(rect.width).to.be.equal(0);
+          expect(rect.height).to.be.equal(0);
+        });
+
         test('it fires an iron-iconset-added event on the window', function() {
           return loadedPromise;
         });
@@ -91,6 +97,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           var elements = fixture('StandardIconsetSvg');
           iconset = elements[0];
           div = elements[1];
+        });
+
+        test('it does not have a size', function () {
+          var rect = iconset.getBoundingClientRect();
+          expect(rect.width).to.be.equal(0);
+          expect(rect.height).to.be.equal(0);
         });
 
         test('appends a child to the target element', function () {
