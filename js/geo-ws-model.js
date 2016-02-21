@@ -284,7 +284,8 @@ com.xomena.geo.Models.Parameter = Backbone.Model.extend({
         m4wOnly: false,
         condRequired: '',
         condRequiredOr: '',
-        deprecated: false
+        deprecated: false,
+        excludedGroup: null
     }
 });
 
@@ -347,6 +348,7 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
             console.log("Start parameters validation");
             var msg = [];
             var reqOrGroup = [];
+            var excludedGroups = Object.create(null);
             value.forEach(function(p){
                 var m = p.get("model");
                 var n = p.get("name");
@@ -378,6 +380,16 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                         msg.push("The following values of " + n + " don't match the pattern:<br/>&nbsp;&nbsp;&nbsp;" + notPassed.join("<br/>&nbsp;&nbsp;&nbsp;"));
                     }
                 }
+                //Excluded groups
+                if (m.get("excludedGroup")) {
+                    if (!excludedGroups[m.get("excludedGroup")]) {
+                        excludedGroups[m.get("excludedGroup")] = [];
+                    }
+                    excludedGroups[m.get("excludedGroup")].push({
+                        name: n,
+                        value: v
+                    });
+                }
             });
             //Check required one of 
             if(reqOrGroup.length){
@@ -388,6 +400,18 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                     var allNames = _.map(reqOrGroup, function(elem){ return elem.name; });
                     msg.push("One of these parameters is required:<br/>&nbsp;&nbsp;&nbsp;" + allNames.join("<br/>&nbsp;&nbsp;&nbsp;"));
                 }
+            }
+            //Check excluded groups
+            if (_.keys(excludedGroups).length) {
+                _.each(_.keys(excludedGroups), function (grp) {
+                    var f = _.filter(excludedGroups[grp], function(elem) {
+                        return elem.value.length;
+                    });
+                    if (f.length > 1) {
+                        var exclNames = _.map(excludedGroups[grp], function(elem){ return elem.name; });
+                        msg.push("You can define only one of the following parameters:<br/>&nbsp;&nbsp;&nbsp;" + exclNames.join("<br/>&nbsp;&nbsp;&nbsp;"));
+                    }
+                });
             }
             console.log("End parameters validation");
             if(msg.length){
