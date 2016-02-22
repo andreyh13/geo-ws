@@ -1086,8 +1086,8 @@ com.xomena.geo.Views.ParameterView = Backbone.View.extend({
     this.$el.html(this.newTemplate(this.model.toJSON())); // calls the template
     if (this.model.get("model").get("type") === "timestamp") {
         this.$el.find("#parameter-"+this.model.get("id")).datetimepicker({
-            format:'unixtime',
-            step: 10
+            step: 10,
+            format: 'unixtime'
         });
     }
   },
