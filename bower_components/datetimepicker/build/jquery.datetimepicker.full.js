@@ -542,7 +542,7 @@ var DateFormatter;
                  * @return {number}
                  */
                 U: function () {
-                    return vDate.getTime() / 1000 || 0;
+                    return Math.round(vDate.getTime() / 1000 || 0);
                 }
             };
             return doFormat(vChar, vChar);
@@ -556,6 +556,7 @@ var DateFormatter;
                 }
             }
             if (vDate instanceof Date) {
+                if (vFormat === "unixtime") vFormat = 'U';
                 len = vFormat.length;
                 for (i = 0; i < len; i++) {
                     vChar = vFormat.charAt(i);
