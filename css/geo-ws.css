@@ -50,6 +50,16 @@
     overflow-x: auto;
 }
 
+.ws-tools-links {
+    padding: 12px 0 0 8px;
+    color: darkgreen;
+}
+
+.ws-tools-links a {
+    text-decoration: none;
+    color:darkgreen;
+}
+
 .ws-url {
     max-width: 100%;
 }

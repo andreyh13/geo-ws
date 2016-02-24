@@ -11,6 +11,7 @@
         "/home/andriy/geoworkspace/geo-ws/bower_components/fontfaceobserver/src/observer.js",
         "/home/andriy/geoworkspace/geo-ws/bower_components/fontfaceobserver/src/ruler.js",
         "/home/andriy/geoworkspace/geo-ws/bower_components/fontfaceobserver/src/descriptors.js",
-        "/home/andriy/geoworkspace/geo-ws/bower_components/jquery/src/selector.js"
+        "/home/andriy/geoworkspace/geo-ws/bower_components/jquery/src/selector.js",
+        "/home/andriy/geoworkspace/geo-ws/bower_components/highlight/src/highlight.js"
     ]
 }

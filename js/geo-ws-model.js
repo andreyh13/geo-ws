@@ -12,11 +12,14 @@ window.com.xomena.geo = {
   config: {},  
   storedValues: {},
   port: null,
-  getNewId: function(){
+  getNewId: function () {
     window.com.xomena.geo.getNewId.count = ++window.com.xomena.geo.getNewId.count || 1;
     return window.com.xomena.geo.getNewId.count;
   },
-  getFormElement: function(id, name, model, triggers, listeners, parentInstance){
+  tools: {
+      geocoder: "https://google-developers.appspot.com/maps/documentation/utils/geocoder/#"
+  },
+  getFormElement: function (id, name, model, triggers, listeners, parentInstance) {
     var output = [],
         t = model.get("type"),
         p = model.get("pattern"),
@@ -262,7 +265,8 @@ com.xomena.geo.Models.WebService = Backbone.Model.extend({
         apiaryKeyFree: 'API_KEY',
         apiaryKeyM4W: '',
         render: '',
-        isImagery: false
+        isImagery: false,
+        geocoderTool: false
     }
 });
     
@@ -534,6 +538,79 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
             });
         }
         return res;
+    },
+
+    getToolsURLs: function () {
+        var m_links = [];
+        var m_service = this.get("webservice");
+        if (m_service) {
+            var m_services = this.get("services");
+            var service = m_services.filterById(parseInt(m_service));
+            if ($.isArray(service) && service.length) {
+                var m_geocoder = service[0].get("geocoderTool");
+                if (m_geocoder) {
+                    var pars = this.get("parameters");
+                    var aa = "";
+                    var res = [];
+                    var hasOptions = false;
+                    if (pars) {
+                        pars.forEach(function (p) {
+                            var n = p.get("name");
+                            var v = p.get("value");
+                            switch (n) {
+                                case "address":
+                                case "latlng":
+                                    if (v && $.isArray(v) && v.length) {
+                                        res.push(aa);
+                                        res.push("q");
+                                        res.push("=");
+                                        res.push(encodeURIComponent(v[0]));
+                                        aa = "&";
+                                    }
+                                    break;
+                                case "place_id":
+                                    //TODO: check with Miguel
+                                    break;
+                                case "components":
+                                    if (v && $.isArray(v) && v.length) {
+                                        v.forEach(function (val) {
+                                            var m_arr = val.split(":");
+                                            res.push(aa);
+                                            res.push("in_" + m_arr[0]);
+                                            res.push("=");
+                                            res.push(encodeURIComponent(m_arr[1]));
+                                            aa = "&";
+                                        });
+                                        hasOptions = true;
+                                    }
+                                    break;
+                                case "region":
+                                    if (v && $.isArray(v) && v.length) {
+                                        res.push(aa);
+                                        res.push("country");
+                                        res.push("=");
+                                        res.push(encodeURIComponent(v[0]));
+                                        aa = "&";
+                                        hasOptions = true;
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                        });
+                    }
+                    if (hasOptions) {
+                        res.push(aa);
+                        res.push("options");
+                        res.push("=");
+                        res.push("true");
+                    }
+                    m_links.push('<a href="' + com.xomena.geo.tools.geocoder + encodeURIComponent(res.join('')) +
+                                 '" title="Geocoder Tool" target="_blank">Open in Geocoder Tool</a>&nbsp;☝️');
+                }
+            }
+        }
+        return m_links;
     }
 });
 
@@ -646,6 +723,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
                     }
                     hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
                     self.renderMap(data);
+                    self.addToolsLinks();
                     //Talk to external part
                     if (window.com.xomena.geo.port) {
                         window.com.xomena.geo.port.postMessage({
@@ -1030,6 +1108,13 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
       if(m_map){
           window.com.xomena.mapRenderer.updateInstance(this.model, data);
           window.com.xomena.mapRenderer.renderMap(this.model.get("id"));
+      }
+  },
+  addToolsLinks: function () {
+      this.$("#ws-tools-links-"+this.model.get("id")).html("");
+      var tools_urls = this.model.getToolsURLs();
+      if (tools_urls && tools_urls.length) {
+          this.$("#ws-tools-links-"+this.model.get("id")).html(tools_urls.join("<br/>"));
       }
   }
 });

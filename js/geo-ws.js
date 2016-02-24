@@ -172,7 +172,8 @@
                         apiaryKeyFree: data[i][7],
                         apiaryKeyM4W: data[i][8],
                         render: data[i][9],
-                        isImagery: data[i][10]
+                        isImagery: data[i][10],
+                        geocoderTool: data[i][11]
                     });
                     if(data[i][2]){
                         //Init parameters
