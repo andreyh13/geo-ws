@@ -266,7 +266,8 @@ com.xomena.geo.Models.WebService = Backbone.Model.extend({
         apiaryKeyM4W: '',
         render: '',
         isImagery: false,
-        geocoderTool: false
+        geocoderTool: false,
+        automotive: false
     }
 });
     
@@ -430,6 +431,13 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                 $("#validation-dialog").find("p.validation-content").html(warn).end().get(0).open();
                 return warn;
             }
+        },
+        version: function (value) {
+            if(!value){
+                var warn = "Please set the version to Free or For Work";
+                $("#validation-dialog").find("p.validation-content").html(warn).end().get(0).open();
+                return warn;
+            }
         }
     },
     getURL: function(){
@@ -486,6 +494,19 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                         res.push(aa);
                         res.push("key=");
                         res.push(com.xomena.geo.config.get(service[0].get("apiaryKeyFree")));
+                    }
+                } else if (ver === "automotive") {
+                    var autoClientID = $("#ws-version-automotive-" + this.get("id")).attr("data-clientid");
+                    var autoAPIKey = $("#ws-version-automotive-" + this.get("id")).attr("data-apikey");
+                    if (autoClientID) {
+                        res.push(aa);
+                        res.push("client=");
+                        res.push(autoClientID);
+                    }
+                    if (autoAPIKey) {
+                        res.push(aa);
+                        res.push("key=");
+                        res.push(autoAPIKey);
                     }
                 } else {
                     if(m_isApiary){
@@ -699,8 +720,8 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     jem.fire('InstanceUpdated', {
         instance: this.model
     });  
-    var isValid = this.model.isValid("output") && this.model.isValid("parameters");  
-    if(isValid){  
+    var isValid = this.model.isValid("version") && this.model.isValid("output") && this.model.isValid("parameters");
+    if (isValid) {
         var m_url = this.model.getURL();
         document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = m_url;
         if(m_url && com.xomena.geo.config.get("SERVER_URL")){
@@ -795,6 +816,15 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
             $("#output-xml-"+this.model.get("id")).removeAttr("checked");
         } else {
             $("#output-xml-"+this.model.get("id")).removeAttr("disabled");
+        }
+        //Talk to external part
+        if (window.com.xomena.geo.port) {
+            window.com.xomena.geo.port.postMessage({
+                type: "ws-choose",
+                model: this.model.get("id"),
+                automotive: service[0].get("automotive"),
+                version: this.model.get("version")
+            });
         }  
       } else {
         this.$(".ws-parameters").html("");  
