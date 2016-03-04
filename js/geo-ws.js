@@ -691,6 +691,36 @@
                 instance_col.localStorage.update(eventAttributes.instance);
             }
         });
+        jem.on('InstanceCloned', function (eventName, eventAttributes) {
+            // Handle the event
+            console.log("Handling instance cloned event");
+            if(eventAttributes.instance){
+                instance_col.add(eventAttributes.instance);
+                var m_instanceView = new com.xomena.geo.Views.InstanceView({model: eventAttributes.instance});
+                Backbone.Validation.bind(m_instanceView);
+                $("#instances-container").append(m_instanceView.el);
+                com.xomena.geo.instanceViewsMap[eventAttributes.instance.get("id")] = m_instanceView;
+                $("#instances-container > li:last").get(0).scrollIntoView(true);
+                document.querySelector('#t-' + eventAttributes.instance.get("id")).selected = 0;
+                $("#ws-result-" + eventAttributes.instance.get("id")).width(function (ind, val) {
+                    return $($(this).parents("div.pure-g").get(0)).width();
+                });
+                m_instanceView.chooseWebService({
+                  target: {
+                    value: eventAttributes.instance.get("webservice")
+                  }
+                });
+                jem.fire('VisibilityDependence', {
+                  instanceId: eventAttributes.instance.get("id")
+                });
+                jem.fire('RequiredDependence', {
+                  instanceId: eventAttributes.instance.get("id")
+                });
+                jem.fire('RequiredOrDependence', {
+                  instanceId: eventAttributes.instance.get("id")
+                });
+            }
+        });
         
         $( window ).resize(function () {
             for(var key in com.xomena.geo.instanceViewsMap){

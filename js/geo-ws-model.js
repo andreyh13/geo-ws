@@ -745,6 +745,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
                     hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
                     self.renderMap(data);
                     self.addToolsLinks();
+                    self.$("#clone-instance-"+self.model.get("id")).removeAttr("disabled");
                     //Talk to external part
                     if (window.com.xomena.geo.port) {
                         window.com.xomena.geo.port.postMessage({
@@ -777,6 +778,42 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     window.com.xomena.mapRenderer.removeInstance(this.model.get("id"));
     this.model.destroy(); // deletes the model when delete button clicked
     return false;  
+  },
+  cloneInstance: function (ev) {
+      ev.preventDefault();
+      console.log("Clone instance #" + this.model.get("id"));
+
+      // Generate four random hex digits.
+      function S4() {
+          return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+      }
+
+      // Generate a pseudo-GUID by concatenating random hexadecimal.
+      function guid() {
+          return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
+      }
+
+      var ws = this.model.get("webservice");
+      var params = this.model.get("parameters");
+      if (ws && params) {
+          this.storeValues();
+
+          var m_instance = new com.xomena.geo.Models.Instance({
+              id: guid(),
+              services: com.xomena.geo.services,
+              output: this.model.get("output"),
+              version: this.model.get("version"),
+              webservice: ws
+          });
+
+          com.xomena.geo.storedValues[m_instance.get("id")] = {};
+		  com.xomena.geo.storedValues[m_instance.get("id")][ws] = com.xomena.geo.storedValues[this.model.get("id")][ws];
+
+          jem.fire('InstanceCloned', {
+              instance: m_instance
+          });
+      }
+      return false;
   },    
   chooseWebService: function(ev){
       var self = this;
@@ -801,6 +838,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
         this.$(".ws-parameters").html(paramsView.el);
         this.$(".chosen-select").chosen();
         this.$("#exec-instance-"+this.model.get("id")).removeAttr("disabled");
+        this.$("#clone-instance-"+this.model.get("id")).attr("disabled","disabled");
         this.setParametersVisibility(); 
         this.setM4WVisibility();  
         this.setParametersRequired();
@@ -829,6 +867,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
       } else {
         this.$(".ws-parameters").html("");  
         this.$("#exec-instance-"+this.model.get("id")).attr("disabled","disabled");
+        this.$("#clone-instance-"+this.model.get("id")).attr("disabled","disabled");
         $("#output-json-"+this.model.get("id")).removeAttr("disabled");
         $("#output-json-"+this.model.get("id")).prop("checked","checked");  
         $("#output-xml-"+this.model.get("id")).removeAttr("disabled");  
@@ -845,6 +884,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
   events: {
     'click .exec':   'execInstance',
     'click .delete': 'deleteInstance',
+    'click .clone':   'cloneInstance',
     'change .ws-choose': 'chooseWebService',
     'click .ws-toggle': 'toggleWs',
     'click .ws-version-fs [type="radio"]': 'toggleVersion'  
