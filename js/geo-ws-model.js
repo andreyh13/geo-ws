@@ -590,7 +590,13 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                                     }
                                     break;
                                 case "place_id":
-                                    //TODO: check with Miguel
+                                    if (v && $.isArray(v) && v.length) {
+                                        res.push(aa);
+                                        res.push("place_id");
+                                        res.push("=");
+                                        res.push(v[0]);
+                                        aa = "&";
+                                    }
                                     break;
                                 case "components":
                                     if (v && $.isArray(v) && v.length) {
