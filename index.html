@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Maps Web Services Requests Builder</title>
+    <title>Maps Web Services and Image APIs Requests Builder</title>
 
     <script src="bower_components/fontfaceobserver/fontfaceobserver.js"></script>
     <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
@@ -218,9 +218,9 @@
                 <header class="title">
                     <h1>
                         <div class="devsite-product-logo-container">
-                            <img class="devsite-product-logo"  src="https://www.gstatic.com/images/branding/product/1x/maps_64dp.png" alt="Google Maps Web Services Requests Builder">
+                            <img class="devsite-product-logo"  src="https://www.gstatic.com/images/branding/product/1x/maps_64dp.png" alt="Google Maps Web Services and Image APIs Requests Builder">
                         </div>
-                        G<span class="red">o</span><span class="yellow">o</span>g<span class="green">l</span><span class="red">e</span> Maps Web Services Requests Builder
+                        G<span class="red">o</span><span class="yellow">o</span>g<span class="green">l</span><span class="red">e</span> Maps Web Services and Image APIs Requests Builder
                     </h1>
                 </header>
                 <paper-icon-button icon="settings" title="Settings" id="edit-config"></paper-icon-button>
@@ -344,9 +344,7 @@
                             <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>" class="ws-choose">
                                 <option value="">--Please select--</option>
                                 <% services.forEach(function(model){
-                                    if (!model.get('isImagery')) {
-                                        print('<option value="'+model.get('id')+'"'+(model.get('id')==webservice?'  selected':'')+'>'+model.get('name')+'</option>');
-                                    }
+                                    print('<option value="'+model.get('id')+'"'+(model.get('id')==webservice?'  selected':'')+'>'+model.get('name')+'</option>');
                                 });
                                 %>
                             </select>

@@ -730,40 +730,44 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     if (isValid) {
         var m_url = this.model.getURL();
         document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = m_url;
-        if(m_url && com.xomena.geo.config.get("SERVER_URL")){
-            $.ajax({
-                url: com.xomena.geo.config.get("SERVER_URL"),
-                dataType: self.model.get("output")=="json"?"json":"text",
-                type: "POST",
-                crossDomain: true,
-                async: true,
-                data: {
-                    uri: m_url,
-                    version: self.model.get("version"),
-                    output: self.model.get("output")
-                },
-                success: function(data) {
-                    if($.type(data)=="string"){
-                        self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='xml'>"+$.trim(data).replace(/</ig,"&lt;").replace(/>/ig,"&gt;")+"</code></pre>");
-                    } else {
-                        self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='json'>"+com.xomena.geo.formatJSON(data)+"</code></pre>");
+        if (!this.model.get('isImagery')) {
+            if(m_url && com.xomena.geo.config.get("SERVER_URL")){
+                $.ajax({
+                    url: com.xomena.geo.config.get("SERVER_URL"),
+                    dataType: self.model.get("output")=="json"?"json":"text",
+                    type: "POST",
+                    crossDomain: true,
+                    async: true,
+                    data: {
+                        uri: m_url,
+                        version: self.model.get("version"),
+                        output: self.model.get("output")
+                    },
+                    success: function(data) {
+                        if($.type(data)=="string"){
+                            self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='xml'>"+$.trim(data).replace(/</ig,"&lt;").replace(/>/ig,"&gt;")+"</code></pre>");
+                        } else {
+                            self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='json'>"+com.xomena.geo.formatJSON(data)+"</code></pre>");
+                        }
+                        hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
+                        self.renderMap(data);
+                        self.addToolsLinks();
+                        self.$("#clone-instance-"+self.model.get("id")).removeAttr("disabled");
+                        //Talk to external part
+                        if (window.com.xomena.geo.port) {
+                            window.com.xomena.geo.port.postMessage({
+                              type: "ws-exec",
+                              model: self.model.get("id")
+                            });
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown){
+                        console.log("Server side error: "+textStatus+" - "+ errorThrown);
                     }
-                    hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
-                    self.renderMap(data);
-                    self.addToolsLinks();
-                    self.$("#clone-instance-"+self.model.get("id")).removeAttr("disabled");
-                    //Talk to external part
-                    if (window.com.xomena.geo.port) {
-                        window.com.xomena.geo.port.postMessage({
-                          type: "ws-exec",
-                          model: self.model.get("id")
-                        });                    
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown){
-                    console.log("Server side error: "+textStatus+" - "+ errorThrown);
-                }
-            });
+                });
+            }
+        } else {
+            //TODO: implement imagery call via <img>
         }
     } else {
         document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = "Please set valid parameters";
