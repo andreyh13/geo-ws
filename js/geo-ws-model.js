@@ -638,6 +638,18 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
             }
         }
         return m_links;
+    },
+    isImageryInstance: function () {
+        var m_res = false;
+        var m_service = this.get("webservice");
+        if (m_service) {
+            var m_services = this.get("services");
+            var service = m_services.filterById(parseInt(m_service));
+            if ($.isArray(service) && service.length) {
+                m_res = service[0].get("isImagery");
+            }
+        }
+        return m_res;
     }
 });
 
@@ -726,11 +738,16 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
     jem.fire('InstanceUpdated', {
         instance: this.model
     });  
-    var isValid = this.model.isValid("version") && this.model.isValid("output") && this.model.isValid("parameters");
+    var isValid;
+    if (this.model.isImageryInstance()) {
+        isValid = this.model.isValid("version") && this.model.isValid("parameters");
+    } else {
+        isValid = this.model.isValid("version") && this.model.isValid("output") && this.model.isValid("parameters");
+    }
     if (isValid) {
         var m_url = this.model.getURL();
         document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = m_url;
-        if (!this.model.get('isImagery')) {
+        if (!this.model.isImageryInstance()) {
             if(m_url && com.xomena.geo.config.get("SERVER_URL")){
                 $.ajax({
                     url: com.xomena.geo.config.get("SERVER_URL"),
@@ -765,9 +782,26 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
                         console.log("Server side error: "+textStatus+" - "+ errorThrown);
                     }
                 });
+            } else {
+                this.$("#ws-result-" + this.model.get("id")).html("");
+                this.$("#ws-tools-links-" + this.model.get("id")).html("");
             }
         } else {
-            //TODO: implement imagery call via <img>
+            var m_img_content = "";
+            if (m_url) {
+                m_img_content = '<img src="' + m_url + '" title="" alt="" />';
+            }
+            this.$("#ws-result-" + this.model.get("id")).html(m_img_content);
+            this.$("#ws-tools-links-" + this.model.get("id")).html("");
+            //this.renderMap();
+            this.$("#clone-instance-" + this.model.get("id")).removeAttr("disabled");
+            //Talk to external part
+            if (window.com.xomena.geo.port) {
+                window.com.xomena.geo.port.postMessage({
+                  type: "ws-exec",
+                  model: this.model.get("id")
+                });
+            }
         }
     } else {
         document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = "Please set valid parameters";
