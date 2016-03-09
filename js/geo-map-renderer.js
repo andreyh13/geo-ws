@@ -242,6 +242,9 @@
             var m_format = null;
             if (this.instances[id] && this.instances[id].model) {
                 m_format = this.instances[id].model.get("output");
+                if (!m_format && this.instances[id].model.isImageryInstance()) {
+                    m_format = "image";
+                }
             }
             return m_format;
         },
@@ -350,11 +353,12 @@
      */
     window.com.xomena.mapRenderer.Strategy.prototype.getGeoJSON = function (data, format, map, id) {
         switch (format) {
-        case "json":
-            return this.m_getGeoJSON_JSON(data, map, id);
-        case "xml":
-            return this.m_getGeoJSON_XML(data, map, id);
-        }
+            case "json":
+                return this.m_getGeoJSON_JSON(data, map, id);
+            case "xml":
+                return this.m_getGeoJSON_XML(data, map, id);
+            case "image":
+        }       return this.m_getGeoJSON_Image(data, map, id);
     };
 
     /**
@@ -428,6 +432,21 @@
     };
 
     /**
+     * Prototype function of the Strategy to get GeoJSON for Imagery API
+     * @param   {Object} data Data from render map call of the instance view
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} GeoJSON object
+     */
+    window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_Image = function (data, map, id) {
+        switch (this.type) {
+        case "staticmap":
+            return m_parseStaticMap(data, map, id);
+        }
+        return null;
+    };
+
+    /**
      * Defines if the strategy has asynchronous nature
      * @returns {Boolean} True if nature is acync, false otherwise
      */
@@ -455,7 +474,8 @@
         PlacesDetailRender: new window.com.xomena.mapRenderer.Strategy("places_detail"),
         PlacesAutocompleteRender: new window.com.xomena.mapRenderer.Strategy("places_autocomplete"),
         RoadsRender: new window.com.xomena.mapRenderer.Strategy("roads"),
-        SpeedRender: new window.com.xomena.mapRenderer.Strategy("speed")
+        SpeedRender: new window.com.xomena.mapRenderer.Strategy("speed"),
+        StaticMapsRender: new window.com.xomena.mapRenderer.Strategy("staticmap")
     };
 
     /**
@@ -1314,6 +1334,61 @@
             }
         }
         return null;
+    }
+
+    /**
+     * Parse Static Maps data
+     * @param {Object} data Data from render map instance view call
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} GeoJSON object
+     */
+    function m_parseStaticMap (data, map, id) {
+        var res = {
+            "type": "FeatureCollection",
+            "features": []
+        };
+        /*if (_.isObject(data) && data.status && data.status === "OK") {
+            if (data.results && _.isArray(data.results)) {
+                _.each(data.results, function (elem, index) {
+                    res.features.push({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [elem.geometry.location.lng, elem.geometry.location.lat]
+                        },
+                        "properties": {
+                            "address": elem.formatted_address,
+                            "types": elem.types.join(","),
+                            "location_type": elem.geometry.location_type,
+                            "place_id": elem.place_id,
+                            "partial_match": elem.partial_match ? elem.partial_match : false,
+                            "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                            "content": m_info_window_content_address(elem),
+                            "zIndex": 2
+                        },
+                        "id": elem.place_id
+                    });
+                    if (index < 3) {
+                        bounds.extend(new google.maps.LatLng(elem.geometry.location.lat, elem.geometry.location.lng));
+                        if (elem.geometry.viewport) {
+                            bounds.extend(new google.maps.LatLng(elem.geometry.viewport.northeast.lat, elem.geometry.viewport.northeast.lng));
+                            bounds.extend(new google.maps.LatLng(elem.geometry.viewport.southwest.lat, elem.geometry.viewport.southwest.lng));
+                        }
+                    }
+                });
+                res.bounds = bounds;
+            }
+        }*/
+
+        var m_center = com.xomena.mapRenderer.instances[id].model.getParameterValue("center");
+        if($.isArray(m_center) && m_center.length) {
+            //TODO: implement set center.
+        }
+
+
+        return res;
     }
 
     /**
