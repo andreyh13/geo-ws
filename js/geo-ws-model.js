@@ -793,7 +793,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
             }
             this.$("#ws-result-" + this.model.get("id")).html(m_img_content);
             this.$("#ws-tools-links-" + this.model.get("id")).html("");
-            //this.renderMap({isImageryAPI: true});
+            this.renderMap({isImageryAPI: true});
             this.$("#clone-instance-" + this.model.get("id")).removeAttr("disabled");
             //Talk to external part
             if (window.com.xomena.geo.port) {

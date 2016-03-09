@@ -12,7 +12,8 @@
         geocoder = null,
         ICON_SIZE_32 = null,
         ICON_SIZE_16 = null,
-        ICON_PLACE = "https://maps.gstatic.com/mapfiles/place_api/icons/geocode-71.png";
+        ICON_PLACE = "https://maps.gstatic.com/mapfiles/place_api/icons/geocode-71.png",
+        reLatLng = /^[-+]?\d{1,2}([.]\d+)?,\s*[-+]?\d{1,3}([.]\d+)?$/;
 
     window.com = window.com || {};
     window.com.xomena = window.com.xomena || {};
@@ -1384,9 +1385,32 @@
 
         var m_center = com.xomena.mapRenderer.instances[id].model.getParameterValue("center");
         if($.isArray(m_center) && m_center.length) {
-            //TODO: implement set center.
+            if (reLatLng.test($.trim(m_center[0]))) {
+                var _ll = $.trim(m_center[0]).split(',');
+                if (_ll.length > 1) {
+                    map.setCenter({
+                        lat: parseFloat(_ll[0]),
+                        lng: parseFloat(_ll[1])
+                    });
+                }
+            } else {
+                geocoder.geocode({
+                    address: $.trim(m_center[0])
+                }, function (results, status) {
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        map.setCenter(results[0].geometry.location);
+                    }
+                });
+            }
         }
-
+        var m_zoom = com.xomena.mapRenderer.instances[id].model.getParameterValue("zoom");
+        if($.isArray(m_zoom) && m_zoom.length) {
+            map.setZoom(Number(m_zoom[0]));
+        }
+        var m_type = com.xomena.mapRenderer.instances[id].model.getParameterValue("maptype");
+        if($.isArray(m_type) && m_type.length) {
+            map.setMapTypeId(m_type[0]);
+        }
 
         return res;
     }
@@ -1671,7 +1695,9 @@
                     break;
             }
         });
-        map.fitBounds(bounds);
+        if (!bounds.isEmpty()) {
+            map.fitBounds(bounds);
+        }
     }
 
     function m_add_center_and_radius (id, map) {
