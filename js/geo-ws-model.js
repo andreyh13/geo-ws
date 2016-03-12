@@ -34,7 +34,8 @@ window.com.xomena.geo = {
         t_req = triggers && triggers.required,
         l_req = listeners && listeners.required,
         t_reqOr = triggers && triggers.requiredOr,
-        l_reqOr = listeners && listeners.requiredOr;
+        l_reqOr = listeners && listeners.requiredOr,
+        isPart = model instanceof com.xomena.geo.Models.ParameterPart;
 
     function construct_input_element (pureClass, classes, type, inputId, inputName, inputValue, inputTitle) {
         return  '<input class="' + pureClass + classes + '" type="' + type + '" id="' + inputId +
@@ -59,28 +60,38 @@ window.com.xomena.geo = {
                 '" class="add-parameter">Add</button>';
     }
 
+    function get_add_parts_button () {
+        return '<button type="button" name="add-parts-' + id + '" id="add-parts-' + id +
+                '" class="add-parts">Add</button>';
+    }
+
     output.push('<div id="' + (m ? 'multiple-' : '') + 'container-' + id + '">');
     var sv = [];  
-    if(com.xomena.geo.instanceViewsMap[parentInstance]){
+    if (com.xomena.geo.instanceViewsMap[parentInstance]) {
         var m_ws = com.xomena.geo.instanceViewsMap[parentInstance].model.get("webservice");
-        if(com.xomena.geo.storedValues[parentInstance] && com.xomena.geo.storedValues[parentInstance][m_ws] &&
-           com.xomena.geo.storedValues[parentInstance][m_ws][name]){
-            sv = com.xomena.geo.storedValues[parentInstance][m_ws][name];
-        }
-        if(/components:/ig.test(name)){
-            var arr = name.split(':');
+        if (!isPart) {
             if (com.xomena.geo.storedValues[parentInstance] && com.xomena.geo.storedValues[parentInstance][m_ws] &&
-                com.xomena.geo.storedValues[parentInstance][m_ws][arr[0]]) {
-                    _.each(com.xomena.geo.storedValues[parentInstance][m_ws][arr[0]], function(m1){
-                        if((new RegExp(arr[1]+":")).test(m1)){
+                com.xomena.geo.storedValues[parentInstance][m_ws][name]) {
+                sv = com.xomena.geo.storedValues[parentInstance][m_ws][name];
+            }
+        } else {
+            var _a1 = id.split("-");
+            var ind = Number(_a1[2]);
+            var _a2 = name.split(":");
+            var nn = _a2[0];
+            var pp = _a2[1];
+            if (com.xomena.geo.storedValues[parentInstance] && com.xomena.geo.storedValues[parentInstance][m_ws] &&
+                com.xomena.geo.storedValues[parentInstance][m_ws][nn] && com.xomena.geo.storedValues[parentInstance][m_ws][nn][ind]) {
+                    _.each(com.xomena.geo.storedValues[parentInstance][m_ws][nn][ind], function (m1) {
+                        if ((new RegExp(pp + ":")).test(m1)) {
                            var m2 = m1.split(":");
-                           if(m2.length>1 && m2[1]){
+                           if (m2.length > 1 && m2[1]) {
                                sv.push(m2[1]);
                            }
                         }
                     }); 
             }
-        }    
+        }
     }
 
     var m_classes = (t_vis ? ' trigger-visibility' : '') + (l_vis ? ' listen-visibility' : '') +
@@ -156,18 +167,36 @@ window.com.xomena.geo = {
             output.push('</label>');
             break;
         case 'parts':
+            if (m) {
+                output.push(get_add_parts_button());
+            }
             var parts = model.get("parts");
-            output.push('<ul class="parts-container">');
+            output.push('<ul class="parts-container' + (m ? ' multiple':'') + '">');
             if (parts) {
                 parts.forEach(function (p) {
                     output.push('<li>');
-                    output.push('<label for="parameter-' + id + '-' + p.get("id") + '">' + p.get('name') + '</label>');
-                    output.push(com.xomena.geo.getFormElement(id + "-" + p.get("id"), name + ":" + p.get("name"),
+                    output.push('<label for="parameter-' + id + '-' + p.get("id") + '-0">' + p.get('name') + '</label>');
+                    output.push(com.xomena.geo.getFormElement(id + "-" + p.get("id") + "-0", name + ":" + p.get("name"),
                                     p, null, null, parentInstance));
                     output.push('</li>');
                 });
             }
             output.push('</ul>');
+            if (m && sv.length > 1) {
+                output.push('<ul class="parts-container' + (m ? ' multiple':'') + '">');
+                if (parts) {
+                    for (var j=1; j<sv.length; j++) {
+                        parts.forEach(function (p) {
+                            output.push('<li>');
+                            output.push('<label for="parameter-' + id + '-' + p.get("id") + '-' + j + '">' + p.get('name') + '</label>');
+                            output.push(com.xomena.geo.getFormElement(id + "-" + p.get("id") + "-" + j, name + ":" + p.get("name"),
+                                            p, null, null, parentInstance));
+                            output.push('</li>');
+                        });
+                    }
+                }
+                output.push('</ul>');
+            }
             break;
         case 'timestamp':
             output.push(construct_input_element('pure-input-2-3', m_classes, 'text', 'parameter-' + id, name,
@@ -329,7 +358,9 @@ com.xomena.geo.Models.ParameterPart = Backbone.Model.extend({
         m4wOnly: false,
         condRequired: '',
         condRequiredOr: '',
-        deprecated: false
+        deprecated: false,
+        urlEncoded: false,
+        omitLabel: false
     }
 });  
 
@@ -467,20 +498,26 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                 
                 var pars = this.get("parameters");
                 var aa = "";
-                if(pars){
-                    pars.forEach(function(p){
+                if (pars) {
+                    pars.forEach(function (p) {
                         var m = p.get("model");
                         var sep = m.get("separator");
                         var n = p.get("name");
                         var v = p.get("value");
-                        if(v && $.isArray(v) && v.length){
-                            _.each(v, function(el, ind, arr) {
-                                arr[ind] = el.replace('&', '%26');
+                        if (v && $.isArray(v) && v.length) {
+                            //Parts is a subarray, so we have to transform it to string
+                            var v1 = [];
+                            _.each(v, function(el, ind) {
+                                if ($.isArray(el)) {
+                                    v1[ind] = el.join("|");
+                                } else {
+                                    v1[ind] = $.trim(el);
+                                }
                             });
                             res.push(aa);
                             res.push(n);
-                            var m_encval = encodeURI(v.join(sep)).replace('%2526', '%26');
-                            if(m_encval){
+                            var m_encval = encodeURIComponent(v1.join(sep));
+                            if (m_encval) {
                                 res.push("=");
                                 res.push(m_encval);
                             }
@@ -600,7 +637,7 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                                     break;
                                 case "components":
                                     if (v && $.isArray(v) && v.length) {
-                                        v.forEach(function (val) {
+                                        v[0].forEach(function (val) {
                                             var m_arr = val.split(":");
                                             res.push(aa);
                                             res.push("in_" + m_arr[0]);
@@ -1091,36 +1128,41 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
          }
      });
   },    
-  syncParameters: function(){
+  syncParameters: function () {
     var self = this;  
     var params = this.model.get("parameters");
 	if(!params){
 		return;
 	}
-    params.forEach(function(p){
+    params.forEach(function (p) {
         var m = p.get("model");
         var t = m.get("type");
         var n = p.get("name");
         var v = [];
-        self.$("input[name^='"+n+"'], select[name^='"+n+"']").each(function(){
-            if(t==="list"){
+        self.$("input[name^='" + n + "'], select[name^='" + n + "']").each(function () {
+            if (t === "list") {
                 var val = $(this).val();
-                if($.isArray(val)){
+                if ($.isArray(val)) {
                     v = _.union(v,val);
                 } else {
-                    if(val){    
+                    if (val) {
                         v.push(val);
                     }
                 }
-            } else if(t==='parts'){
+            } else if (t === 'parts') {
                 var m_n = $(this).attr("name");
+                var m_id = $(this).attr("id");
                 var prefix = m_n.split(":")[1];
                 var val = $(this).val();
-                if($.isArray(val)){
-                    v.push(prefix + ":" + val.join("|"));
+                var index = Number(m_id.split("-")[2]);
+                if (!v[index]) {
+                    v[index] = [];
+                }
+                if ($.isArray(val)) {
+                    v[index].push(prefix + ":" + val.join("|"));
                 } else {
-                    if(val){
-                        v.push(prefix + ":" + val);
+                    if (val) {
+                        v[index].push(prefix + ":" + val);
                     }
                 }
             } else if(t==='checkboxes'){
@@ -1148,7 +1190,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
         instance: this.model
     });
   },
-  storeValues: function(){
+  storeValues: function () {
     var self = this;  
 	var ws = this.model.get("webservice");
 	if(ws){	
@@ -1162,47 +1204,52 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
 		}
 		com.xomena.geo.storedValues[m_id][ws] = {};
     	
-    	params.forEach(function(p){
+    	params.forEach(function (p) {
         	var m = p.get("model");
         	var t = m.get("type");
         	var n = p.get("name");
         	var v = [];
-        	self.$("input[name^='"+n+"'], select[name^='"+n+"']").each(function(){
-            	if(t==="list"){
+        	self.$("input[name^='" + n + "'], select[name^='" + n + "']").each(function () {
+            	if (t === "list") {
                		var val = $(this).val();
-                	if($.isArray(val)){
+                	if ($.isArray(val)) {
                     	v = _.union(v,val);
                 	} else {
-                    	if(val){    
+                    	if (val) {
                         	v.push(val);
                     	}
                 	}
-            	} else if(t==='parts'){
+            	} else if (t === 'parts') {
                 	var m_n = $(this).attr("name");
                 	var prefix = m_n.split(":")[1];
+                    var m_id = $(this).attr("id");
+                    var index = Number(m_id.split("-")[2]);
                 	var val = $(this).val();
-                	if($.isArray(val)){
-                    	v.push(prefix + ":" + val.join("|"));
+                    if (!v[index]) {
+                        v[index] = [];
+                    }
+                	if ($.isArray(val)) {
+                    	v[index].push(prefix + ":" + val.join("|"));
                 	} else {
-                    	if(val){
-                        	v.push(prefix + ":" + val);
+                    	if (val) {
+                        	v[index].push(prefix + ":" + val);
                     	}
                 	}
-            	} else if(t==='checkboxes'){
-                	if(this.checked){
+            	} else if (t === 'checkboxes') {
+                	if (this.checked) {
                     	var val = $(this).val();
-                    	if(val){
+                    	if (val) {
                         	v.push(val);
                     	}
                 	}
-            	} else if(t==='checkbox') {
-                	if(this.checked){
+            	} else if (t === 'checkbox') {
+                	if (this.checked) {
                     	var val = $(this).val();
                     	v.push(val);
                 	}
             	} else {
                 	var val = $(this).val();
-                	if(val){
+                	if (val) {
                     	v.push(val);
                 	}
             	}

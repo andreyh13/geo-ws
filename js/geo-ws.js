@@ -103,7 +103,9 @@
                         m4wOnly: data[i][10],
                         condRequired: data[i][11],
                         condRequiredOr: data[i][12],
-                        deprecated: data[i][13]
+                        deprecated: data[i][13],
+                        urlEncoded: data[i][14],
+                        omitLabel: data[i][15]
                     });
                     partscol.add(part);
                 }
@@ -403,6 +405,13 @@
             $("#multiple-container-"+m_id+" > #parameter-"+m_id).clone().attr("id","parameter-"+m_id+"-"+com.xomena.geo.getNewId()).appendTo("#multiple-container-"+m_id);
         });
         
+        /*$( "body" ).on("click", "button.add-parts", function () {
+            console.log("Add parts clicked");
+            var m_id = $(this).attr("id").replace(/add-parts-/ig, "");
+            $("<br/>").appendTo("#multiple-container-"+m_id);
+            $("#multiple-container-"+m_id+" > #parameter-"+m_id).clone().attr("id","parameter-"+m_id+"-"+com.xomena.geo.getNewId()).appendTo("#multiple-container-"+m_id);
+        });*/
+
         $( "body" ).on("click", "paper-tab", function (ev) {
             //console.log(ev);
             var m_target_text = ev.target.innerText ? ev.target.innerText : ev.target.textContent;
