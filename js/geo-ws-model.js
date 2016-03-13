@@ -65,6 +65,11 @@ window.com.xomena.geo = {
                 '" class="add-parts">Add</button>';
     }
 
+    function get_remove_parts_button (enabled) {
+        return '<button type="button" name="remove-parts-' + id + '" id="remove-parts-' + id +
+                '" class="remove-parts"' + (enabled ? '' : ' disabled') + '>Remove</button>';
+    }
+
     output.push('<div id="' + (m ? 'multiple-' : '') + 'container-' + id + '">');
     var sv = [];  
     if (com.xomena.geo.instanceViewsMap[parentInstance]) {
@@ -84,9 +89,9 @@ window.com.xomena.geo = {
                 com.xomena.geo.storedValues[parentInstance][m_ws][nn] && com.xomena.geo.storedValues[parentInstance][m_ws][nn][ind]) {
                     _.each(com.xomena.geo.storedValues[parentInstance][m_ws][nn][ind], function (m1) {
                         if ((new RegExp(pp + ":")).test(m1)) {
-                           var m2 = m1.split(":");
-                           if (m2.length > 1 && m2[1]) {
-                               sv.push(m2[1]);
+                           var m2 = $.trim(m1.replace(new RegExp(pp + ":"), ""));
+                           if (m2) {
+                               sv.push(m2);
                            }
                         }
                     }); 
@@ -167,35 +172,35 @@ window.com.xomena.geo = {
             output.push('</label>');
             break;
         case 'parts':
-            if (m) {
-                output.push(get_add_parts_button());
-            }
             var parts = model.get("parts");
-            output.push('<ul class="parts-container' + (m ? ' multiple':'') + '">');
             if (parts) {
+                if (m) {
+                    output.push(get_add_parts_button());
+                    output.push(get_remove_parts_button (sv.length > 1));
+                }
+                output.push('<ul class="parts-container' + (m ? ' multiple':'') + '">');
                 parts.forEach(function (p) {
                     output.push('<li>');
                     output.push('<label for="parameter-' + id + '-' + p.get("id") + '-0">' + p.get('name') + '</label>');
                     output.push(com.xomena.geo.getFormElement(id + "-" + p.get("id") + "-0", name + ":" + p.get("name"),
-                                    p, null, null, parentInstance));
+                                    p, {required: t_req}, null, parentInstance));
                     output.push('</li>');
                 });
-            }
-            output.push('</ul>');
-            if (m && sv.length > 1) {
-                output.push('<ul class="parts-container' + (m ? ' multiple':'') + '">');
-                if (parts) {
+                output.push('</ul>');
+
+                if (m && sv.length > 1) {
                     for (var j=1; j<sv.length; j++) {
+                        output.push('<ul class="parts-container' + (m ? ' multiple':'') + '">');
                         parts.forEach(function (p) {
                             output.push('<li>');
                             output.push('<label for="parameter-' + id + '-' + p.get("id") + '-' + j + '">' + p.get('name') + '</label>');
                             output.push(com.xomena.geo.getFormElement(id + "-" + p.get("id") + "-" + j, name + ":" + p.get("name"),
-                                            p, null, null, parentInstance));
+                                            p, {required: t_req}, null, parentInstance));
                             output.push('</li>');
                         });
+                        output.push('</ul>');
                     }
                 }
-                output.push('</ul>');
             }
             break;
         case 'timestamp':
@@ -385,20 +390,22 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
             var msg = [];
             var reqOrGroup = [];
             var excludedGroups = Object.create(null);
-            value.forEach(function(p){
+            value.forEach(function (p) {
                 var m = p.get("model");
                 var n = p.get("name");
                 var v = p.get("value");
                 var r = m.get("required") || p.get("isRequired");
+                var t = m.get("type");
                 //Check required fields
-                if(r && !v.length){
+                if (r && (!v.length || (t === "parts" && !v[0].length))) {
                     msg.push("Parameter " + n + " is required.");
                 }
                 //Creating list of required one of
                 if(m.get("requiredOrGroup") || p.get("isRequiredOr")){
                     reqOrGroup.push({
                         name: n,
-                        value: v
+                        value: v,
+                        type: t
                     });
                 }
                 //Check field against pattern
@@ -430,7 +437,7 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
             //Check required one of 
             if(reqOrGroup.length){
                 var notEmptyPar = _.find(reqOrGroup, function(elem){ 
-                    return elem.value.length; 
+                    return elem.type !== "parts" ? elem.value.length : (elem.value[0] && elem.value[0].length);
                 });
                 if(!notEmptyPar){
                     var allNames = _.map(reqOrGroup, function(elem){ return elem.name; });
@@ -504,20 +511,58 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                         var sep = m.get("separator");
                         var n = p.get("name");
                         var v = p.get("value");
+                        var t = m.get("type");
+                        var repl = [];
+                        var doubleEnc = [];
+                        if (t === "parts") {
+                            var parts = m.get("parts");
+                            if (parts && parts.length) {
+                                parts.forEach(function (pp) {
+                                    if (pp.get("omitLabel")) {
+                                        repl.push(pp.get("name") + ":");
+                                    }
+                                    if (pp.get("urlEncoded")) {
+                                        doubleEnc.push(pp.get("name") + ":");
+                                    }
+                                });
+                            }
+                        }
                         if (v && $.isArray(v) && v.length) {
                             //Parts is a subarray, so we have to transform it to string
                             var v1 = [];
                             _.each(v, function(el, ind) {
                                 if ($.isArray(el)) {
+                                    if (doubleEnc.length) {
+                                        doubleEnc.forEach(function (de) {
+                                            el.forEach(function (e1, i1, a1) {
+                                                if (e1.startsWith(de)) {
+                                                    var _e1 = e1.replace(de, "");
+                                                    a1[i1] = de + encodeURI(_e1);
+                                                }
+                                            });
+                                        });
+                                    }
                                     v1[ind] = el.join("|");
                                 } else {
                                     v1[ind] = $.trim(el);
                                 }
                             });
-                            res.push(aa);
-                            res.push(n);
-                            var m_encval = encodeURIComponent(v1.join(sep));
+                            v1 = _.filter(v1, function (e2) {
+                               return e2 ? true : false;
+                            });
+                            var v2 = v1.join(sep);
+                            if (repl.length) {
+                                repl.forEach(function (rp) {
+                                    v2 = v2.replace(new RegExp(rp, "g"), "");
+                                });
+                            }
+                            var m_encval = encodeURIComponent(v2);
+                            if (sep !== "|") {
+                                m_encval = m_encval.replace(new RegExp(encodeURIComponent(sep),"g"), sep);
+                            }
                             if (m_encval) {
+                                res.push(aa);
+                                res.push(n);
                                 res.push("=");
                                 res.push(m_encval);
                             }
@@ -637,15 +682,17 @@ com.xomena.geo.Models.Instance = Backbone.Model.extend({
                                     break;
                                 case "components":
                                     if (v && $.isArray(v) && v.length) {
-                                        v[0].forEach(function (val) {
-                                            var m_arr = val.split(":");
-                                            res.push(aa);
-                                            res.push("in_" + m_arr[0]);
-                                            res.push("=");
-                                            res.push(encodeURIComponent(m_arr[1]));
-                                            aa = "&";
-                                        });
-                                        hasOptions = true;
+                                        if (v[0] && $.isArray(v[0])) {
+                                            v[0].forEach(function (val) {
+                                                var m_arr = val.split(":");
+                                                res.push(aa);
+                                                res.push("in_" + m_arr[0]);
+                                                res.push("=");
+                                                res.push(encodeURIComponent(m_arr[1]));
+                                                aa = "&";
+                                            });
+                                            hasOptions = true;
+                                        }
                                     }
                                     break;
                                 case "region":
@@ -1054,6 +1101,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
              var m = p.get("model");
              var c = m.get("condRequired");
              var r = c;
+             //Means this field has one of the values
              var reParam = /[a-z_]+:\[.+\]/g;
              if(c){
                  var matches = c.match(reParam);
@@ -1072,9 +1120,37 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
                         }
                         r = r.replace(new RegExp(match.replace(/\[/g,"\\[").replace(/\]/g,"\\]")),""+res);
                     });
+                 } else {
+                     //Means not empty value for some field
+                     reParam = /\{\{[a-z_:]+\}\}/g;
+                     var matches = c.match(reParam);
+                     if (matches) {
+                         _.each(matches, function (match) {
+                             var a1 = match.replace("{{", "").replace("}}", "").split(":");
+                             var mp1 = parameters.filterByName(a1[0]);
+                             var v1 = mp1[0].get("value");
+                             var res1 = false;
+                             if ($.isArray(v1)) {
+                                 if (a1.length > 1) {
+                                     res1 = _.some(v1, function (e1) {
+                                        return _.some(e1, function (e2) {
+                                            return e2.startsWith(a1[1] + ":");
+                                        });
+                                     });
+                                 } else {
+                                     res1 = _.some(v1, function (e1) {
+                                        return e1 ? true : false;
+                                     });
+                                 }
+                             } else {
+                                 res1 = v1 ? true: false;
+                             }
+                             r = r.replace(new RegExp(match.replace(/\{/g,"\\{").replace(/\}/g,"\\}")), "" + res1);
+                         });
+                     }
                  }
                  var req = eval(r);
-                 if(req){
+                 if (req) {
                      p.set("isRequired",true);
                  } else {
                      p.set("isRequired",false);
@@ -1154,7 +1230,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
                 var m_id = $(this).attr("id");
                 var prefix = m_n.split(":")[1];
                 var val = $(this).val();
-                var index = Number(m_id.split("-")[2]);
+                var index = Number(m_id.split("-")[3]);
                 if (!v[index]) {
                     v[index] = [];
                 }
@@ -1223,7 +1299,7 @@ com.xomena.geo.Views.InstanceView = Backbone.View.extend({
                 	var m_n = $(this).attr("name");
                 	var prefix = m_n.split(":")[1];
                     var m_id = $(this).attr("id");
-                    var index = Number(m_id.split("-")[2]);
+                    var index = Number(m_id.split("-")[3]);
                 	var val = $(this).val();
                     if (!v[index]) {
                         v[index] = [];
@@ -1418,6 +1494,16 @@ com.xomena.geo.Views.ParametersView = Backbone.View.extend({
                           triggersCondReq[arr1[0]]= cond_req;
                       }
                   });
+              } else {
+                  matches = cond_req.match(/\{\{[a-z_:]+\}\}/);
+                  if(matches){
+                        _.each(matches, function (match) {
+                            var fld = match.replace("{{", "").replace("}}", "");
+                            if (!triggersCondReq[fld]) {
+                                triggersCondReq[fld]= cond_req;
+                            }
+                        });
+                  }
               }
               if(!listenersCondReq[m.get("name")]){
                   listenersCondReq[m.get("name")] = cond_req;
@@ -1440,7 +1526,7 @@ com.xomena.geo.Views.ParametersView = Backbone.View.extend({
               }
           }
       });
-      this.collection.each(function(param){
+      this.collection.each(function (param) {
         //Conditional visibility  
         if(triggersCondVisible[param.get("name")]){
             param.set("triggerCondVisibility", true);
@@ -1451,6 +1537,14 @@ com.xomena.geo.Views.ParametersView = Backbone.View.extend({
         //Conditional required
         if(triggersCondReq[param.get("name")]){
             param.set("triggerCondRequired", true);
+        }
+        if (param.get("model").get("type") === "parts") {
+            var parts = param.get("model").get("parts");
+            parts.forEach(function (part) {
+                if (triggersCondReq[param.get("name") + ":" + part.get("name")]) {
+                    param.set("triggerCondRequired", true);
+                }
+            });
         }
         if(listenersCondReq[param.get("name")]){
             param.set("listenCondRequired", true);

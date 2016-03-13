@@ -405,12 +405,48 @@
             $("#multiple-container-"+m_id+" > #parameter-"+m_id).clone().attr("id","parameter-"+m_id+"-"+com.xomena.geo.getNewId()).appendTo("#multiple-container-"+m_id);
         });
         
-        /*$( "body" ).on("click", "button.add-parts", function () {
+        $( "body" ).on("click", "button.add-parts", function () {
             console.log("Add parts clicked");
             var m_id = $(this).attr("id").replace(/add-parts-/ig, "");
-            $("<br/>").appendTo("#multiple-container-"+m_id);
-            $("#multiple-container-"+m_id+" > #parameter-"+m_id).clone().attr("id","parameter-"+m_id+"-"+com.xomena.geo.getNewId()).appendTo("#multiple-container-"+m_id);
-        });*/
+            var parent_id = $(this).parents("div.ws-parameters").attr("id").replace(/ws-parameters-/ig, "");
+            if (com.xomena.geo.instanceViewsMap[parent_id]) {
+                var inst = com.xomena.geo.instanceViewsMap[parent_id].model;
+                var params = inst.get("parameters");
+                var pp = params.filterById(Number(m_id));
+                if ($.isArray(pp) && pp.length) {
+                    var parts = pp[0].get("model").get("parts");
+                    if (parts) {
+                        var output = [];
+                        var index = $("#multiple-container-" + m_id).find("ul.parts-container.multiple").length;
+                        output.push('<ul class="parts-container multiple">');
+                        parts.forEach(function (p) {
+                            output.push('<li>');
+                            output.push('<label for="parameter-' + m_id + '-' + p.get("id") + '-' + index + '">' + p.get('name') + '</label>');
+                            output.push(com.xomena.geo.getFormElement(m_id + "-" + p.get("id") + "-" + index, pp[0].get("name") + ":" + p.get("name"), p, {required: pp[0].get("triggerCondRequired")}, null, parent_id));
+                            output.push('</li>');
+                        });
+                        output.push('</ul>');
+                        $(output.join("")).appendTo("#multiple-container-"+m_id);
+                        $("#multiple-container-"+m_id+" ul.parts-container.multiple:last").find(".chosen-select").chosen();
+                        if (index + 1 > 1) {
+                            $("#remove-parts-" + m_id).removeAttr("disabled");
+                        }
+                    }
+                }
+            }
+        });
+
+        $( "body" ).on("click", "button.remove-parts", function () {
+            console.log("Remove parts clicked");
+            var m_id = $(this).attr("id").replace(/remove-parts-/ig, "");
+            var count = $("#multiple-container-"+m_id+" ul.parts-container.multiple").length;
+            if (count > 1) {
+                $("#multiple-container-"+m_id+" ul.parts-container.multiple:last").remove();
+                if (count - 1 < 2) {
+                    $(this).attr("disabled", "disabled");
+                }
+            }
+        });
 
         $( "body" ).on("click", "paper-tab", function (ev) {
             //console.log(ev);
@@ -541,12 +577,21 @@
                             var execView = {};
                             for (var key in m_obj) {
                               var inst = null;
+                              var isImagery = false;
                               try {
                                 inst = JSON.parse(m_obj[key]);
+                                if (inst.webservice && inst.services && $.isArray(inst.services)) {
+                                    var _ss = _.filter(inst.services, function (ss) {
+                                        return ss.id === Number(inst.webservice);
+                                    });
+                                    if ($.isArray(_ss) && _ss.length) {
+                                        isImagery = _ss[0].isImagery;
+                                    }
+                                }
                               } catch (m_err) {
                                 console.log("Cannot parse JSON data for instance.");
                               }  
-                              if(inst && inst.id && ("webservice" in inst) && ("output" in inst) && ("version" in inst) && ("parameters" in inst)) {
+                              if(inst && inst.id && ("webservice" in inst) && ("output" in inst || isImagery) && ("version" in inst) && ("parameters" in inst)) {
                                 var m_id = guid();
                                 var m_instance = new com.xomena.geo.Models.Instance({id: m_id, services: com.xomena.geo.services});
                                 //restore parameters
