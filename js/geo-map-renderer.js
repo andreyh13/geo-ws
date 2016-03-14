@@ -1349,6 +1349,31 @@
             "type": "FeatureCollection",
             "features": []
         };
+
+        var m_toadd = [];
+
+        var m_markers = com.xomena.mapRenderer.instances[id].model.getParameterValue("markers");
+        if($.isArray(m_markers) && m_markers.length) {
+            m_markers.forEach(function (marker) {
+                var m_size, m_color, m_label, m_icon, m_locations;
+                marker.forEach(function (element) {
+                    if (element.startsWith("size:")) {
+                        m_size = element.replace("size:", "");
+                    } else if (element.startsWith("color:")) {
+                        m_color = element.replace("color:", "");
+                    } else if (element.startsWith("label:")) {
+                        m_label = element.replace("label:", "");
+                    } else if (element.startsWith("icon:")) {
+                        m_icon = element.replace("icon:", "");
+                    } else if (element.startsWith("locations:")) {
+                        m_locations = element.replace("locations:", "");
+                    }
+                });
+            });
+        }
+
+        //TODO: this should be async process because locations can contain address strings
+
         /*if (_.isObject(data) && data.status && data.status === "OK") {
             if (data.results && _.isArray(data.results)) {
                 _.each(data.results, function (elem, index) {
