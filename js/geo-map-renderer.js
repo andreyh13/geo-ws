@@ -457,7 +457,8 @@
             case "places_autocomplete":
             case "roads":
             case "speed":
-            case "distancematrix":  
+            case "distancematrix":
+            case "staticmap":
                 return true;
             default:
                 return false;
@@ -1345,68 +1346,21 @@
      * @returns {Object} GeoJSON object
      */
     function m_parseStaticMap (data, map, id) {
-        var res = {
-            "type": "FeatureCollection",
-            "features": []
-        };
 
-        var m_toadd = [];
-
-        var m_markers = com.xomena.mapRenderer.instances[id].model.getParameterValue("markers");
-        if($.isArray(m_markers) && m_markers.length) {
-            m_markers.forEach(function (marker) {
-                var m_size, m_color, m_label, m_icon, m_locations;
-                marker.forEach(function (element) {
-                    if (element.startsWith("size:")) {
-                        m_size = element.replace("size:", "");
-                    } else if (element.startsWith("color:")) {
-                        m_color = element.replace("color:", "");
-                    } else if (element.startsWith("label:")) {
-                        m_label = element.replace("label:", "");
-                    } else if (element.startsWith("icon:")) {
-                        m_icon = element.replace("icon:", "");
-                    } else if (element.startsWith("locations:")) {
-                        m_locations = element.replace("locations:", "");
-                    }
-                });
-            });
+        function m_add_marker_to_map (loc, options) {
+            map.data.add(new google.maps.Data.Feature({
+                geometry: loc,
+                "properties": {
+                    "icon": options.icon ? options.icon : ICON_URL,
+                    "iconSize": ICON_SIZE_32,
+                    "zIndex": 2
+                }
+            }));
         }
 
-        //TODO: this should be async process because locations can contain address strings
+        window.com.xomena.mapRenderer.clearMap(id);
 
-        /*if (_.isObject(data) && data.status && data.status === "OK") {
-            if (data.results && _.isArray(data.results)) {
-                _.each(data.results, function (elem, index) {
-                    res.features.push({
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [elem.geometry.location.lng, elem.geometry.location.lat]
-                        },
-                        "properties": {
-                            "address": elem.formatted_address,
-                            "types": elem.types.join(","),
-                            "location_type": elem.geometry.location_type,
-                            "place_id": elem.place_id,
-                            "partial_match": elem.partial_match ? elem.partial_match : false,
-                            "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
-                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
-                            "content": m_info_window_content_address(elem),
-                            "zIndex": 2
-                        },
-                        "id": elem.place_id
-                    });
-                    if (index < 3) {
-                        bounds.extend(new google.maps.LatLng(elem.geometry.location.lat, elem.geometry.location.lng));
-                        if (elem.geometry.viewport) {
-                            bounds.extend(new google.maps.LatLng(elem.geometry.viewport.northeast.lat, elem.geometry.viewport.northeast.lng));
-                            bounds.extend(new google.maps.LatLng(elem.geometry.viewport.southwest.lat, elem.geometry.viewport.southwest.lng));
-                        }
-                    }
-                });
-                res.bounds = bounds;
-            }
-        }*/
+        var m_toadd = [];
 
         var m_center = com.xomena.mapRenderer.instances[id].model.getParameterValue("center");
         if($.isArray(m_center) && m_center.length) {
@@ -1437,7 +1391,65 @@
             map.setMapTypeId(m_type[0]);
         }
 
-        return res;
+        var m_markers = com.xomena.mapRenderer.instances[id].model.getParameterValue("markers");
+        if($.isArray(m_markers) && m_markers.length) {
+            m_markers.forEach(function (marker) {
+                var m_size, m_color, m_label, m_icon, m_locations;
+                marker.forEach(function (element) {
+                    if (element.startsWith("size:")) {
+                        m_size = element.replace("size:", "");
+                    } else if (element.startsWith("color:")) {
+                        m_color = element.replace("color:", "");
+                    } else if (element.startsWith("label:")) {
+                        m_label = element.replace("label:", "");
+                    } else if (element.startsWith("icon:")) {
+                        m_icon = element.replace("icon:", "");
+                    } else if (element.startsWith("locations:")) {
+                        m_locations = element.replace("locations:", "");
+                    }
+                });
+                if (m_locations) {
+                    var a_locations = m_locations.split("|");
+                    a_locations.forEach(function (loc) {
+                        m_toadd.push({
+                            size: m_size ? m_size : null,
+                            color: m_color ? m_color : null,
+                            label: m_label ? m_label : null,
+                            icon: m_icon ? m_icon : null,
+                            location: $.trim(loc)
+                        });
+                    });
+                }
+            });
+        }
+
+        if (m_toadd.length) {
+            m_toadd.forEach(function (m) {
+                if (reLatLng.test(m.location)) {
+                    var _ll1 = m.location.split(',');
+                    if (_ll1.length > 1) {
+                        m_add_marker_to_map ({
+                            lat: parseFloat(_ll1[0]),
+                            lng: parseFloat(_ll1[1])
+                        }, {});
+                    }
+                } else {
+                    geocoder.geocode({
+                        address: m.location
+                    }, function (results, status) {
+                        if (status === google.maps.GeocoderStatus.OK) {
+                            m_add_marker_to_map (results[0].geometry.location, {});
+                        }
+                    });
+                }
+            });
+
+            window.setTimeout(function () {
+                m_adjust_bounds (map);
+            }, 1500);
+        }
+
+        return null;
     }
 
     /**
