@@ -11,7 +11,9 @@
         placesServices = null,
         geocoder = null,
         ICON_SIZE_32 = null,
+        ICON_SIZE_24 = null,
         ICON_SIZE_16 = null,
+        ICON_SIZE_8 = null,
         ICON_PLACE = "https://maps.gstatic.com/mapfiles/place_api/icons/geocode-71.png",
         reLatLng = /^[-+]?\d{1,2}([.]\d+)?,\s*[-+]?\d{1,3}([.]\d+)?$/;
 
@@ -48,8 +50,14 @@
             if (!geocoder) {
                 geocoder = new google.maps.Geocoder();
             }
+            if (!ICON_SIZE_8) {
+                ICON_SIZE_8 = new google.maps.Size(8, 8);
+            }
             if (!ICON_SIZE_16) {
                 ICON_SIZE_16 = new google.maps.Size(16, 16);
+            }
+            if (!ICON_SIZE_24) {
+                ICON_SIZE_24 = new google.maps.Size(24, 24);
             }
             if (!ICON_SIZE_32) {
                 ICON_SIZE_32 = new google.maps.Size(32, 32);
@@ -1352,7 +1360,7 @@
                 geometry: loc,
                 "properties": {
                     "icon": options.icon ? options.icon : ICON_URL,
-                    "iconSize": ICON_SIZE_32,
+                    "iconSize": options.iconSize? options.iconSize: ICON_SIZE_32,
                     "zIndex": 2
                 }
             }));
@@ -1425,20 +1433,43 @@
 
         if (m_toadd.length) {
             m_toadd.forEach(function (m) {
+                var _options = {};
+                if (m.size) {
+                    switch (m.size) {
+                        case "tiny":
+                            _options.iconSize = ICON_SIZE_16;
+                            break;
+                        case "small":
+                            _options.iconSize = ICON_SIZE_24;
+                            break;
+                        case "mid":
+                            _options.iconSize = ICON_SIZE_32;
+                            break;
+                    }
+                }
+                if (m.icon) {
+                    _options.icon = m.icon;
+                }
+                if (m.color) {
+                    _options.color = m.color;
+                }
+                if (m.label) {
+                    _options.label = m.label;
+                }
                 if (reLatLng.test(m.location)) {
                     var _ll1 = m.location.split(',');
                     if (_ll1.length > 1) {
                         m_add_marker_to_map ({
                             lat: parseFloat(_ll1[0]),
                             lng: parseFloat(_ll1[1])
-                        }, {});
+                        }, _options);
                     }
                 } else {
                     geocoder.geocode({
                         address: m.location
                     }, function (results, status) {
                         if (status === google.maps.GeocoderStatus.OK) {
-                            m_add_marker_to_map (results[0].geometry.location, {});
+                            m_add_marker_to_map (results[0].geometry.location, _options);
                         }
                     });
                 }
