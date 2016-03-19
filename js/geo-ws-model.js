@@ -1495,7 +1495,7 @@ com.xomena.geo.Views.ParametersView = Backbone.View.extend({
                       }
                   });
               } else {
-                  matches = cond_req.match(/\{\{[a-z_:]+\}\}/);
+                  matches = cond_req.match(/\{\{[a-z_:]+\}\}/ig);
                   if(matches){
                         _.each(matches, function (match) {
                             var fld = match.replace("{{", "").replace("}}", "");
