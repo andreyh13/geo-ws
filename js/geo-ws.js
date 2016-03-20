@@ -5,7 +5,9 @@
 	    URL_SIGN_DEF = "http://aux.xomena.elementfx.com/geowssign.php",
 	    instance_col = new com.xomena.geo.Collections.InstanceCollection(),
         instancesView = null,
-        isIE = /*@cc_on!@*/false;
+        isIE = /*@cc_on!@*/false,
+        initialLoad = Object.create(null),
+        initialLoadElapsed = 0;
     
     instance_col.on("add", function (inst) {
         console.log("The instance " + inst.get("id") + " has added to collection");
@@ -70,6 +72,14 @@
         return true;
     }
     
+    function isInitialLoadFinished () {
+        var res = true;
+        Object.getOwnPropertyNames(initialLoad).forEach(function (p) {
+            res = res && initialLoad[p];
+        });
+        return res;
+    }
+
     function toast(msg, delay) {
       delay = delay || 3000;
       var m_toast = document.getElementById("geo-ws-toast");
@@ -80,11 +90,12 @@
       }
     }
 
-    function initParameterParts (par, parts_url) {
+    function initParameterParts (par, parts_url, procName) {
+        initialLoad[procName] = false;
         $.ajax({
             url: parts_url,
             dataType: 'jsonp',
-            async: false,
+            async: true,
             success: function (data) {
                 var partscol = new com.xomena.geo.Collections.ParameterPartCollection();
                 for (var i = 1; i < data.length; i++) {
@@ -110,15 +121,17 @@
                     partscol.add(part);
                 }
                 par.set('parts', partscol);
+                initialLoad[procName] = true;
             }
         });    
     }
     
     function initParameters (wserv, params_url) {
+        initialLoad[wserv.get("id")] = false;
         $.ajax({
             url: params_url,
             dataType: 'jsonp',
-            async: false,
+            async: true,
             success: function (data) {
                 var parcol = [];
                 for (var i = 1; i < data.length; i++) {
@@ -142,11 +155,12 @@
                     });
                     if(data[i][4]){
                         //Init parameter parts
-                        initParameterParts(par, data[i][4]+'?jsonp=?');
+                        initParameterParts(par, data[i][4]+'?jsonp=?', wserv.get("id") + ":" + data[i][0]);
                     }
                     parcol.push(par);
                 }
                 wserv.set('parameters', parcol);
+                initialLoad[wserv.get("id")] = true;
             }
         });    
     } 
@@ -157,10 +171,11 @@
         $.blockUI({
             message: '<img src="image/waiting.gif" title="Please wait" width="75" height="75" />'
         });
+        initialLoad["main"] = false;
         $.ajax({
             url: WS_DS_URI,
             dataType: 'jsonp',
-            async: false,
+            async: true,
             success: function(data) {
                 for (var i = 1; i < data.length; i++) {
                     var wserv = new com.xomena.geo.Models.WebService({
@@ -230,37 +245,50 @@
                     });
                     return false;
                 });
+                initialLoad["main"] = true;
                 console.log("Finish init instances");
-                window.setTimeout(function(){
-                    $.unblockUI();
-                    console.log("Finish blockUI");
-                    var m_counter = 0;
-                    for(var key in com.xomena.geo.instanceViewsMap){
-                        var inst = com.xomena.geo.instanceViewsMap[key].model;
-                        var m_ws = inst.get("webservice");
-                        if(m_ws){
-                           com.xomena.geo.instanceViewsMap[key].chooseWebService({
-                               target: {
-                                   value: m_ws
+
+                var intHandler = window.setInterval(function () {
+                    initialLoadElapsed += 100;
+                    if (isInitialLoadFinished()) {
+                        console.log("Initial load elapsep time is " + initialLoadElapsed + " ms");
+                        window.clearInterval(intHandler);
+                        $.unblockUI();
+                        console.log("Finish blockUI");
+                        var m_counter = 0;
+                        for(var key in com.xomena.geo.instanceViewsMap){
+                            var inst = com.xomena.geo.instanceViewsMap[key].model;
+                            var m_ws = inst.get("webservice");
+                            if(m_ws){
+                               com.xomena.geo.instanceViewsMap[key].chooseWebService({
+                                   target: {
+                                       value: m_ws
+                                   }
+                               });
+                               jem.fire('VisibilityDependence', {
+                                    instanceId: key
+                               });
+                               jem.fire('RequiredDependence', {
+                                    instanceId: key
+                               });
+                               jem.fire('RequiredOrDependence', {
+                                    instanceId: key
+                               });
+
+                               if (localStorage.getItem("com.xomena.geo.Models.Config.AUTO_EXEC_ONLOAD") === "true") {
+                                 m_counter++;
+                                 com.xomena.geo.instanceViewsMap[key].execInstanceWithDelay(m_counter*100);
                                }
-                           });
-                           jem.fire('VisibilityDependence', {
-                                instanceId: key
-                           });
-                           jem.fire('RequiredDependence', {
-                                instanceId: key
-                           });
-                           jem.fire('RequiredOrDependence', {
-                                instanceId: key
-                           });  
-                           
-                           if (localStorage.getItem("com.xomena.geo.Models.Config.AUTO_EXEC_ONLOAD") === "true") {
-                             m_counter++;
-                             com.xomena.geo.instanceViewsMap[key].execInstanceWithDelay(m_counter*100);
-                           }
+                            }
                         }
+                    } else if (initialLoadElapsed > 30000) {
+                        console.log("Initial load timeout");
+                        window.clearInterval(intHandler);
+                        $.unblockUI();
+                        console.log("Finish blockUI");
+                        toast("Something went wrong. Initial load timeout.", 15000);
                     }
-                }, 5000);
+                }, 100);
             }
         });
         
