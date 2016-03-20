@@ -168,6 +168,7 @@
     //DOM ready initialization
     $(function(){
         console.log("Start blockUI");
+        var timestamp0 = Date.now();
         $.blockUI({
             message: '<img src="image/waiting.gif" title="Please wait" width="75" height="75" />'
         });
@@ -248,6 +249,7 @@
                 initialLoad["main"] = true;
                 console.log("Finish init instances");
 
+                initialLoadElapsed = Date.now() - timestamp0;
                 var intHandler = window.setInterval(function () {
                     initialLoadElapsed += 100;
                     if (isInitialLoadFinished()) {

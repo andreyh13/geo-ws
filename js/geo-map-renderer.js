@@ -91,12 +91,31 @@
                             break;
                         case "LineString":
                             var m_color = feature.getProperty("color"),
-                                m_zindex = feature.getProperty("zIndex");
+                                m_opacity = feature.getProperty("opacity"),
+                                m_zindex = feature.getProperty("zIndex"),
+                                m_weight = feature.getProperty("weight");
 
                             style = {
                                 strokeColor: m_color ? m_color : "#0000FF",
-                                strokeOpacity: 1.0,
-                                strokeWeight: 4,
+                                strokeOpacity: m_opacity ? m_opacity : 1.0,
+                                strokeWeight: m_weight ? m_weight : 4,
+                                zIndex: m_zindex ? m_zindex : 0
+                            };
+                            break;
+                        case "Polygon":
+                            var m_color = feature.getProperty("color"),
+                                m_opacity = feature.getProperty("opacity"),
+                                m_zindex = feature.getProperty("zIndex"),
+                                m_weight = feature.getProperty("weight"),
+                                m_fillColor = feature.getProperty("fillcolor"),
+                                m_fillOpacity = feature.getProperty("fillopacity");
+
+                            style = {
+                                strokeColor: m_color ? m_color : "#0000FF",
+                                strokeOpacity: m_opacity ? m_opacity : 1.0,
+                                strokeWeight: m_weight ? m_weight : 4,
+                                fillColor: m_fillColor ? m_fillColor : "#00FF00",
+                                fillOpacity: m_fillOpacity ? m_fillOpacity : 1.0,
                                 zIndex: m_zindex ? m_zindex : 0
                             };
                             break;
@@ -1355,6 +1374,10 @@
      */
     function m_parseStaticMap (data, map, id) {
 
+        var m_toadd = [];
+        var m_polylines_toadd = [];
+        var m_async_proc = Object.create(null);
+
         function m_add_marker_to_map (loc, options) {
             map.data.add(new google.maps.Data.Feature({
                 geometry: loc,
@@ -1366,9 +1389,74 @@
             }));
         }
 
-        window.com.xomena.mapRenderer.clearMap(id);
+        function m_add_polylines_to_map () {
+            m_polylines_toadd.forEach(function (polyline) {
+               if (polyline.points.length) {
+                   map.data.add({
+                        geometry: polyline.fillcolor ? new google.maps.Data.Polygon([polyline.points]): new google.maps.Data.LineString(polyline.points),
+                        properties: {
+                            "color": polyline.color,
+                            "opacity": 0.5,
+                            "weight": polyline.weight,
+                            "fillcolor": polyline.fillcolor,
+                            "fillopacity": 0.5,
+                            "geodesic": polyline.geodesic
+                        }
+                   });
+               }
+            });
+        }
 
-        var m_toadd = [];
+        function m_resolve_marker_callback (location, index, options) {
+            if (reLatLng.test(location)) {
+                var _ll1 = location.split(',');
+                if (_ll1.length > 1) {
+                    m_add_marker_to_map({
+                        lat: parseFloat(_ll1[0]),
+                        lng: parseFloat(_ll1[1])
+                    }, options);
+                }
+            } else {
+                m_async_proc["marker:" + index] = false;
+                geocoder.geocode({
+                    address: location
+                }, function (results, status) {
+                    m_async_proc["marker:" + index] = true;
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        m_add_marker_to_map(results[0].geometry.location, options);
+                    }
+                });
+            }
+        }
+
+        function m_resolve_point_callback (point, ind, index) {
+            if (reLatLng.test(point)) {
+                var _ll2 = point.split(',');
+                if (_ll2.length > 1) {
+                    m_polylines_toadd[index].points[ind] = new google.maps.LatLng(parseFloat(_ll2[0]),parseFloat(_ll2[1]));
+                }
+            } else {
+                m_async_proc["polyline:" + index + ":" + ind] = false;
+                geocoder.geocode({
+                    address: point
+                }, function (results, status) {
+                    m_async_proc["polyline:" + index + ":" + ind] = true;
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        m_polylines_toadd[index].points[ind] = results[0].geometry.location;
+                    }
+                });
+            }
+        }
+
+        function m_is_finished_async() {
+            var res = true;
+            Object.getOwnPropertyNames(m_async_proc).forEach(function (p) {
+                res = res && m_async_proc[p];
+            });
+            return res;
+        }
+
+        window.com.xomena.mapRenderer.clearMap(id);
 
         var m_center = com.xomena.mapRenderer.instances[id].model.getParameterValue("center");
         if($.isArray(m_center) && m_center.length) {
@@ -1381,9 +1469,11 @@
                     });
                 }
             } else {
+                m_async_proc["center"] = false;
                 geocoder.geocode({
                     address: $.trim(m_center[0])
                 }, function (results, status) {
+                    m_async_proc["center"] = true;
                     if (status === google.maps.GeocoderStatus.OK) {
                         map.setCenter(results[0].geometry.location);
                     }
@@ -1432,7 +1522,7 @@
         }
 
         if (m_toadd.length) {
-            m_toadd.forEach(function (m) {
+            m_toadd.forEach(function (m, ii) {
                 var _options = {};
                 if (m.size) {
                     switch (m.size) {
@@ -1456,29 +1546,68 @@
                 if (m.label) {
                     _options.label = m.label;
                 }
-                if (reLatLng.test(m.location)) {
-                    var _ll1 = m.location.split(',');
-                    if (_ll1.length > 1) {
-                        m_add_marker_to_map ({
-                            lat: parseFloat(_ll1[0]),
-                            lng: parseFloat(_ll1[1])
-                        }, _options);
+                m_resolve_marker_callback (m.location, ii, _options);
+            });
+        }
+
+        var m_paths = com.xomena.mapRenderer.instances[id].model.getParameterValue("path");
+        if($.isArray(m_paths) && m_paths.length) {
+            m_paths.forEach(function (path, index) {
+                var m_weight, m_color, m_fillcolor, m_geodesic, m_points;
+                path.forEach(function (element) {
+                    if (element.startsWith("weight:")) {
+                        m_weight = element.replace("weight:", "");
+                    } else if (element.startsWith("color:")) {
+                        m_color = element.replace("color:", "");
+                    } else if (element.startsWith("fillcolor:")) {
+                        m_fillcolor = element.replace("fillcolor:", "");
+                    } else if (element.startsWith("geodesic:")) {
+                        m_geodesic = element.replace("geodesic:", "");
+                    } else if (element.startsWith("points:")) {
+                        m_points = element.replace("points:", "");
                     }
-                } else {
-                    geocoder.geocode({
-                        address: m.location
-                    }, function (results, status) {
-                        if (status === google.maps.GeocoderStatus.OK) {
-                            m_add_marker_to_map (results[0].geometry.location, _options);
-                        }
-                    });
+                });
+                m_polylines_toadd[index] = {
+                    weight: m_weight,
+                    color: m_color,
+                    fillcolor: m_fillcolor,
+                    geodesic: m_geodesic,
+                    points: []
+                };
+                if (m_points) {
+                    if (m_points.startsWith("enc:")) {
+                        m_points = m_points.replace("enc:", "");
+                        m_polylines_toadd[index].points = google.maps.geometry.encoding.decodePath(m_points);
+                    } else {
+                        var a_points = m_points.split("|");
+                        a_points.forEach(function (point, ind) {
+                            m_resolve_point_callback(point, ind, index);
+                        });
+                    }
                 }
             });
-
-            window.setTimeout(function () {
-                m_adjust_bounds (map);
-            }, 1500);
         }
+
+        var asyncElapsed = 0;
+        var intHandler = window.setInterval(function () {
+            asyncElapsed += 100;
+            //debugger;
+            if (m_is_finished_async()) {
+                window.clearInterval(intHandler);
+                m_polylines_toadd.forEach(function (polyline, ind, arr) {
+                    if (polyline.points.length) {
+                        arr[ind].points = polyline.points.filter(function (e) {
+                           return e && e instanceof google.maps.LatLng;
+                        });
+                    }
+                });
+                m_add_polylines_to_map();
+                m_adjust_bounds(map);
+            } else if (asyncElapsed > 30000) {
+                window.clearInterval(intHandler);
+                m_adjust_bounds(map);
+            }
+        }, 100);
 
         return null;
     }
@@ -1760,6 +1889,18 @@
             switch (feature.getGeometry().getType()) {
                 case "Point":
                     bounds.extend(feature.getGeometry().get());
+                    break;
+                case "LineString":
+                    feature.getGeometry().getArray().forEach(function (latlng) {
+                       bounds.extend(latlng);
+                    });
+                    break;
+                case "Polygon":
+                    feature.getGeometry().getArray().forEach(function (ring) {
+                        ring.getArray().forEach( function (latlng) {
+                            bounds.extend(latlng);
+                        });
+                    });
                     break;
             }
         });
