@@ -72,7 +72,8 @@
                                 m_size = feature.getProperty("iconSize"),
                                 m_address = feature.getProperty("address"),
                                 m_zindex = feature.getProperty("zIndex"),
-                                m_name = feature.getProperty("name");
+                                m_name = feature.getProperty("name"),
+                                m_visible = feature.getProperty("visible");
                             
                             var m_iconDef = {
                                 url: m_icon ? m_icon : ICON_URL,
@@ -85,7 +86,7 @@
                             style = {
                                 icon: m_iconDef,
                                 title: m_name? m_name : (m_address ? m_address : ""),
-                                visible: true,
+                                visible: typeof m_visible !== undefined ? m_visible : true,
                                 zIndex: m_zindex ? m_zindex : 0
                             };
                             break;
@@ -1384,7 +1385,8 @@
                 "properties": {
                     "icon": options.icon ? options.icon : ICON_URL,
                     "iconSize": options.iconSize? options.iconSize: ICON_SIZE_32,
-                    "zIndex": 2
+                    "zIndex": 2,
+                    "visible": "visible" in options ? options.visible : true
                 }
             }));
         }
@@ -1424,6 +1426,28 @@
                     m_async_proc["marker:" + index] = true;
                     if (status === google.maps.GeocoderStatus.OK) {
                         m_add_marker_to_map(results[0].geometry.location, options);
+                    }
+                });
+            }
+        }
+
+        function m_resolve_visible_callback (location, index) {
+            if (reLatLng.test(location)) {
+                var _ll1 = location.split(',');
+                if (_ll1.length > 1) {
+                    m_add_marker_to_map({
+                        lat: parseFloat(_ll1[0]),
+                        lng: parseFloat(_ll1[1])
+                    }, {visible: false});
+                }
+            } else {
+                m_async_proc["visible:" + index] = false;
+                geocoder.geocode({
+                    address: location
+                }, function (results, status) {
+                    m_async_proc["visible:" + index] = true;
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        m_add_marker_to_map(results[0].geometry.location, {visible: false});
                     }
                 });
             }
@@ -1585,6 +1609,13 @@
                         });
                     }
                 }
+            });
+        }
+
+        var m_visible = com.xomena.mapRenderer.instances[id].model.getParameterValue("visible");
+        if($.isArray(m_visible) && m_visible.length) {
+            m_visible.forEach(function (loc, ind) {
+                 m_resolve_visible_callback(loc, ind);
             });
         }
 
