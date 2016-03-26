@@ -344,7 +344,9 @@
                             <select id="ws-choose-<%= id %>" name="ws-choose-<%= id %>" class="ws-choose">
                                 <option value="">--Please select--</option>
                                 <% services.forEach(function(model){
-                                    print('<option value="'+model.get('id')+'"'+(model.get('id')==webservice?'  selected':'')+'>'+model.get('name')+'</option>');
+                                    if (!model.get("isExperiment") || localStorage.getItem("geo-ws-experiment") === "yes") {
+                                        print('<option value="'+model.get('id')+'"'+(model.get('id')==webservice?'  selected':'')+'>'+model.get('name')+'</option>');
+                                    }
                                 });
                                 %>
                             </select>
