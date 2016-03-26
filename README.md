@@ -1,12 +1,12 @@
-Google Maps Web Services Requests Builder
+Google Maps Web Services and Image APIs Requests Builder
 ==========================================
 
 ![WS Builder](/image/docs/geo-ws.png?raw=true "Maps WS Builder")
 
 ## Description
-This application allows to construct Google Maps WebServices HTTPS requests.
+This application allows to construct Google Maps WebServices and Static Maps API HTTPS requests.
 
-The Google Maps Web Services Requests Builder application is available for the following Google Maps 
+The Google Maps Web Services and Image APIs Requests Builder application is available for the following Google Maps 
 APIs:
 
  - [Geocoding API]
@@ -16,6 +16,7 @@ APIs:
  - [Time Zone API]
  - [Places API]
  - [Roads API]
+ - [Static Maps API]
 
 ### Settings
 
@@ -100,3 +101,4 @@ This application works with the following browsers
 [Time Zone API]: https://developers.google.com/maps/documentation/timezone
 [Places API]: https://developers.google.com/places/documentation/index
 [Roads API]: https://developers.google.com/maps/documentation/roads
+[Static Maps API]: https://developers.google.com/maps/documentation/static-maps/intro

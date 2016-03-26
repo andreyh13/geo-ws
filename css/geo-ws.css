@@ -163,6 +163,15 @@ body.wait-init div.blockUI {
   font-size: 11px;
 }
 
+ul.parts-container.multiple {
+    border: 1px dashed #DDDDDD;
+    padding: 8px 0 8px 38px;
+}
+
+button.remove-parts {
+    margin: 0 0 0 8px;
+}
+
 @media screen and (min-width: 568px){
     #instances-container li.ws-instance {
         width:90%;

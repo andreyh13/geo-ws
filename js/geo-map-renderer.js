@@ -11,8 +11,11 @@
         placesServices = null,
         geocoder = null,
         ICON_SIZE_32 = null,
+        ICON_SIZE_24 = null,
         ICON_SIZE_16 = null,
-        ICON_PLACE = "https://maps.gstatic.com/mapfiles/place_api/icons/geocode-71.png";
+        ICON_SIZE_8 = null,
+        ICON_PLACE = "https://maps.gstatic.com/mapfiles/place_api/icons/geocode-71.png",
+        reLatLng = /^[-+]?\d{1,2}([.]\d+)?,\s*[-+]?\d{1,3}([.]\d+)?$/;
 
     window.com = window.com || {};
     window.com.xomena = window.com.xomena || {};
@@ -47,8 +50,14 @@
             if (!geocoder) {
                 geocoder = new google.maps.Geocoder();
             }
+            if (!ICON_SIZE_8) {
+                ICON_SIZE_8 = new google.maps.Size(8, 8);
+            }
             if (!ICON_SIZE_16) {
                 ICON_SIZE_16 = new google.maps.Size(16, 16);
+            }
+            if (!ICON_SIZE_24) {
+                ICON_SIZE_24 = new google.maps.Size(24, 24);
             }
             if (!ICON_SIZE_32) {
                 ICON_SIZE_32 = new google.maps.Size(32, 32);
@@ -63,7 +72,8 @@
                                 m_size = feature.getProperty("iconSize"),
                                 m_address = feature.getProperty("address"),
                                 m_zindex = feature.getProperty("zIndex"),
-                                m_name = feature.getProperty("name");
+                                m_name = feature.getProperty("name"),
+                                m_visible = feature.getProperty("visible");
                             
                             var m_iconDef = {
                                 url: m_icon ? m_icon : ICON_URL,
@@ -76,18 +86,37 @@
                             style = {
                                 icon: m_iconDef,
                                 title: m_name? m_name : (m_address ? m_address : ""),
-                                visible: true,
+                                visible: typeof m_visible !== undefined ? m_visible : true,
                                 zIndex: m_zindex ? m_zindex : 0
                             };
                             break;
                         case "LineString":
                             var m_color = feature.getProperty("color"),
-                                m_zindex = feature.getProperty("zIndex");
+                                m_opacity = feature.getProperty("opacity"),
+                                m_zindex = feature.getProperty("zIndex"),
+                                m_weight = feature.getProperty("weight");
 
                             style = {
                                 strokeColor: m_color ? m_color : "#0000FF",
-                                strokeOpacity: 1.0,
-                                strokeWeight: 4,
+                                strokeOpacity: m_opacity ? m_opacity : 1.0,
+                                strokeWeight: m_weight ? m_weight : 4,
+                                zIndex: m_zindex ? m_zindex : 0
+                            };
+                            break;
+                        case "Polygon":
+                            var m_color = feature.getProperty("color"),
+                                m_opacity = feature.getProperty("opacity"),
+                                m_zindex = feature.getProperty("zIndex"),
+                                m_weight = feature.getProperty("weight"),
+                                m_fillColor = feature.getProperty("fillcolor"),
+                                m_fillOpacity = feature.getProperty("fillopacity");
+
+                            style = {
+                                strokeColor: m_color ? m_color : "#0000FF",
+                                strokeOpacity: m_opacity ? m_opacity : 1.0,
+                                strokeWeight: m_weight ? m_weight : 4,
+                                fillColor: m_fillColor ? m_fillColor : "#00FF00",
+                                fillOpacity: m_fillOpacity ? m_fillOpacity : 1.0,
                                 zIndex: m_zindex ? m_zindex : 0
                             };
                             break;
@@ -197,6 +226,7 @@
                 infoWindow.close();
             }
             this.instances[id].circle.setVisible(false);
+            this.instances[id].map.setOptions({styles: []});
         },
         
         /**
@@ -242,6 +272,9 @@
             var m_format = null;
             if (this.instances[id] && this.instances[id].model) {
                 m_format = this.instances[id].model.get("output");
+                if (!m_format && this.instances[id].model.isImageryInstance()) {
+                    m_format = "image";
+                }
             }
             return m_format;
         },
@@ -350,11 +383,12 @@
      */
     window.com.xomena.mapRenderer.Strategy.prototype.getGeoJSON = function (data, format, map, id) {
         switch (format) {
-        case "json":
-            return this.m_getGeoJSON_JSON(data, map, id);
-        case "xml":
-            return this.m_getGeoJSON_XML(data, map, id);
-        }
+            case "json":
+                return this.m_getGeoJSON_JSON(data, map, id);
+            case "xml":
+                return this.m_getGeoJSON_XML(data, map, id);
+            case "image":
+        }       return this.m_getGeoJSON_Image(data, map, id);
     };
 
     /**
@@ -428,6 +462,21 @@
     };
 
     /**
+     * Prototype function of the Strategy to get GeoJSON for Imagery API
+     * @param   {Object} data Data from render map call of the instance view
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} GeoJSON object
+     */
+    window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_Image = function (data, map, id) {
+        switch (this.type) {
+        case "staticmap":
+            return m_parseStaticMap(data, map, id);
+        }
+        return null;
+    };
+
+    /**
      * Defines if the strategy has asynchronous nature
      * @returns {Boolean} True if nature is acync, false otherwise
      */
@@ -437,7 +486,8 @@
             case "places_autocomplete":
             case "roads":
             case "speed":
-            case "distancematrix":  
+            case "distancematrix":
+            case "staticmap":
                 return true;
             default:
                 return false;
@@ -455,7 +505,8 @@
         PlacesDetailRender: new window.com.xomena.mapRenderer.Strategy("places_detail"),
         PlacesAutocompleteRender: new window.com.xomena.mapRenderer.Strategy("places_autocomplete"),
         RoadsRender: new window.com.xomena.mapRenderer.Strategy("roads"),
-        SpeedRender: new window.com.xomena.mapRenderer.Strategy("speed")
+        SpeedRender: new window.com.xomena.mapRenderer.Strategy("speed"),
+        StaticMapsRender: new window.com.xomena.mapRenderer.Strategy("staticmap")
     };
 
     /**
@@ -1317,6 +1368,349 @@
     }
 
     /**
+     * Parse Static Maps data
+     * @param {Object} data Data from render map instance view call
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} GeoJSON object
+     */
+    function m_parseStaticMap (data, map, id) {
+
+        var m_toadd = [];
+        var m_polylines_toadd = [];
+        var m_async_proc = Object.create(null);
+
+        function m_add_marker_to_map (loc, options) {
+            map.data.add(new google.maps.Data.Feature({
+                geometry: loc,
+                "properties": {
+                    "icon": options.icon ? options.icon : ICON_URL,
+                    "iconSize": options.iconSize? options.iconSize: ICON_SIZE_32,
+                    "zIndex": 2,
+                    "visible": "visible" in options ? options.visible : true
+                }
+            }));
+        }
+
+        function m_add_polylines_to_map () {
+            m_polylines_toadd.forEach(function (polyline) {
+               if (polyline.points.length) {
+                   map.data.add({
+                        geometry: polyline.fillcolor ? new google.maps.Data.Polygon([polyline.points]): new google.maps.Data.LineString(polyline.points),
+                        properties: {
+                            "color": polyline.color,
+                            "opacity": 0.5,
+                            "weight": polyline.weight,
+                            "fillcolor": polyline.fillcolor,
+                            "fillopacity": 0.5,
+                            "geodesic": polyline.geodesic
+                        }
+                   });
+               }
+            });
+        }
+
+        function m_resolve_marker_callback (location, index, options) {
+            if (reLatLng.test(location)) {
+                var _ll1 = location.split(',');
+                if (_ll1.length > 1) {
+                    m_add_marker_to_map({
+                        lat: parseFloat(_ll1[0]),
+                        lng: parseFloat(_ll1[1])
+                    }, options);
+                }
+            } else {
+                m_async_proc["marker:" + index] = false;
+                geocoder.geocode({
+                    address: location
+                }, function (results, status) {
+                    m_async_proc["marker:" + index] = true;
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        m_add_marker_to_map(results[0].geometry.location, options);
+                    }
+                });
+            }
+        }
+
+        function m_resolve_visible_callback (location, index) {
+            if (reLatLng.test(location)) {
+                var _ll1 = location.split(',');
+                if (_ll1.length > 1) {
+                    m_add_marker_to_map({
+                        lat: parseFloat(_ll1[0]),
+                        lng: parseFloat(_ll1[1])
+                    }, {visible: false});
+                }
+            } else {
+                m_async_proc["visible:" + index] = false;
+                geocoder.geocode({
+                    address: location
+                }, function (results, status) {
+                    m_async_proc["visible:" + index] = true;
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        m_add_marker_to_map(results[0].geometry.location, {visible: false});
+                    }
+                });
+            }
+        }
+
+        function m_resolve_point_callback (point, ind, index) {
+            if (reLatLng.test(point)) {
+                var _ll2 = point.split(',');
+                if (_ll2.length > 1) {
+                    m_polylines_toadd[index].points[ind] = new google.maps.LatLng(parseFloat(_ll2[0]),parseFloat(_ll2[1]));
+                }
+            } else {
+                m_async_proc["polyline:" + index + ":" + ind] = false;
+                geocoder.geocode({
+                    address: point
+                }, function (results, status) {
+                    m_async_proc["polyline:" + index + ":" + ind] = true;
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        m_polylines_toadd[index].points[ind] = results[0].geometry.location;
+                    }
+                });
+            }
+        }
+
+        function m_is_finished_async() {
+            var res = true;
+            Object.getOwnPropertyNames(m_async_proc).forEach(function (p) {
+                res = res && m_async_proc[p];
+            });
+            return res;
+        }
+
+        window.com.xomena.mapRenderer.clearMap(id);
+
+        var m_center = com.xomena.mapRenderer.instances[id].model.getParameterValue("center");
+        if($.isArray(m_center) && m_center.length) {
+            if (reLatLng.test($.trim(m_center[0]))) {
+                var _ll = $.trim(m_center[0]).split(',');
+                if (_ll.length > 1) {
+                    map.setCenter({
+                        lat: parseFloat(_ll[0]),
+                        lng: parseFloat(_ll[1])
+                    });
+                }
+            } else {
+                m_async_proc["center"] = false;
+                geocoder.geocode({
+                    address: $.trim(m_center[0])
+                }, function (results, status) {
+                    m_async_proc["center"] = true;
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        map.setCenter(results[0].geometry.location);
+                    }
+                });
+            }
+        }
+        var m_zoom = com.xomena.mapRenderer.instances[id].model.getParameterValue("zoom");
+        if($.isArray(m_zoom) && m_zoom.length) {
+            map.setZoom(Number(m_zoom[0]));
+        }
+        var m_type = com.xomena.mapRenderer.instances[id].model.getParameterValue("maptype");
+        if($.isArray(m_type) && m_type.length) {
+            map.setMapTypeId(m_type[0]);
+        }
+
+        var m_markers = com.xomena.mapRenderer.instances[id].model.getParameterValue("markers");
+        if($.isArray(m_markers) && m_markers.length) {
+            m_markers.forEach(function (marker) {
+                var m_size, m_color, m_label, m_icon, m_locations;
+                marker.forEach(function (element) {
+                    if (element.startsWith("size:")) {
+                        m_size = element.replace("size:", "");
+                    } else if (element.startsWith("color:")) {
+                        m_color = element.replace("color:", "");
+                    } else if (element.startsWith("label:")) {
+                        m_label = element.replace("label:", "");
+                    } else if (element.startsWith("icon:")) {
+                        m_icon = element.replace("icon:", "");
+                    } else if (element.startsWith("locations:")) {
+                        m_locations = element.replace("locations:", "");
+                    }
+                });
+                if (m_locations) {
+                    var a_locations = m_locations.split("|");
+                    a_locations.forEach(function (loc) {
+                        m_toadd.push({
+                            size: m_size ? m_size : null,
+                            color: m_color ? m_color : null,
+                            label: m_label ? m_label : null,
+                            icon: m_icon ? m_icon : null,
+                            location: $.trim(loc)
+                        });
+                    });
+                }
+            });
+        }
+
+        if (m_toadd.length) {
+            m_toadd.forEach(function (m, ii) {
+                var _options = {};
+                if (m.size) {
+                    switch (m.size) {
+                        case "tiny":
+                            _options.iconSize = ICON_SIZE_16;
+                            break;
+                        case "small":
+                            _options.iconSize = ICON_SIZE_24;
+                            break;
+                        case "mid":
+                            _options.iconSize = ICON_SIZE_32;
+                            break;
+                    }
+                }
+                if (m.icon) {
+                    _options.icon = m.icon;
+                }
+                if (m.color) {
+                    _options.color = m.color;
+                }
+                if (m.label) {
+                    _options.label = m.label;
+                }
+                m_resolve_marker_callback (m.location, ii, _options);
+            });
+        }
+
+        var m_paths = com.xomena.mapRenderer.instances[id].model.getParameterValue("path");
+        if($.isArray(m_paths) && m_paths.length) {
+            m_paths.forEach(function (path, index) {
+                var m_weight, m_color, m_fillcolor, m_geodesic, m_points;
+                path.forEach(function (element) {
+                    if (element.startsWith("weight:")) {
+                        m_weight = element.replace("weight:", "");
+                    } else if (element.startsWith("color:")) {
+                        m_color = element.replace("color:", "");
+                    } else if (element.startsWith("fillcolor:")) {
+                        m_fillcolor = element.replace("fillcolor:", "");
+                    } else if (element.startsWith("geodesic:")) {
+                        m_geodesic = element.replace("geodesic:", "");
+                    } else if (element.startsWith("points:")) {
+                        m_points = element.replace("points:", "");
+                    }
+                });
+                m_polylines_toadd[index] = {
+                    weight: m_weight,
+                    color: m_color,
+                    fillcolor: m_fillcolor,
+                    geodesic: m_geodesic,
+                    points: []
+                };
+                if (m_points) {
+                    if (m_points.startsWith("enc:")) {
+                        m_points = m_points.replace("enc:", "");
+                        m_polylines_toadd[index].points = google.maps.geometry.encoding.decodePath(m_points);
+                    } else {
+                        var a_points = m_points.split("|");
+                        a_points.forEach(function (point, ind) {
+                            m_resolve_point_callback(point, ind, index);
+                        });
+                    }
+                }
+            });
+        }
+
+        var m_visible = com.xomena.mapRenderer.instances[id].model.getParameterValue("visible");
+        if($.isArray(m_visible) && m_visible.length) {
+            m_visible.forEach(function (loc, ind) {
+                 m_resolve_visible_callback(loc, ind);
+            });
+        }
+
+        var m_styles = com.xomena.mapRenderer.instances[id].model.getParameterValue("style");
+        if($.isArray(m_styles) && m_styles.length) {
+            var stylesArray = [];
+            m_styles.forEach(function (style, index) {
+                var m_feature, m_element, m_color, m_hue, m_lightness, m_saturation, m_gamma, m_visibility, m_invert_lightness;
+                style.forEach(function (element) {
+                    if (element.startsWith("feature:")) {
+                        m_feature = element.replace("feature:", "");
+                    } else if (element.startsWith("element:")) {
+                        m_element = element.replace("element:", "");
+                    } else if (element.startsWith("color:")) {
+                        m_color = element.replace("color:", "").replace("0x", "#");
+                    } else if (element.startsWith("hue:")) {
+                        m_hue = element.replace("hue:", "").replace("0x", "#");
+                    } else if (element.startsWith("lightness:")) {
+                        m_lightness = element.replace("lightness:", "");
+                    } else if (element.startsWith("invert_lightness:")) {
+                        m_invert_lightness = element.replace("invert_lightness:", "");
+                    } else if (element.startsWith("saturation:")) {
+                        m_saturation = element.replace("saturation:", "");
+                    } else if (element.startsWith("gamma:")) {
+                        m_gamma = element.replace("gamma:", "");
+                    } else if (element.startsWith("visibility:")) {
+                        m_visibility = element.replace("visibility:", "");
+                    }
+                });
+                if (m_feature || m_element || m_color || m_visibility || m_hue || m_lightness ||
+                    m_saturation || m_gamma || m_invert_lightness) {
+                    var _stylers = [];
+                    var _style = {};
+                    if (m_color) {
+                        _stylers.push({color: m_color});
+                    }
+                    if (m_hue) {
+                        _stylers.push({hue: m_hue});
+                    }
+                    if (m_lightness) {
+                        _stylers.push({lightness: m_lightness});
+                    }
+                    if (m_invert_lightness) {
+                        _stylers.push({invert_lightness: m_invert_lightness});
+                    }
+                    if (m_saturation) {
+                        _stylers.push({saturation: m_saturation});
+                    }
+                    if (m_gamma) {
+                        _stylers.push({gamma: m_gamma});
+                    }
+                    if (m_visibility) {
+                        _stylers.push({visibility: m_visibility});
+                    }
+                    if (m_feature) {
+                        _style.featureType = m_feature;
+                    }
+                    if (m_element) {
+                        _style.elementType = m_element;
+                    }
+                    _style.stylers = _stylers;
+                    stylesArray.push(_style);
+                }
+            });
+            if (stylesArray.length) {
+                map.setOptions({styles: stylesArray});
+            }
+        }
+
+        var asyncElapsed = 0;
+        var intHandler = window.setInterval(function () {
+            asyncElapsed += 100;
+            //debugger;
+            if (m_is_finished_async()) {
+                window.clearInterval(intHandler);
+                m_polylines_toadd.forEach(function (polyline, ind, arr) {
+                    if (polyline.points.length) {
+                        arr[ind].points = polyline.points.filter(function (e) {
+                           return e && e instanceof google.maps.LatLng;
+                        });
+                    }
+                });
+                m_add_polylines_to_map();
+                m_adjust_bounds(map);
+            } else if (asyncElapsed > 30000) {
+                window.clearInterval(intHandler);
+                m_adjust_bounds(map);
+            }
+        }, 100);
+
+        return null;
+    }
+
+    /**
      * Adds arrow feature to show location (reverse geocoding, places searches)
      * @param {String} id      ID for feature
      * @param {Float} lat     Latitude
@@ -1594,9 +1988,23 @@
                 case "Point":
                     bounds.extend(feature.getGeometry().get());
                     break;
+                case "LineString":
+                    feature.getGeometry().getArray().forEach(function (latlng) {
+                       bounds.extend(latlng);
+                    });
+                    break;
+                case "Polygon":
+                    feature.getGeometry().getArray().forEach(function (ring) {
+                        ring.getArray().forEach( function (latlng) {
+                            bounds.extend(latlng);
+                        });
+                    });
+                    break;
             }
         });
-        map.fitBounds(bounds);
+        if (!bounds.isEmpty()) {
+            map.fitBounds(bounds);
+        }
     }
 
     function m_add_center_and_radius (id, map) {
