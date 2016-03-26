@@ -226,6 +226,7 @@
                 infoWindow.close();
             }
             this.instances[id].circle.setVisible(false);
+            this.instances[id].map.setOptions({styles: []});
         },
         
         /**
@@ -1617,6 +1618,72 @@
             m_visible.forEach(function (loc, ind) {
                  m_resolve_visible_callback(loc, ind);
             });
+        }
+
+        var m_styles = com.xomena.mapRenderer.instances[id].model.getParameterValue("style");
+        if($.isArray(m_styles) && m_styles.length) {
+            var stylesArray = [];
+            m_styles.forEach(function (style, index) {
+                var m_feature, m_element, m_color, m_hue, m_lightness, m_saturation, m_gamma, m_visibility, m_invert_lightness;
+                style.forEach(function (element) {
+                    if (element.startsWith("feature:")) {
+                        m_feature = element.replace("feature:", "");
+                    } else if (element.startsWith("element:")) {
+                        m_element = element.replace("element:", "");
+                    } else if (element.startsWith("color:")) {
+                        m_color = element.replace("color:", "").replace("0x", "#");
+                    } else if (element.startsWith("hue:")) {
+                        m_hue = element.replace("hue:", "").replace("0x", "#");
+                    } else if (element.startsWith("lightness:")) {
+                        m_lightness = element.replace("lightness:", "");
+                    } else if (element.startsWith("invert_lightness:")) {
+                        m_invert_lightness = element.replace("invert_lightness:", "");
+                    } else if (element.startsWith("saturation:")) {
+                        m_saturation = element.replace("saturation:", "");
+                    } else if (element.startsWith("gamma:")) {
+                        m_gamma = element.replace("gamma:", "");
+                    } else if (element.startsWith("visibility:")) {
+                        m_visibility = element.replace("visibility:", "");
+                    }
+                });
+                if (m_feature || m_element || m_color || m_visibility || m_hue || m_lightness ||
+                    m_saturation || m_gamma || m_invert_lightness) {
+                    var _stylers = [];
+                    var _style = {};
+                    if (m_color) {
+                        _stylers.push({color: m_color});
+                    }
+                    if (m_hue) {
+                        _stylers.push({hue: m_hue});
+                    }
+                    if (m_lightness) {
+                        _stylers.push({lightness: m_lightness});
+                    }
+                    if (m_invert_lightness) {
+                        _stylers.push({invert_lightness: m_invert_lightness});
+                    }
+                    if (m_saturation) {
+                        _stylers.push({saturation: m_saturation});
+                    }
+                    if (m_gamma) {
+                        _stylers.push({gamma: m_gamma});
+                    }
+                    if (m_visibility) {
+                        _stylers.push({visibility: m_visibility});
+                    }
+                    if (m_feature) {
+                        _style.featureType = m_feature;
+                    }
+                    if (m_element) {
+                        _style.elementType = m_element;
+                    }
+                    _style.stylers = _stylers;
+                    stylesArray.push(_style);
+                }
+            });
+            if (stylesArray.length) {
+                map.setOptions({styles: stylesArray});
+            }
         }
 
         var asyncElapsed = 0;
