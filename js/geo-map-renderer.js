@@ -226,6 +226,7 @@
                 infoWindow.close();
             }
             this.instances[id].circle.setVisible(false);
+            this.instances[id].map.getStreetView().setVisible(false);
             this.instances[id].map.setOptions({styles: []});
         },
         
@@ -470,8 +471,10 @@
      */
     window.com.xomena.mapRenderer.Strategy.prototype.m_getGeoJSON_Image = function (data, map, id) {
         switch (this.type) {
-        case "staticmap":
-            return m_parseStaticMap(data, map, id);
+            case "staticmap":
+                return m_parseStaticMap(data, map, id);
+            case "streetview":
+                return m_parseStreetView(data, map, id);
         }
         return null;
     };
@@ -488,6 +491,7 @@
             case "speed":
             case "distancematrix":
             case "staticmap":
+            case "streetview":
                 return true;
             default:
                 return false;
@@ -506,7 +510,8 @@
         PlacesAutocompleteRender: new window.com.xomena.mapRenderer.Strategy("places_autocomplete"),
         RoadsRender: new window.com.xomena.mapRenderer.Strategy("roads"),
         SpeedRender: new window.com.xomena.mapRenderer.Strategy("speed"),
-        StaticMapsRender: new window.com.xomena.mapRenderer.Strategy("staticmap")
+        StaticMapsRender: new window.com.xomena.mapRenderer.Strategy("staticmap"),
+        StreetViewRender: new window.com.xomena.mapRenderer.Strategy("streetview")
     };
 
     /**
@@ -1701,6 +1706,107 @@
                 });
                 m_add_polylines_to_map();
                 m_adjust_bounds(map);
+            } else if (asyncElapsed > 30000) {
+                window.clearInterval(intHandler);
+                m_adjust_bounds(map);
+            }
+        }, 100);
+
+        return null;
+    }
+
+    /**
+     * Parse Street View data
+     * @param {Object} data Data from render map instance view call
+     * @param {google.maps.Map} map   The instance of the map
+     * @param {String} id    The ID of web service instance
+     * @returns {Object} GeoJSON object
+     */
+    function m_parseStreetView (data, map, id) {
+
+        var m_async_proc = Object.create(null);
+        var streetViewContainer = map.getStreetView();
+
+        function m_add_marker_to_map (loc, options) {
+            map.data.add(new google.maps.Data.Feature({
+                geometry: loc,
+                "properties": {
+                    "icon": options.icon ? options.icon : ICON_URL,
+                    "iconSize": options.iconSize? options.iconSize: ICON_SIZE_32,
+                    "zIndex": 2,
+                    "visible": "visible" in options ? options.visible : true
+                }
+            }));
+            streetViewContainer.setPosition(loc);
+        }
+
+        function m_resolve_marker_callback (location, options) {
+            if (reLatLng.test(location)) {
+                var _ll1 = location.split(',');
+                if (_ll1.length > 1) {
+                    m_add_marker_to_map({
+                        lat: parseFloat(_ll1[0]),
+                        lng: parseFloat(_ll1[1])
+                    }, options);
+                }
+            } else {
+                m_async_proc["marker"] = false;
+                geocoder.geocode({
+                    address: location
+                }, function (results, status) {
+                    m_async_proc["marker"] = true;
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        m_add_marker_to_map(results[0].geometry.location, options);
+                    }
+                });
+            }
+        }
+
+        function m_is_finished_async() {
+            var res = true;
+            Object.getOwnPropertyNames(m_async_proc).forEach(function (p) {
+                res = res && m_async_proc[p];
+            });
+            return res;
+        }
+
+        window.com.xomena.mapRenderer.clearMap(id);
+
+        var m_location = com.xomena.mapRenderer.instances[id].model.getParameterValue("location");
+        if($.isArray(m_location) && m_location.length) {
+            m_resolve_marker_callback (m_location[0], {
+                iconSize: ICON_SIZE_32
+            });
+        }
+
+        var m_pano = com.xomena.mapRenderer.instances[id].model.getParameterValue("pano");
+        if($.isArray(m_pano) && m_pano.length) {
+            streetViewContainer.setPano(m_pano[0]);
+        }
+
+        var m_pov = Object.create(null);
+        var m_heading = com.xomena.mapRenderer.instances[id].model.getParameterValue("heading");
+        if($.isArray(m_heading) && m_heading.length) {
+            m_pov.heading = Number(m_heading[0]);
+        }
+
+        var m_pitch = com.xomena.mapRenderer.instances[id].model.getParameterValue("pitch");
+        if($.isArray(m_pitch) && m_pitch.length) {
+            m_pov.pitch = Number(m_pitch[0]);
+        }
+
+        if (Object.getOwnPropertyNames(m_pov).length) {
+            streetViewContainer.setPov(m_pov);
+        }
+
+        var asyncElapsed = 0;
+        var intHandler = window.setInterval(function () {
+            asyncElapsed += 100;
+            //debugger;
+            if (m_is_finished_async()) {
+                window.clearInterval(intHandler);
+                m_adjust_bounds(map);
+                streetViewContainer.setVisible(true);
             } else if (asyncElapsed > 30000) {
                 window.clearInterval(intHandler);
                 m_adjust_bounds(map);

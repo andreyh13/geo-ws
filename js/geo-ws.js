@@ -193,7 +193,8 @@
                         isImagery: data[i][10],
                         geocoderTool: data[i][11],
                         automotive: data[i][12],
-                        isExperiment: data[i][13]
+                        isExperiment: data[i][13],
+                        svWizardTool: data[i][14]
                     });
                     if(data[i][2]){
                         //Init parameters

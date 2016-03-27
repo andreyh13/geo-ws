@@ -18,7 +18,8 @@
             return window.com.xomena.geo.getNewId.count;
         },
         tools: {
-            geocoder: "https://google-developers.appspot.com/maps/documentation/utils/geocoder/#"
+            geocoder: "https://google-developers.appspot.com/maps/documentation/utils/geocoder/#",
+            svwizard: "http://mcorcuera.github.io/sv-wizard/#"
         },
         getFormElement: function (id, name, model, triggers, listeners, parentInstance) {
             var output = [],
@@ -303,7 +304,8 @@
             isImagery: false,
             geocoderTool: false,
             automotive: false,
-            isExperiment: true
+            isExperiment: true,
+            svWizardTool: false
         }
     });
 
@@ -653,6 +655,7 @@
                 var service = m_services.filterById(parseInt(m_service));
                 if ($.isArray(service) && service.length) {
                     var m_geocoder = service[0].get("geocoderTool");
+                    var m_svwizard = service[0].get("svWizardTool");
                     if (m_geocoder) {
                         var pars = this.get("parameters");
                         var aa = "";
@@ -720,6 +723,26 @@
                         }
                         m_links.push('<a href="' + window.com.xomena.geo.tools.geocoder + encodeURIComponent(res.join('')) +
                                      '" title="Geocoder Tool" target="_blank">Open in Geocoder Tool</a>&nbsp;☝️');
+                    }
+                    if (m_svwizard) {
+                        var pars = this.get("parameters");
+                        var aa = "";
+                        var res = [];
+                        if (pars) {
+                            pars.forEach(function (p) {
+                                var n = p.get("name");
+                                var v = p.get("value");
+                                if ($.isArray(v) && v.length) {
+                                    res.push(aa);
+                                    res.push(n);
+                                    res.push("=");
+                                    res.push(v[0]);
+                                    aa = "&";
+                                }
+                            });
+                        }
+                        m_links.push('<a href="' + window.com.xomena.geo.tools.svwizard + encodeURIComponent(res.join('')) +
+                                     '" title="Street View Wizard" target="_blank">Open in Street View Wizard</a>&nbsp;☝️');
                     }
                 }
             }
@@ -878,7 +901,7 @@
                     m_img_content = '<img src="' + m_url + '" title="" alt="" />';
                 }
                 this.$("#ws-result-" + this.model.get("id")).html(m_img_content);
-                this.$("#ws-tools-links-" + this.model.get("id")).html("");
+                this.addToolsLinks();
                 this.renderMap({isImageryAPI: true});
                 this.$("#clone-instance-" + this.model.get("id")).removeAttr("disabled");
                 //Talk to external part
