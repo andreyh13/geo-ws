@@ -316,14 +316,22 @@
                     <div class="pure-u-1 pure-u-lg-11-24">
                         <div class="pure-g">
                         <fieldset class="ws-version-fs pure-u-23-24 pure-u-xl-11-24" id="ws-version-fs-<%= id %>">
-                            <legend>Select the version</legend>
+                            <legend>Authentication</legend>
                             <label for="ws-version-free-<%= id %>" class="pure-radio">
                                 <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-free-<%= id %>" <% print(version==='free'?'checked="checked"':''); %> value="free" />
-                                Free
+                                Standard (free version)
+                            </label>
+                            <label for="ws-version-premium-key-<%= id %>" class="pure-radio">
+                                <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-premium-key-<%= id %>" <% print(version==='premium-key'?'checked="checked"':''); %> value="premium-key" />
+                                Premium plan (API key)
+                            </label>
+                            <label for="ws-version-premium-client-<%= id %>" class="pure-radio">
+                                <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-premium-client-<%= id %>" <% print(version==='premium-client'?'checked="checked"':''); %> value="premium-client" />
+                                Premium plan (client ID)
                             </label>
                             <label for="ws-version-work-<%= id %>" class="pure-radio">
                                 <input type="radio" name="ws-version-val-<%= id %>" id="ws-version-work-<%= id %>" <% print(version==='work'?'checked="checked"':''); %> value="work" />
-                                For Work
+                                Maps for Work
                             </label>
                         </fieldset>
                         <fieldset class="ws-output-fs pure-u-23-24 pure-u-xl-11-24">
@@ -419,17 +427,40 @@
     <!-- external template -->
     <script id="configTemplate" type="text/template">
         <div class="vertical-section app-config-fs">
-            <paper-input label="API key" type="text" name="app-config-api-key" id="app-config-api-key" value="<%= API_KEY %>" size="40"></paper-input>
-            <paper-input label="Client ID" type="text" name="app-config-client-id" id="app-config-client-id" value="<%= CLIENT_ID %>" size="40"></paper-input>
-            <paper-input label="Crypto Key" type="text" name="app-config-crypto-key" id="app-config-crypto-key" value="<%= CRYPTO_KEY %>" size="40"></paper-input>
-            <paper-input label="Places for Work API key" type="text" name="app-config-places-api-key" id="app-config-places-api-key" value="<%= PLACES_API_KEY %>" size="40"></paper-input>
-            <paper-input label="Roads for Work API key" type="text" name="app-config-roads-api-key" id="app-config-roads-api-key" value="<%= ROADS_API_KEY %>" size="40"></paper-input>
+            <template id="setting-auth-section" is="dom-bind">
+                <h4 class="setting-section-title">Authentication</h4>
+                <paper-tabs selected="{{selected}}">
+                    <paper-tab>Standard</paper-tab>
+                    <paper-tab>Premium plan</paper-tab>
+                    <paper-tab>Maps for Work</paper-tab>
+                </paper-tabs>
+                <iron-pages selected="{{selected}}">
+                    <div>
+                        <paper-input label="API key" type="text" name="app-config-api-key" id="app-config-api-key" value="<%= API_KEY %>" size="40"></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="API key" type="text" name="app-config-api-key-premium" id="app-config-api-key-premium" value="<%= API_KEY_PREMIUM %>" size="40"></paper-input>
+                        <paper-input label="Client ID" type="text" name="app-config-client-id-premium" id="app-config-client-id-premium" value="<%= CLIENT_ID_PREMIUM %>" size="40"></paper-input>
+                        <paper-input label="Crypto Key" type="text" name="app-config-crypto-key-premium" id="app-config-crypto-key-premium" value="<%= CRYPTO_KEY_PREMIUM %>" size="40"></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="Client ID" type="text" name="app-config-client-id" id="app-config-client-id" value="<%= CLIENT_ID %>" size="40"></paper-input>
+                        <paper-input label="Crypto Key" type="text" name="app-config-crypto-key" id="app-config-crypto-key" value="<%= CRYPTO_KEY %>" size="40"></paper-input>
+                        <paper-input label="Places for Work API key" type="text" name="app-config-places-api-key" id="app-config-places-api-key" value="<%= PLACES_API_KEY %>" size="40"></paper-input>
+                        <paper-input label="Roads for Work API key" type="text" name="app-config-roads-api-key" id="app-config-roads-api-key" value="<%= ROADS_API_KEY %>" size="40"></paper-input>
+                    </div>
+                </iron-pages>
+            </template>
+            <br/>
+            <h4 class="setting-section-title">Server</h4>
             <paper-input label="Server URL" type="text" name="app-config-server-url" id="app-config-server-url" value="<%= SERVER_URL %>" size="40"></paper-input>
             <paper-input label="Digital Signature URL" type="text" name="app-config-sign-url" id="app-config-sign-url" value="<%= SIGN_URL %>" size="40"></paper-input>
-            <paper-input label="Maps Support ID" type="text" name="app-config-ext-id" id="app-config-ext-id" value="<%= EXT_ID %>" size="40"></paper-input>
             <paper-checkbox <%= AUTO_EXEC_ONLOAD ? 'checked' : '' %> id="app-config-exec-onload" value="app-config-exec-onload">
                   Automatically execute stored requests on page load
             </paper-checkbox>
+            <br/>
+            <h4 class="setting-section-title">Support</h4>
+            <paper-input label="Maps Support ID" type="text" name="app-config-ext-id" id="app-config-ext-id" value="<%= EXT_ID %>" size="40"></paper-input>
         </div>
     </script>
     

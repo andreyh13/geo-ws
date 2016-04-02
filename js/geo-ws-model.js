@@ -305,7 +305,8 @@
             geocoderTool: false,
             automotive: false,
             isExperiment: true,
-            svWizardTool: false
+            svWizardTool: false,
+            apiaryKeyPremium: 'API_KEY_PREMIUM'
         }
     });
 
@@ -580,6 +581,10 @@
                             res.push(aa);
                             res.push("key=");
                             res.push(window.com.xomena.geo.config.get(service[0].get("apiaryKeyFree")));
+                        } else {
+                            //Requests without API key are deprecated
+                            $("#validation-dialog").find("p.validation-content").html("Please configure the Standard API key").end().get(0).open();
+                            return "";
                         }
                     } else if (ver === "automotive") {
                         var autoClientID = $("#ws-version-automotive-" + this.get("id")).attr("data-clientid");
@@ -594,25 +599,63 @@
                             res.push("key=");
                             res.push(autoAPIKey);
                         }
+                    } else if (ver === "premium-key") {
+                        if(window.com.xomena.geo.config.get(service[0].get("apiaryKeyPremium"))){
+                            res.push(aa);
+                            res.push("key=");
+                            res.push(window.com.xomena.geo.config.get(service[0].get("apiaryKeyPremium")));
+                        } else {
+                            //Requests without API key are deprecated
+                            $("#validation-dialog").find("p.validation-content").html("Please configure the Premium API key").end().get(0).open();
+                            return "";
+                        }
+                    } else if (ver === "premium-client") {
+                        if(m_isApiary){
+                            if(window.com.xomena.geo.config.get(service[0].get("apiaryKeyPremium"))){
+                                res.push(aa);
+                                res.push("key=");
+                                res.push(window.com.xomena.geo.config.get(service[0].get("apiaryKeyPremium")));
+                            } else {
+                                //Requests without API key are deprecated
+                                $("#validation-dialog").find("p.validation-content").html("Please configure the Premium API key").end().get(0).open();
+                                return "";
+                            }
+                        } else {
+                            if(window.com.xomena.geo.config.get("CLIENT_ID_PREMIUM")){
+                                res.push(aa);
+                                res.push("client=");
+                                res.push(window.com.xomena.geo.config.get("CLIENT_ID_PREMIUM"));
+                            } else {
+                                $("#validation-dialog").find("p.validation-content").html("Please configure the Premium Client ID").end().get(0).open();
+                                return "";
+                            }
+                        }
                     } else {
                         if(m_isApiary){
                             if(window.com.xomena.geo.config.get(service[0].get("apiaryKeyM4W"))){
                                 res.push(aa);
                                 res.push("key=");
                                 res.push(window.com.xomena.geo.config.get(service[0].get("apiaryKeyM4W")));
+                            } else {
+                                //Requests without API key are deprecated
+                                $("#validation-dialog").find("p.validation-content").html("Please configure Maps for Work API key").end().get(0).open();
+                                return "";
                             }
                         } else {
                             if(window.com.xomena.geo.config.get("CLIENT_ID")){
                                 res.push(aa);
                                 res.push("client=");
                                 res.push(window.com.xomena.geo.config.get("CLIENT_ID"));
+                            } else {
+                                $("#validation-dialog").find("p.validation-content").html("Please configure Maps for Work Client ID").end().get(0).open();
+                                return "";
                             }
                         }
                     }
                 }
             }
             var m_join = res.join("");
-            if(!m_isApiary && m_join && ver=='work' && window.com.xomena.geo.config.get("SIGN_URL") && window.com.xomena.geo.config.get("CRYPTO_KEY")){
+            if(!m_isApiary && m_join && ver==='work' && window.com.xomena.geo.config.get("SIGN_URL") && window.com.xomena.geo.config.get("CRYPTO_KEY")){
                 $.ajax({
                     url: window.com.xomena.geo.config.get("SIGN_URL"),
                     dataType: "text",
@@ -622,6 +665,25 @@
                     data: {
                         uri: m_join,
                         cryptokey: window.com.xomena.geo.config.get("CRYPTO_KEY")
+                    },
+                    success: function(data) {
+                        m_join = $.trim(data);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown){
+                        console.log("Server side error: "+textStatus+" - "+ errorThrown);
+                    }
+                });
+            }
+            if(!m_isApiary && m_join && ver==='premium-client' && window.com.xomena.geo.config.get("SIGN_URL") && window.com.xomena.geo.config.get("CRYPTO_KEY_PREMIUM")){
+                $.ajax({
+                    url: window.com.xomena.geo.config.get("SIGN_URL"),
+                    dataType: "text",
+                    type: "POST",
+                    crossDomain: true,
+                    async: false,
+                    data: {
+                        uri: m_join,
+                        cryptokey: window.com.xomena.geo.config.get("CRYPTO_KEY_PREMIUM")
                     },
                     success: function(data) {
                         m_join = $.trim(data);
@@ -772,7 +834,10 @@
             PLACES_API_KEY: null,
             ROADS_API_KEY: null,
             AUTO_EXEC_ONLOAD: false,
-            EXT_ID: null
+            EXT_ID: null,
+            API_KEY_PREMIUM: null,
+            CLIENT_ID_PREMIUM: null,
+            CRYPTO_KEY_PREMIUM: null
         }
     });
 
