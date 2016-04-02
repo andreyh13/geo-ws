@@ -172,6 +172,10 @@ button.remove-parts {
     margin: 0 0 0 8px;
 }
 
+.setting-section-title {
+    margin: 0;
+}
+
 @media screen and (min-width: 568px){
     #instances-container li.ws-instance {
         width:90%;
