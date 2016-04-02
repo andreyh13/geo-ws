@@ -40,11 +40,11 @@
                 isPart = model instanceof window.com.xomena.geo.Models.ParameterPart,
                 sv = [];
 
-            function construct_input_element(pureClass, classes, type, inputId, inputName, inputValue, inputTitle) {
+            function construct_input_element(pureClass, classes, type, inputId, inputName, inputValue, inputTitle, addAttr) {
                 return '<input class="' + pureClass + classes + '" type="' + type + '" id="' + inputId +
                         '" name="' + inputName + '" value="' + inputValue + '" size="60"' +
                         (p ? ' pattern="' + p + '"' : '') + (h ? ' placeholder="' + h + '"' : '') +
-                        (r ? ' required' : '') + ' title="' + inputTitle + '"/>';
+                        (r ? ' required' : '') + ' title="' + inputTitle + '"' + (addAttr ? ' ' + addAttr : '') + '/>';
             }
 
             function get_tooltip_element(elemId, text) {
@@ -112,7 +112,7 @@
                     var m_pure_class = (t === 'string') ? 'pure-input-2-3' : 'pure-input-1-2',
                         m_type = (t === 'string') ? 'text' : 'number';
                     output.push(construct_input_element(m_pure_class, m_classes, m_type, 'parameter-' + id, name,
-                                    (sv.length ? sv[0] : ''), m_title) + get_tooltip_element('parameter-' + id, d));
+                                    (sv.length ? sv[0] : ''), m_title, o) + get_tooltip_element('parameter-' + id, d));
                     if (m) {
                         output.push(get_add_button());
                         if (sv.length > 1) {
@@ -120,7 +120,7 @@
                                 var m_new_id = window.com.xomena.geo.getNewId();
                                 output.push('<br/>');
                                 output.push(construct_input_element(m_pure_class, m_classes, m_type, 'parameter-' + id + '-' + m_new_id,
-                                                name, sv[i], m_title) + get_tooltip_element('parameter-' + id + '-' + m_new_id, d));
+                                                name, sv[i], m_title, o) + get_tooltip_element('parameter-' + id + '-' + m_new_id, d));
                             }
                         }
                     }
@@ -329,7 +329,8 @@
             condRequired: '',
             condRequiredOr: '',
             deprecated: false,
-            excludedGroup: null
+            excludedGroup: null,
+            includedGroup: null
         }
     });
 
@@ -394,7 +395,10 @@
                 console.log("Start parameters validation");
                 var msg = [];
                 var reqOrGroup = [];
+                //Excluded group can have only one value
                 var excludedGroups = Object.create(null);
+                //Included group must have all values or nothing
+                var includedGroups = Object.create(null);
                 value.forEach(function (p) {
                     var m = p.get("model");
                     var n = p.get("name");
@@ -438,6 +442,16 @@
                             value: v
                         });
                     }
+                    //Included groups
+                    if (m.get("includedGroup")) {
+                        if (!includedGroups[m.get("includedGroup")]) {
+                            includedGroups[m.get("includedGroup")] = [];
+                        }
+                        includedGroups[m.get("includedGroup")].push({
+                            name: n,
+                            value: v
+                        });
+                    }
                 });
                 //Check required one of
                 if(reqOrGroup.length){
@@ -458,6 +472,18 @@
                         if (f.length > 1) {
                             var exclNames = _.map(excludedGroups[grp], function(elem){ return elem.name; });
                             msg.push("You can define only one of the following parameters:<br/>&nbsp;&nbsp;&nbsp;" + exclNames.join("<br/>&nbsp;&nbsp;&nbsp;"));
+                        }
+                    });
+                }
+                //Check included groups
+                if (_.keys(includedGroups).length) {
+                    _.each(_.keys(includedGroups), function (grp) {
+                        var f1 = _.filter(includedGroups[grp], function(elem) {
+                            return elem.value.length;
+                        });
+                        if (!(f1.length === 0 || f1.length === includedGroups[grp].length)) {
+                            var inclNames = _.map(includedGroups[grp], function(elem){ return elem.name; });
+                            msg.push("You must define all parameters for the following group:<br/>&nbsp;&nbsp;&nbsp;" + inclNames.join("<br/>&nbsp;&nbsp;&nbsp;"));
                         }
                     });
                 }
@@ -692,6 +718,9 @@
                         console.log("Server side error: "+textStatus+" - "+ errorThrown);
                     }
                 });
+            }
+            if (m_join.length > 2048) {
+                $("#validation-dialog").find("p.validation-content").html("URL is longer than 2048 symbols").end().get(0).open();
             }
             return m_join;
         },

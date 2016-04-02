@@ -151,7 +151,8 @@
                         condRequiredOr: data[i][13],
                         separator: data[i][14] ? data[i][14] : '|',
                         deprecated: data[i][15],
-                        excludedGroup: data[i][16]
+                        excludedGroup: data[i][16],
+                        includedGroup: data[i][17]
                     });
                     if(data[i][4]){
                         //Init parameter parts
