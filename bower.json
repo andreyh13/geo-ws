@@ -32,6 +32,7 @@
     "backbone.validation": "backbone-validation#^0.11.0",
     "blockUI": "malsup/blockui",
     "chosen": "^1.2.0",
+    "crypto-js": "CryptoJS#~3.1.12",
     "datetimepicker": "~2.4.5",
     "fontfaceobserver": "~1.5.4",
     "google-apis": "GoogleWebComponents/google-apis#~1.1.2",

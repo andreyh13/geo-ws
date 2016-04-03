@@ -2,7 +2,6 @@
     'use strict';
     var WS_DS_URI = "https://script.google.com/macros/s/AKfycbwPrEGcNZfsQEWmKm_XC-IXdEPdIQdIE1Na8pL4uBprm2YIT8E/exec?jsonp=?",
         URL_SERVER_DEF = "http://aux.xomena.elementfx.com/geows.php",
-	    URL_SIGN_DEF = "http://aux.xomena.elementfx.com/geowssign.php",
 	    instance_col = new window.com.xomena.geo.Collections.InstanceCollection(),
         instancesView = null,
         isIE = /*@cc_on!@*/false,
@@ -308,10 +307,7 @@
             CRYPTO_KEY_PREMIUM: localStorage.getItem("com.xomena.geo.Models.Config.CRYPTO_KEY_PREMIUM"),
             SERVER_URL: localStorage.getItem("com.xomena.geo.Models.Config.SERVER_URL")?
 			            localStorage.getItem("com.xomena.geo.Models.Config.SERVER_URL"):
-						URL_SERVER_DEF, 
-            SIGN_URL: localStorage.getItem("com.xomena.geo.Models.Config.SIGN_URL")?
-			          localStorage.getItem("com.xomena.geo.Models.Config.SIGN_URL"):
-					  URL_SIGN_DEF,
+						URL_SERVER_DEF,
             PLACES_API_KEY: localStorage.getItem("com.xomena.geo.Models.Config.PLACES_API_KEY"),
             ROADS_API_KEY: localStorage.getItem("com.xomena.geo.Models.Config.ROADS_API_KEY"),
             EXT_ID: localStorage.getItem("com.xomena.geo.Models.Config.EXT_ID"),
@@ -331,7 +327,6 @@
             window.com.xomena.geo.config.set("CLIENT_ID_PREMIUM", $("#app-config-client-id-premium").val());
             window.com.xomena.geo.config.set("CRYPTO_KEY_PREMIUM", $("#app-config-crypto-key-premium").val());
             window.com.xomena.geo.config.set("SERVER_URL", $("#app-config-server-url").val());
-            window.com.xomena.geo.config.set("SIGN_URL", $("#app-config-sign-url").val());
             window.com.xomena.geo.config.set("PLACES_API_KEY", $("#app-config-places-api-key").val());
             window.com.xomena.geo.config.set("ROADS_API_KEY", $("#app-config-roads-api-key").val());
             window.com.xomena.geo.config.set("EXT_ID", $("#app-config-ext-id").val());
@@ -343,7 +338,6 @@
             localStorage.setItem("com.xomena.geo.Models.Config.CLIENT_ID_PREMIUM", window.com.xomena.geo.config.get("CLIENT_ID_PREMIUM"));
             localStorage.setItem("com.xomena.geo.Models.Config.CRYPTO_KEY_PREMIUM", window.com.xomena.geo.config.get("CRYPTO_KEY_PREMIUM"));
             localStorage.setItem("com.xomena.geo.Models.Config.SERVER_URL", window.com.xomena.geo.config.get("SERVER_URL"));
-            localStorage.setItem("com.xomena.geo.Models.Config.SIGN_URL", window.com.xomena.geo.config.get("SIGN_URL"));
             localStorage.setItem("com.xomena.geo.Models.Config.PLACES_API_KEY", window.com.xomena.geo.config.get("PLACES_API_KEY"));
             localStorage.setItem("com.xomena.geo.Models.Config.ROADS_API_KEY", window.com.xomena.geo.config.get("ROADS_API_KEY"));
             localStorage.setItem("com.xomena.geo.Models.Config.EXT_ID", window.com.xomena.geo.config.get("EXT_ID"));
@@ -361,7 +355,6 @@
               "com.xomena.geo.Models.Config.CLIENT_ID_PREMIUM": window.com.xomena.geo.config.get("CLIENT_ID_PREMIUM"),
               "com.xomena.geo.Models.Config.CRYPTO_KEY_PREMIUM": window.com.xomena.geo.config.get("CRYPTO_KEY_PREMIUM"),
               "com.xomena.geo.Models.Config.SERVER_URL": window.com.xomena.geo.config.get("SERVER_URL"),
-              "com.xomena.geo.Models.Config.SIGN_URL": window.com.xomena.geo.config.get("SIGN_URL"),
               "com.xomena.geo.Models.Config.PLACES_API_KEY": window.com.xomena.geo.config.get("PLACES_API_KEY"),
               "com.xomena.geo.Models.Config.ROADS_API_KEY": window.com.xomena.geo.config.get("ROADS_API_KEY"),
               "com.xomena.geo.Models.Config.EXT_ID": window.com.xomena.geo.config.get("EXT_ID")
@@ -413,9 +406,6 @@
                                   break;
                                 case "com.xomena.geo.Models.Config.SERVER_URL":
                                   elemId = "app-config-server-url";
-                                  break;
-                                case "com.xomena.geo.Models.Config.SIGN_URL":
-                                  elemId = "app-config-sign-url";
                                   break;
                                 case "com.xomena.geo.Models.Config.PLACES_API_KEY":
                                   elemId = "app-config-places-api-key";
