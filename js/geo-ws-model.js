@@ -1,5 +1,6 @@
 (function (window, $, _, Backbone, jem, hljs) {
     'use strict';
+
     window.com = window.com || {};
     window.com.xomena = window.com.xomena || {};
 
@@ -681,44 +682,37 @@
                 }
             }
             var m_join = res.join("");
-            if(!m_isApiary && m_join && ver==='work' && window.com.xomena.geo.config.get("SIGN_URL") && window.com.xomena.geo.config.get("CRYPTO_KEY")){
-                $.ajax({
-                    url: window.com.xomena.geo.config.get("SIGN_URL"),
-                    dataType: "text",
-                    type: "POST",
-                    crossDomain: true,
-                    async: false,
-                    data: {
-                        uri: m_join,
-                        cryptokey: window.com.xomena.geo.config.get("CRYPTO_KEY")
-                    },
-                    success: function(data) {
-                        m_join = $.trim(data);
-                    },
-                    error: function(jqXHR, textStatus, errorThrown){
-                        console.log("Server side error: "+textStatus+" - "+ errorThrown);
+            if (!m_isApiary && m_join) {
+                var cr_key;
+                switch(ver) {
+                    case "work":
+                        cr_key = "CRYPTO_KEY";
+                        break;
+                    case "premium-client":
+                        cr_key = "CRYPTO_KEY_PREMIUM";
+                        break;
+                }
+                if (cr_key) {
+                    var m_crypto_key = window.com.xomena.geo.config.get(cr_key);
+                    if (m_crypto_key) {
+                        //debugger;
+                        var m_path = m_join.replace("https://maps.googleapis.com", "");
+
+                        var k1 = m_crypto_key.replace(/\-/g,'+').replace(/\_/g,'/');
+                        var k2 = CryptoJS.enc.Base64.parse(k1);
+
+                        var m_hash = CryptoJS.HmacSHA1( m_path, k2 );
+                        var m_signature = CryptoJS.enc.Base64.stringify( m_hash );
+
+                        m_signature = m_signature.replace(/\+/g,'-').replace(/\//g,'_');
+                        m_join += "&signature=" + m_signature;
+                    } else {
+                        $("#validation-dialog").find("p.validation-content").html("Please configure your Cryptographic Key").end().get(0).open();
+                        return "";
                     }
-                });
+                }
             }
-            if(!m_isApiary && m_join && ver==='premium-client' && window.com.xomena.geo.config.get("SIGN_URL") && window.com.xomena.geo.config.get("CRYPTO_KEY_PREMIUM")){
-                $.ajax({
-                    url: window.com.xomena.geo.config.get("SIGN_URL"),
-                    dataType: "text",
-                    type: "POST",
-                    crossDomain: true,
-                    async: false,
-                    data: {
-                        uri: m_join,
-                        cryptokey: window.com.xomena.geo.config.get("CRYPTO_KEY_PREMIUM")
-                    },
-                    success: function(data) {
-                        m_join = $.trim(data);
-                    },
-                    error: function(jqXHR, textStatus, errorThrown){
-                        console.log("Server side error: "+textStatus+" - "+ errorThrown);
-                    }
-                });
-            }
+
             if (m_join.length > 2048) {
                 $("#validation-dialog").find("p.validation-content").html("URL is longer than 2048 symbols").end().get(0).open();
             }
@@ -859,7 +853,6 @@
             CLIENT_ID: null,
             CRYPTO_KEY: null,
             SERVER_URL: null,
-            SIGN_URL: null,
             PLACES_API_KEY: null,
             ROADS_API_KEY: null,
             AUTO_EXEC_ONLOAD: false,

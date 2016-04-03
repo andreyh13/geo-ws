@@ -307,6 +307,10 @@
     <script src="bower_components/highlight/build/highlight.pack.js"></script>
     <script src="bower_components/jem.js/jem.js"></script>
     <script src="bower_components/datetimepicker/build/jquery.datetimepicker.full.js"></script>
+    <script src="bower_components/crypto-js/build/components/core.js"></script>
+    <script src="bower_components/crypto-js/build/components/sha1.js"></script>
+    <script src="bower_components/crypto-js/build/components/hmac.js"></script>
+    <script src="bower_components/crypto-js/build/components/enc-base64.js"></script>
     
     <!-- external template -->
     <script id="instanceTemplate" type="text/template">
@@ -454,10 +458,10 @@
             <br/>
             <h4 class="setting-section-title">Server</h4>
             <paper-input label="Server URL" type="text" name="app-config-server-url" id="app-config-server-url" value="<%= SERVER_URL %>" size="40"></paper-input>
-            <paper-input label="Digital Signature URL" type="text" name="app-config-sign-url" id="app-config-sign-url" value="<%= SIGN_URL %>" size="40"></paper-input>
             <paper-checkbox <%= AUTO_EXEC_ONLOAD ? 'checked' : '' %> id="app-config-exec-onload" value="app-config-exec-onload">
                   Automatically execute stored requests on page load
             </paper-checkbox>
+            <br/>
             <br/>
             <h4 class="setting-section-title">Support</h4>
             <paper-input label="Maps Support ID" type="text" name="app-config-ext-id" id="app-config-ext-id" value="<%= EXT_ID %>" size="40"></paper-input>
