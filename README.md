@@ -25,13 +25,22 @@ To start working with Requests Builder please fill in the Settings for your API 
 
 ![Settings Config](/image/docs/geo-ws-settings.png?raw=true "Maps WS Builder Settings")
 
-Please put the following values:
- - In **API key** field you should enter the value of the free version's API key that you generated in your developer console project. Please follow [documentation](https://developers.google.com/maps/documentation/geocoding/get-api-key) for more details. Please note that you have to enable all APIs mentioned above in your project to be able to construct all free version's requests.
- - **Client ID** and **Crypto Key**. If you have a Google Maps for Work license you should enter there the corresponding values of your client ID and cryptographic key. Please read [authenticate and authorize Maps for Work documentation](https://developers.google.com/maps/documentation/business/webservices/auth) for more details.
+Please put the following values for different types of authentication:
+
+#### Standard 
+ - In **API key** field you should enter the value of the free version's Server API key that you generated in your developer console project. Please follow [documentation](https://developers.google.com/maps/documentation/geocoding/get-api-key) for more details. Please note that you have to enable all APIs mentioned above in your project to be able to construct all free version's requests.
+ 
+ #### Premium Plan
+ - In **API key** field you should enter the value of the Premium plan's Server API key that you generated in your developer console project. Please follow [documentation](https://developers.google.com/maps/premium/overview#api-key) for more details.
+ - **Client ID** and **Crypto Key**. If you have a Premium Plan license you should enter there the corresponding values of your client ID and cryptographic key. Please read [authenticate and authorize documentation](https://developers.google.com/maps/documentation/geocoding/get-api-key#client-id) for more details.
+ 
+ #### Maps for Work (previous license)
+ - **Client ID** and **Crypto Key**. If you have a Google Maps for Work license you should enter there the corresponding values of your client ID and cryptographic key. Please read [authenticate and authorize Maps for Work documentation](https://developers.google.com/maps/premium/previous-licenses/webservices/auth) for more details.
  - **Places for Work API key**. If you have a Places API for Work license please enter here the value of the API key from your locked Places API - Zagat Content project.
  - **Roads for Work API key**. If you have a Maps for Work license and enabled the Roads API, please enter here the value of the API key from your locked Roads API project.
+ 
+ #### Other parameters
  - **Server URL**. Please enter the `http://aux.xomena.elementfx.com/geows.php`
- - **Digital Signature URL**. Please enter the `http://aux.xomena.elementfx.com/geowssign.php`
  - If you would like to execute all stored requests on page load, please mark the corresponding checkbox.
  
  ### Select version and format
