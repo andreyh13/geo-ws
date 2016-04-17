@@ -2204,6 +2204,9 @@
         function m_callback (place_res, status) {
             count++;
             console.log("Status: " + status);
+            if (status === google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT) {
+                console.log(place_res);
+            }
             progress.value = count;
             if (status === google.maps.places.PlacesServiceStatus.OK) {
                 m_add_place_to_map (place_res, map, false);
