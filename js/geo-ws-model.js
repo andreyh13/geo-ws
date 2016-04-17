@@ -1517,11 +1517,40 @@
         this.model.on('destroy', this.remove, this); // calls remove function once model deleted
       },
       render: function() {
+        var storedval;
+        var wasclosed;
         this.$el.html(this.newTemplate(this.model.toJSON())); // calls the template
         if (this.model.get("model").get("type") === "timestamp") {
+            var dnow = (new Date()).toISOString();
+            var dmin = dnow.split("T")[0];
             this.$el.find("#parameter-"+this.model.get("id")).datetimepicker({
                 step: 10,
-                format: 'unixtime'
+                format: 'unixtime',
+                lazyInit: true,
+                formatDate: 'Y-m-d',
+                minDate: dmin,
+                defaultDate: false,
+                allowBlank: true,
+                yearStart: (new Date()).getFullYear(),
+                dayOfWeekStart: 1,
+                showApplyButton: false,
+                closeOnDateSelect: false,
+		        closeOnTimeSelect: true,
+                validateOnBlur:false,
+                onChangeDateTime: function (dp,$input) {
+                    if (wasclosed) return;
+                    storedval = $input.val();
+                    console.log("Tmestamp stored: " + storedval);
+                },
+                onClose: function (dp, $input) {
+                    if (!($input.val() === "" || $input.val() === "now")) {
+                        $input.val(storedval ? storedval : "");
+                    }
+                    wasclosed = true;
+                },
+                onShow: function (dp, $input) {
+                    wasclosed = false;
+                }
             });
         }
       },

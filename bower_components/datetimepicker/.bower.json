@@ -1,6 +1,6 @@
 {
   "name": "datetimepicker",
-  "version": "2.4.9",
+  "version": "2.5.3",
   "main": [
     "build/jquery.datetimepicker.full.min.js",
     "jquery.datetimepicker.css"
@@ -42,19 +42,24 @@
       "homepage": "http://xdsoft.net/contacts.html"
     }
   ],
+  "dependencies": {
+    "jquery": ">= 1.7.2",
+    "jquery-mousewheel": ">= 3.1.13",
+    "php-date-formatter": ">= 1.3.3"
+  },
   "license": "MIT",
   "homepage": "http://xdsoft.net/jqplugins/datetimepicker/",
   "repository": {
     "type": "git",
     "url": "git://github.com:xdan/datetimepicker.git"
   },
-  "_release": "2.4.9",
+  "_release": "2.5.3",
   "_resolution": {
     "type": "version",
-    "tag": "2.4.9",
-    "commit": "d7666521ebd45ced30bedd183ebae3ef85b4a577"
+    "tag": "2.5.3",
+    "commit": "c8dd8efe17097aa086a5bac1fc7b60879f740c9f"
   },
-  "_source": "git://github.com/xdan/datetimepicker.git",
-  "_target": "~2.4.5",
+  "_source": "https://github.com/xdan/datetimepicker.git",
+  "_target": "~2.5.3",
   "_originalSource": "datetimepicker"
 }
