@@ -136,6 +136,14 @@
                                 infoWindow.open(self.instances[model.get("id")].map);
                             }
                             break;
+                        case "LineString":
+                            var m_summary = event.feature.getProperty("summary");
+                            if (m_summary) {
+                                infoWindow.setPosition(event.latLng);
+                                infoWindow.setContent(m_summary);
+                                infoWindow.open(self.instances[model.get("id")].map);
+                            }
+                            break;
                         }
                     }
                 });
@@ -578,11 +586,32 @@
         if (_.isObject(data) && data.status && data.status === "OK") {
             if (data.routes && _.isArray(data.routes) && data.routes.length) {
                 _.each(data.routes, function (route, index) {
-                    var arr1 = google.maps.geometry.encoding.decodePath(route.overview_polyline.points),
-                        m_coord = [];
-                    _.each(arr1, function (p, ind1) {
-                        m_coord.push([p.lng(), p.lat()]);
-                    });
+                    var m_coord = [];
+                    var m_descr = "";
+                    if (route.legs && _.isArray(route.legs) && route.legs.length) {
+                        route.legs.forEach(function (leg) {
+                            m_descr += "<li><b>" + leg.start_address + " - " + leg.end_address + "</b><br/>" +
+                                "Distance: " + (leg.distance && leg.distance.text ? leg.distance.text : 'unknown') +
+                                '<br/>' +
+                                "Duration: " + (leg.duration && leg.duration.text ? leg.duration.text : 'unknown') +
+                                (leg.duration_in_traffic && leg.duration_in_traffic.text ? "<br/>Duration in traffic: " + leg.duration_in_traffic.text : "") + "</li>";
+                            if (leg.steps && _.isArray(leg.steps) && leg.steps.length) {
+                                leg.steps.forEach(function (step) {
+                                     if (step.polyline && step.polyline.points) {
+                                         var arr_s =  google.maps.geometry.encoding.decodePath(step.polyline.points);
+                                         arr_s.forEach(function (p) {
+                                              m_coord.push([p.lng(), p.lat()]);
+                                         });
+                                     }
+                                });
+                            }
+                        });
+                    } else {
+                        var arr1 = google.maps.geometry.encoding.decodePath(route.overview_polyline.points);
+                        _.each(arr1, function (p, ind1) {
+                            m_coord.push([p.lng(), p.lat()]);
+                        });
+                    }
                     res.features.push({
                         "type": "Feature",
                         "geometry": {
@@ -591,7 +620,7 @@
                         },
                         "properties": {
                             "color": ROUTE_COLORS[index],
-                            "summary": route.summary,
+                            "summary": '<h3>' + route.summary + '</h3><ul>' + m_descr + '</ul>',
                             "warnings": route.warnings,
                             "waypoint_order": route.waypoint_order,
                             "zIndex": data.routes.length - index
@@ -1057,12 +1086,30 @@
         if (data && xmlDoc) {
             var m_status = $(xmlDoc).find("status").text();
             if(m_status === "OK") {
-                $(xmlDoc).find("route").each(function(index, elem){
-                    var arr1 = google.maps.geometry.encoding.decodePath($(this).find("overview_polyline > points").text()),
-                        m_coord = [];
-                    _.each(arr1, function (p, ind1) {
-                        m_coord.push([p.lng(), p.lat()]);
-                    });
+                $(xmlDoc).find("route").each(function (index, elem) {
+                    var m_coord = [];
+                    var m_descr = "";
+                    if ($(this).find("leg").length) {
+                        $(this).find("leg").each(function (legind, legelem) {
+                            m_descr += "<li><b>" + $(this).find(" > start_address").text() + " - " + $(this).find(" > end_address").text() + "</b><br/>" +
+                                "Distance: " + $(this).find(" > distance > text").text() + '<br/>' +
+                                "Duration: " + $(this).find(" > duration > text").text() +
+                                ($(this).find(" > duration_in_traffic > text").length ? "<br/>Duration in traffic: " + $(this).find(" > duration_in_traffic > text").text() : "") + "</li>";
+                            if ($(this).find("step").length) {
+                                $(this).find("step").each(function (stepind, stepelem) {
+                                    var arr_s =  google.maps.geometry.encoding.decodePath($(this).find("polyline > points").text());
+                                    arr_s.forEach(function (p) {
+                                        m_coord.push([p.lng(), p.lat()]);
+                                    });
+                                });
+                            }
+                        });
+                    } else {
+                        var arr1 = google.maps.geometry.encoding.decodePath($(this).find("overview_polyline > points").text());
+                        _.each(arr1, function (p, ind1) {
+                            m_coord.push([p.lng(), p.lat()]);
+                        });
+                    }
                     res.features.push({
                         "type": "Feature",
                         "geometry": {
@@ -1071,7 +1118,7 @@
                         },
                         "properties": {
                             "color": ROUTE_COLORS[index],
-                            "summary": $(this).find(" > summary").text(),
+                            "summary": '<h3>' + $(this).find(" > summary").text() + '</h3><ul>' + m_descr + '</ul>',
                             "zIndex": $(xmlDoc).find("route").length - index
                         },
                         "id": $(xmlDoc).find("geocoded_waypoint > place_id").text() + "-" + index
