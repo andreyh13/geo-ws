@@ -160,7 +160,7 @@
                 });
                 //Listen to paper-radio-group events
                 $("#radiogrp-" + model.get("id")).on("paper-radio-group-changed", "paper-radio-group",  function (ev) {
-                    console.log(ev);
+                    //console.log(ev);
                     if (ev.target) {
                         var m_selected = ev.target.selected;
                         var m_common, m_index;
@@ -269,6 +269,9 @@
             this.instances[id].map.data.forEach(function (feature) {
                 var m_id = feature.getId();
                 if (m_id && m_id.startsWith(commonPart)) {
+                    if(infoWindow) {
+                        infoWindow.close();
+                    }
                     if (selectedIndex) {
                         if (m_id.startsWith(commonPart + "-" + selectedIndex)) {
                             self.instances[id].map.data.overrideStyle(feature, {visible: true});
@@ -777,9 +780,6 @@
                 res.bounds = bounds;
                 if (m_radio_content) {
                     $("#radiogrp-" + id).html("<paper-radio-group id='route-" + id +"' allow-empty-selection>" + m_radio_content + "</paper-radio-group>");
-                    $("#radiogrp-" + id).find("paper-radio-button").each(function (ind) {
-
-                    });
                 }
             }
         }
@@ -1231,54 +1231,156 @@
         },
         bounds = new google.maps.LatLngBounds(),
         xmlDoc = m_getXMLDoc($.trim(data));
+        var m_mode_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("mode");
+        var m_mode = m_mode_arr.length ? m_mode_arr[0] : "driving";
         if (data && xmlDoc) {
-            var m_status = $(xmlDoc).find("status").text();
+            //console.log(xmlDoc);
+            var m_status = $(xmlDoc).find("DirectionsResponse > status").text();
             if(m_status === "OK") {
-                $(xmlDoc).find("route").each(function (index, elem) {
+                var m_radio_content = "";
+                $(xmlDoc).find("DirectionsResponse > route").each(function (index, elem) {
                     var m_coord = [];
                     var m_descr = "";
-                    if ($(this).find("leg").length) {
-                        $(this).find("leg").each(function (legind, legelem) {
-                            m_descr += "<li><b>" + $(this).find(" > start_address").text() + " - " + $(this).find(" > end_address").text() + "</b><br/>" +
-                                "Distance: " + $(this).find(" > distance > text").text() + '<br/>' +
-                                "Duration: " + $(this).find(" > duration > text").text() +
-                                ($(this).find(" > duration_in_traffic > text").length ? "<br/>Duration in traffic: " + $(this).find(" > duration_in_traffic > text").text() : "") + "</li>";
-                            if ($(this).find("step").length) {
-                                $(this).find("step").each(function (stepind, stepelem) {
-                                    var arr_s =  google.maps.geometry.encoding.decodePath($(this).find("polyline > points").text());
-                                    arr_s.forEach(function (p) {
-                                        m_coord.push([p.lng(), p.lat()]);
-                                    });
+                    if ($(this).find(" > leg").length) {
+                        $(this).find(" > leg").each(function (legind, legelem) {
+                            if (m_mode !== 'transit') {
+                                m_descr += "<li><b>" + $(this).find(" > start_address").text() + " - " + $(this).find(" > end_address").text() + "</b><br/>" +
+                                    "Distance: " + $(this).find(" > distance > text").text() + '<br/>' +
+                                    "Duration: " + $(this).find(" > duration > text").text() +
+                                    ($(this).find(" > duration_in_traffic > text").length ? "<br/>Duration in traffic: " + $(this).find(" > duration_in_traffic > text").text() : "") + "</li>";
+                            }
+                            if ($(this).find(" > step").length) {
+                                $(this).find(" > step").each(function (stepind, stepelem) {
+                                    var arr_s =  google.maps.geometry.encoding.decodePath($(this).find(" > polyline > points").text());
+                                    if (m_mode !== 'transit') {
+                                        arr_s.forEach(function (p) {
+                                            m_coord.push([p.lng(), p.lat()]);
+                                        });
+                                    } else {
+                                        //Transit stuff
+                                        var m_coord_trans = [];
+                                        var m_summary_trans = $(this).find(" > html_instructions").length ? '<h3>' + $(this).find(" > html_instructions").text() + '</h3>' : '';
+                                        if ($(this).find(" > distance").length || $(this).find(" > duration").length) {
+                                            m_summary_trans += '<ul>';
+                                            if ($(this).find(" > travel_mode").text() === 'TRANSIT' && $(this).find(" > transit_details").length) {
+                                                m_summary_trans += "<li><b>" +
+                                                 ($(this).find(" > transit_details > line > vehicle").length ? "<img src='" + $(this).find(" > transit_details > line > vehicle > icon").text() + "' title='" + $(this).find(" > transit_details > line > vehicle > name").text() +"' width='16' height='16' />&nbsp;&nbsp;" : "") +
+                                                 $(this).find(" > transit_details > departure_stop > name").text() + " - " + $(this).find(" > transit_details > arrival_stop > name").text() + "</b></li>";
+                                                 m_summary_trans += "<li><b>Departure:</b> " + $(this).find(" > transit_details > departure_time > text").text() + " (" + $(this).find(" > transit_details > departure_time > time_zone").text() + ")</li>";
+                                                 m_summary_trans += "<li><b>Arrival:</b> " + $(this).find(" > transit_details > arrival_time > text").text() + " (" + $(this).find(" > transit_details > arrival_time > time_zone").text() + ")</li>";
+                                             }
+                                             m_summary_trans += "<li><b>Distance:</b> " + ($(this).find(" > distance > text").length ? $(this).find(" > distance > text").text() : 'unknown') + '</li>';
+                                             m_summary_trans += "<li><b>Duration:</b> " + ($(this).find(" > duration > text").length ? $(this).find(" > duration > text").text() : 'unknown') + "</li>";
+                                             if ($(this).find(" > travel_mode").text() === 'TRANSIT' && $(this).find(" > transit_details > line").length) {
+                                                 var agency_link = $(this).find(" > transit_details > line > short_name").length ? $(this).find(" > transit_details > line > short_name").text() : "";
+                                                 if ($(this).find(" > transit_details > line > url").length) {
+                                                     agency_link = "<a href='" + $(this).find(" > transit_details > line >  url").text() + "' title='" + agency_link + "' target='_blank'>" + agency_link + "</a>";
+                                                 }
+                                                 if ($(this).find(" > transit_details > line > name").length) {
+                                                    m_summary_trans += "<li><b>Line:</b> " + $(this).find(" > transit_details > line > name").text() + "</li>";
+                                                 }
+                                                 if (agency_link) {
+                                                    m_summary_trans += "<li><b>Agency:</b> " + agency_link + "</li>";
+                                                 }
+                                             }
+                                             m_summary_trans += '</ul>';
+                                         }
+                                         arr_s.forEach(function (p) {
+                                              m_coord_trans.push([p.lng(), p.lat()]);
+                                         });
+                                         res.features.push({
+                                            "type": "Feature",
+                                            "geometry": {
+                                                "type": "LineString",
+                                                "coordinates": m_coord_trans
+                                            },
+                                            "properties": {
+                                                "color": ROUTE_COLORS[index],
+                                                "summary": m_summary_trans,
+                                                "warnings": [],
+                                                "waypoint_order": [],
+                                                "zIndex": $(xmlDoc).find(" > route").length - index
+                                            },
+                                            "id": "route-" + id + "-" + index + "-" +
+                                                    legind + "-" + stepind
+                                        });
+                                        if ($(this).find(" > start_location").length && $(this).find(" > travel_mode").text() === 'TRANSIT') {
+                                            var m_address_1 = $(this).find(" > transit_details > departure_stop > name").length ? $(this).find(" > transit_details > departure_stop > name").text() : '';
+                                            res.features.push({
+                                                "type": "Feature",
+                                                "geometry": {
+                                                    "type": "Point",
+                                                    "coordinates": [parseFloat($(this).find(" > start_location > lng").text()), parseFloat($(this).find(" > start_location > lat").text())]
+                                                },
+                                                "properties": {
+                                                    "address": m_address_1,
+                                                    "types": "transit_station",
+                                                    "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                            (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                    "content": '<div id="infowindow" class="infowindow"><h3>' + m_address_1 + '</h3></div>',
+                                                    "zIndex": $(xmlDoc).find(" > route").length - index
+                                                },
+                                                "id": "route-" + id + "-" + index + "-" +
+                                                    legind + "-" + stepind + "-start"
+                                            });
+                                        }
+                                        if ($(this).find(" > end_location").length && $(this).find(" > travel_mode").text() === 'TRANSIT') {
+                                            var m_address_2 = $(this).find(" > transit_details > arrival_stop > name").length ? $(this).find(" > transit_details > arrival_stop > name").text() : '';
+                                            res.features.push({
+                                                "type": "Feature",
+                                                "geometry": {
+                                                    "type": "Point",
+                                                    "coordinates": [parseFloat($(this).find(" > end_location > lng").text()), parseFloat($(this).find(" > end_location > lat").text())]
+                                                },
+                                                "properties": {
+                                                    "address": m_address_2,
+                                                    "types": "transit_station",
+                                                    "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                            (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                    "content": '<div id="infowindow" class="infowindow"><h3>' + m_address_2 + '</h3></div>',
+                                                    "zIndex": $(xmlDoc).find(" > route").length - index
+                                                },
+                                                "id": "route-" + id + "-" + index + "-" +
+                                                    legind + "-" + stepind + "-end"
+                                            });
+                                        }
+                                     }
                                 });
                             }
                         });
                     } else {
-                        var arr1 = google.maps.geometry.encoding.decodePath($(this).find("overview_polyline > points").text());
+                        var arr1 = google.maps.geometry.encoding.decodePath($(this).find(" > overview_polyline > points").text());
                         _.each(arr1, function (p, ind1) {
                             m_coord.push([p.lng(), p.lat()]);
                         });
                     }
-                    res.features.push({
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "LineString",
-                            "coordinates": m_coord
-                        },
-                        "properties": {
-                            "color": ROUTE_COLORS[index],
-                            "summary": '<h3>' + $(this).find(" > summary").text() + '</h3><ul>' + m_descr + '</ul>',
-                            "zIndex": $(xmlDoc).find("route").length - index
-                        },
-                        "id": $(xmlDoc).find("geocoded_waypoint > place_id").text() + "-" + index
-                    });
+                    if (m_mode !== 'transit') {
+                        res.features.push({
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "LineString",
+                                "coordinates": m_coord
+                            },
+                            "properties": {
+                                "color": ROUTE_COLORS[index],
+                                "summary": '<h3>' + $(this).find(" > summary").text() + '</h3><ul>' + m_descr + '</ul>',
+                                "zIndex": $(xmlDoc).find(" > route").length - index
+                            },
+                            "id": "route-" + id + "-" + index
+                        });
+                    }
                     if ($(xmlDoc).find("bounds").length) {
                         bounds.extend(new google.maps.LatLng(parseFloat($(xmlDoc).find("bounds > northeast > lat").text()), parseFloat($(xmlDoc).find("bounds > northeast > lng").text())));
                         bounds.extend(new google.maps.LatLng(parseFloat($(xmlDoc).find("bounds > southwest > lat").text()), parseFloat($(xmlDoc).find("bounds > southwest > lng").text())));
                     }
+                    m_radio_content += "<paper-radio-button name='route-" + id + "-" + index +"' class='route" + index + "'>Route " +  (index + 1) + "</paper-radio-button>";
                 });
                 res.bounds = bounds;
+                if (m_radio_content) {
+                    $("#radiogrp-" + id).html("<paper-radio-group id='route-" + id +"' allow-empty-selection>" + m_radio_content + "</paper-radio-group>");
+                }
             }
-            if ($(xmlDoc).find("geocoded_waypoint").length) {
+            if ($(xmlDoc).find("geocoded_waypoint").length && m_mode !== 'transit') {
                 var count = 0;
                 $(xmlDoc).find("geocoded_waypoint").each(function (index, wp) {
                     placesServices.getDetails({
