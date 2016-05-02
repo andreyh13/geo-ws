@@ -723,6 +723,27 @@
                                                         indleg + "-" + indstep + "-start"
                                                 });
                                             }
+                                            if (step.start_location && step.travel_mode === 'WALKING' && indstep === 0) {
+                                                var m_arr_0 = com.xomena.mapRenderer.instances[id].model.getParameterValue("origin");
+                                                var m_a_0 = m_arr_0.length ? m_arr_0[0] : "";
+                                                res.features.push({
+                                                    "type": "Feature",
+                                                    "geometry": {
+                                                        "type": "Point",
+                                                        "coordinates": [step.start_location.lng, step.start_location.lat]
+                                                    },
+                                                    "properties": {
+                                                        "address": m_a_0,
+                                                        "types": "transit_station",
+                                                        "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                        "content": '<div id="infowindow" class="infowindow"><h3>' + m_a_0 + '</h3></div>',
+                                                        "zIndex": data.routes.length - index
+                                                    },
+                                                    "id": "route-" + id + "-" + index + "-" +
+                                                        indleg + "-" + indstep + "-start"
+                                                });
+                                            }
                                             if (step.end_location && step.travel_mode === 'TRANSIT') {
                                                 var m_address_2 = step.transit_details && step.transit_details.arrival_stop && step.transit_details.arrival_stop.name ? step.transit_details.arrival_stop.name : '';
                                                 res.features.push({
@@ -737,6 +758,27 @@
                                                         "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
                                 (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
                                                         "content": '<div id="infowindow" class="infowindow"><h3>' + m_address_2 + '</h3></div>',
+                                                        "zIndex": data.routes.length - index
+                                                    },
+                                                    "id": "route-" + id + "-" + index + "-" +
+                                                        indleg + "-" + indstep + "-end"
+                                                });
+                                            }
+                                            if (step.end_location && step.travel_mode === 'WALKING' && indstep === leg.steps.length -1) {
+                                                var m_arr_1 = com.xomena.mapRenderer.instances[id].model.getParameterValue("destination");
+                                                var m_a_1 = m_arr_1.length ? m_arr_1[0] : "";
+                                                res.features.push({
+                                                    "type": "Feature",
+                                                    "geometry": {
+                                                        "type": "Point",
+                                                        "coordinates": [step.end_location.lng, step.end_location.lat]
+                                                    },
+                                                    "properties": {
+                                                        "address": m_a_1,
+                                                        "types": "transit_station",
+                                                        "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                        "content": '<div id="infowindow" class="infowindow"><h3>' + m_a_1 + '</h3></div>',
                                                         "zIndex": data.routes.length - index
                                                     },
                                                     "id": "route-" + id + "-" + index + "-" +
@@ -1250,6 +1292,7 @@
                                     ($(this).find(" > duration_in_traffic > text").length ? "<br/>Duration in traffic: " + $(this).find(" > duration_in_traffic > text").text() : "") + "</li>";
                             }
                             if ($(this).find(" > step").length) {
+                                var m_steps_length = $(this).find(" > step").length;
                                 $(this).find(" > step").each(function (stepind, stepelem) {
                                     var arr_s =  google.maps.geometry.encoding.decodePath($(this).find(" > polyline > points").text());
                                     if (m_mode !== 'transit') {
@@ -1324,6 +1367,27 @@
                                                     legind + "-" + stepind + "-start"
                                             });
                                         }
+                                        if ($(this).find(" > start_location").length && $(this).find(" > travel_mode").text() === 'WALKING' && stepind === 0) {
+                                                var m_arr_0 = com.xomena.mapRenderer.instances[id].model.getParameterValue("origin");
+                                                var m_a_0 = m_arr_0.length ? m_arr_0[0] : "";
+                                                res.features.push({
+                                                    "type": "Feature",
+                                                    "geometry": {
+                                                        "type": "Point",
+                                                        "coordinates": [parseFloat($(this).find(" > start_location > lng").text()), parseFloat($(this).find(" > start_location > lat").text())]
+                                                    },
+                                                    "properties": {
+                                                        "address": m_a_0,
+                                                        "types": "transit_station",
+                                                        "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                        "content": '<div id="infowindow" class="infowindow"><h3>' + m_a_0 + '</h3></div>',
+                                                        "zIndex": $(xmlDoc).find(" > route").length - index
+                                                    },
+                                                    "id": "route-" + id + "-" + index + "-" +
+                                                        legind + "-" + stepind + "-start"
+                                                });
+                                        }
                                         if ($(this).find(" > end_location").length && $(this).find(" > travel_mode").text() === 'TRANSIT') {
                                             var m_address_2 = $(this).find(" > transit_details > arrival_stop > name").length ? $(this).find(" > transit_details > arrival_stop > name").text() : '';
                                             res.features.push({
@@ -1344,6 +1408,27 @@
                                                     legind + "-" + stepind + "-end"
                                             });
                                         }
+                                        if ($(this).find(" > end_location").length && $(this).find(" > travel_mode").text() === 'WALKING' && stepind === m_steps_length -1) {
+                                                var m_arr_1 = com.xomena.mapRenderer.instances[id].model.getParameterValue("destination");
+                                                var m_a_1 = m_arr_1.length ? m_arr_1[0] : "";
+                                                res.features.push({
+                                                    "type": "Feature",
+                                                    "geometry": {
+                                                        "type": "Point",
+                                                        "coordinates": [parseFloat($(this).find(" > end_location > lng").text()), parseFloat($(this).find(" > end_location > lat").text())]
+                                                    },
+                                                    "properties": {
+                                                        "address": m_a_1,
+                                                        "types": "transit_station",
+                                                        "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                        "content": '<div id="infowindow" class="infowindow"><h3>' + m_a_1 + '</h3></div>',
+                                                        "zIndex": $(xmlDoc).find(" > route").length - index
+                                                    },
+                                                    "id": "route-" + id + "-" + index + "-" +
+                                                        legind + "-" + stepind + "-end"
+                                                });
+                                         }
                                      }
                                 });
                             }
