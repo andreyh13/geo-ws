@@ -6,7 +6,7 @@
         ICON_LABELS = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         ICON_ARROW = "http://www.google.com/mapfiles/arrow.png",
         ICON_ARROW_SHADOW = "http://www.google.com/mapfiles/arrowshadow.png",
-        ROUTE_COLORS = ['#C53929', '#0B8043', '#3367D6'],
+        ROUTE_COLORS = ['#C53929', '#0B8043', '#3367D6', '#455A64'],
         infoWindow = null,
         placesServices = null,
         geocoder = null,
@@ -158,6 +158,23 @@
                     fillOpacity: 0.2,
                     visible: false
                 });
+                //Listen to paper-radio-group events
+                $("#radiogrp-" + model.get("id")).on("paper-radio-group-changed", "paper-radio-group",  function (ev) {
+                    //console.log(ev);
+                    if (ev.target) {
+                        var m_selected = ev.target.selected;
+                        var m_common, m_index;
+                        if (m_selected) {
+                            var m_arr = m_selected.split("-");
+                            m_index = m_arr.pop();
+                            m_common = m_arr.join("-");
+                        } else {
+                            m_common = ev.target.getAttribute("id");
+                            m_index = null;
+                        }
+                        window.com.xomena.mapRenderer.toggleMapFeatures(model.get("id"), m_common, m_index);
+                    }
+                });
             }
         },
 
@@ -236,6 +253,36 @@
             this.instances[id].circle.setVisible(false);
             this.instances[id].map.getStreetView().setVisible(false);
             this.instances[id].map.setOptions({styles: []});
+            $("#radiogrp-"+id).html("");
+        },
+
+        /**
+         * Show features according to selection in radio group
+         * @param {String} id The ID of Web Service instance
+         * @param {String} commonPart The string feature ID must start with
+         * @param {String} selectedIndex The selected index in radio group, if any.
+         */
+        toggleMapFeatures: function (id, commonPart, selectedIndex) {
+            if (!this.instances[id]) { return; }
+            if (!this.instances[id].map) { return; }
+            var self = this;
+            this.instances[id].map.data.forEach(function (feature) {
+                var m_id = feature.getId();
+                if (m_id && m_id.startsWith(commonPart)) {
+                    if(infoWindow) {
+                        infoWindow.close();
+                    }
+                    if (selectedIndex) {
+                        if (m_id.startsWith(commonPart + "-" + selectedIndex)) {
+                            self.instances[id].map.data.overrideStyle(feature, {visible: true});
+                        } else {
+                            self.instances[id].map.data.overrideStyle(feature, {visible: false});
+                        }
+                    } else {
+                        self.instances[id].map.data.overrideStyle(feature, {visible: true});
+                    }
+                }
+            });
         },
         
         /**
@@ -583,25 +630,162 @@
             "features": []
         },
         bounds = new google.maps.LatLngBounds();
+        var m_mode_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("mode");
+        var m_mode = m_mode_arr.length ? m_mode_arr[0] : "driving";
         if (_.isObject(data) && data.status && data.status === "OK") {
             if (data.routes && _.isArray(data.routes) && data.routes.length) {
+                var m_radio_content = "";
                 _.each(data.routes, function (route, index) {
                     var m_coord = [];
                     var m_descr = "";
                     if (route.legs && _.isArray(route.legs) && route.legs.length) {
-                        route.legs.forEach(function (leg) {
-                            m_descr += "<li><b>" + leg.start_address + " - " + leg.end_address + "</b><br/>" +
-                                "Distance: " + (leg.distance && leg.distance.text ? leg.distance.text : 'unknown') +
-                                '<br/>' +
-                                "Duration: " + (leg.duration && leg.duration.text ? leg.duration.text : 'unknown') +
-                                (leg.duration_in_traffic && leg.duration_in_traffic.text ? "<br/>Duration in traffic: " + leg.duration_in_traffic.text : "") + "</li>";
+                        route.legs.forEach(function (leg, indleg) {
+                            if (m_mode !== 'transit') {
+                                m_descr += "<li><b>" + leg.start_address + " - " + leg.end_address + "</b><br/>" +
+                                    "Distance: " + (leg.distance && leg.distance.text ? leg.distance.text : 'unknown') +
+                                    '<br/>' +
+                                    "Duration: " + (leg.duration && leg.duration.text ? leg.duration.text : 'unknown') +
+                                    (leg.duration_in_traffic && leg.duration_in_traffic.text ? "<br/>Duration in traffic: " + leg.duration_in_traffic.text : "") + "</li>";
+                            }
                             if (leg.steps && _.isArray(leg.steps) && leg.steps.length) {
-                                leg.steps.forEach(function (step) {
+                                leg.steps.forEach(function (step, indstep) {
                                      if (step.polyline && step.polyline.points) {
                                          var arr_s =  google.maps.geometry.encoding.decodePath(step.polyline.points);
-                                         arr_s.forEach(function (p) {
-                                              m_coord.push([p.lng(), p.lat()]);
-                                         });
+                                         if (m_mode !== 'transit') {
+                                             arr_s.forEach(function (p) {
+                                                  m_coord.push([p.lng(), p.lat()]);
+                                             });
+                                         } else {
+                                             //Transit stuff
+                                             var m_coord_trans = [];
+                                             var m_summary_trans = step.html_instructions ? '<h3>' + step.html_instructions + '</h3>' : '';
+                                             if (step.distance || step.duration) {
+                                                 m_summary_trans += '<ul>';
+                                                 if (step.travel_mode === 'TRANSIT' && step.transit_details) {
+                                                     m_summary_trans += "<li><b>" +
+                                                     (step.transit_details.line && step.transit_details.line.vehicle ? "<img src='" + step.transit_details.line.vehicle.icon + "' title='" + step.transit_details.line.vehicle.name +"' width='16' height='16' />&nbsp;&nbsp;" : "") +
+                                                     step.transit_details.departure_stop.name + " - " + step.transit_details.arrival_stop.name + "</b></li>";
+                                                     m_summary_trans += "<li><b>Departure:</b> " + step.transit_details.departure_time.text + " (" + step.transit_details.departure_time.time_zone + ")</li>";
+                                                     m_summary_trans += "<li><b>Arrival:</b> " + step.transit_details.arrival_time.text + " (" + step.transit_details.arrival_time.time_zone + ")</li>";
+                                                 }
+                                                 m_summary_trans += "<li><b>Distance:</b> " + (step.distance && step.distance.text ? step.distance.text : 'unknown') + '</li>';
+                                                 m_summary_trans += "<li><b>Duration:</b> " + (step.duration && step.duration.text ? step.duration.text : 'unknown') + "</li>";
+                                                 if (step.travel_mode === 'TRANSIT' && step.transit_details && step.transit_details.line) {
+                                                     var agency_link = step.transit_details.line.short_name ? step.transit_details.line.short_name : "";
+                                                     if (step.transit_details.line.url) {
+                                                         agency_link = "<a href='" + step.transit_details.line.url + "' title='" + agency_link + "' target='_blank'>" + agency_link + "</a>";
+                                                     }
+                                                     if (step.transit_details.line.name) {
+                                                        m_summary_trans += "<li><b>Line:</b> " + step.transit_details.line.name + "</li>";
+                                                     }
+                                                     if (agency_link) {
+                                                        m_summary_trans += "<li><b>Agency:</b> " + agency_link + "</li>";
+                                                     }
+                                                 }
+                                                 m_summary_trans += '</ul>';
+                                             }
+                                             arr_s.forEach(function (p) {
+                                                  m_coord_trans.push([p.lng(), p.lat()]);
+                                             });
+                                             res.features.push({
+                                                "type": "Feature",
+                                                "geometry": {
+                                                    "type": "LineString",
+                                                    "coordinates": m_coord_trans
+                                                },
+                                                "properties": {
+                                                    "color": ROUTE_COLORS[index],
+                                                    "summary": m_summary_trans,
+                                                    "warnings": route.warnings,
+                                                    "waypoint_order": [],
+                                                    "zIndex": data.routes.length - index
+                                                },
+                                                "id": "route-" + id + "-" + index + "-" +
+                                                        indleg + "-" + indstep
+                                            });
+                                            if (step.start_location && step.travel_mode === 'TRANSIT') {
+                                                var m_address_1 = step.transit_details && step.transit_details.departure_stop && step.transit_details.departure_stop.name ? step.transit_details.departure_stop.name : '';
+                                                res.features.push({
+                                                    "type": "Feature",
+                                                    "geometry": {
+                                                        "type": "Point",
+                                                        "coordinates": [step.start_location.lng, step.start_location.lat]
+                                                    },
+                                                    "properties": {
+                                                        "address": m_address_1,
+                                                        "types": "transit_station",
+                                                        "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                        "content": '<div id="infowindow" class="infowindow"><h3>' + m_address_1 + '</h3></div>',
+                                                        "zIndex": data.routes.length - index
+                                                    },
+                                                    "id": "route-" + id + "-" + index + "-" +
+                                                        indleg + "-" + indstep + "-start"
+                                                });
+                                            }
+                                            if (step.start_location && step.travel_mode === 'WALKING' && indstep === 0) {
+                                                var m_arr_0 = com.xomena.mapRenderer.instances[id].model.getParameterValue("origin");
+                                                var m_a_0 = m_arr_0.length ? m_arr_0[0] : "";
+                                                res.features.push({
+                                                    "type": "Feature",
+                                                    "geometry": {
+                                                        "type": "Point",
+                                                        "coordinates": [step.start_location.lng, step.start_location.lat]
+                                                    },
+                                                    "properties": {
+                                                        "address": m_a_0,
+                                                        "types": "transit_station",
+                                                        "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                        "content": '<div id="infowindow" class="infowindow"><h3>' + m_a_0 + '</h3></div>',
+                                                        "zIndex": data.routes.length - index
+                                                    },
+                                                    "id": "route-" + id + "-" + index + "-" +
+                                                        indleg + "-" + indstep + "-start"
+                                                });
+                                            }
+                                            if (step.end_location && step.travel_mode === 'TRANSIT') {
+                                                var m_address_2 = step.transit_details && step.transit_details.arrival_stop && step.transit_details.arrival_stop.name ? step.transit_details.arrival_stop.name : '';
+                                                res.features.push({
+                                                    "type": "Feature",
+                                                    "geometry": {
+                                                        "type": "Point",
+                                                        "coordinates": [step.end_location.lng, step.end_location.lat]
+                                                    },
+                                                    "properties": {
+                                                        "address": m_address_2,
+                                                        "types": "transit_station",
+                                                        "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                        "content": '<div id="infowindow" class="infowindow"><h3>' + m_address_2 + '</h3></div>',
+                                                        "zIndex": data.routes.length - index
+                                                    },
+                                                    "id": "route-" + id + "-" + index + "-" +
+                                                        indleg + "-" + indstep + "-end"
+                                                });
+                                            }
+                                            if (step.end_location && step.travel_mode === 'WALKING' && indstep === leg.steps.length -1) {
+                                                var m_arr_1 = com.xomena.mapRenderer.instances[id].model.getParameterValue("destination");
+                                                var m_a_1 = m_arr_1.length ? m_arr_1[0] : "";
+                                                res.features.push({
+                                                    "type": "Feature",
+                                                    "geometry": {
+                                                        "type": "Point",
+                                                        "coordinates": [step.end_location.lng, step.end_location.lat]
+                                                    },
+                                                    "properties": {
+                                                        "address": m_a_1,
+                                                        "types": "transit_station",
+                                                        "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                        "content": '<div id="infowindow" class="infowindow"><h3>' + m_a_1 + '</h3></div>',
+                                                        "zIndex": data.routes.length - index
+                                                    },
+                                                    "id": "route-" + id + "-" + index + "-" +
+                                                        indleg + "-" + indstep + "-end"
+                                                });
+                                            }
+                                         }
                                      }
                                 });
                             }
@@ -612,30 +796,36 @@
                             m_coord.push([p.lng(), p.lat()]);
                         });
                     }
-                    res.features.push({
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "LineString",
-                            "coordinates": m_coord
-                        },
-                        "properties": {
-                            "color": ROUTE_COLORS[index],
-                            "summary": '<h3>' + route.summary + '</h3><ul>' + m_descr + '</ul>',
-                            "warnings": route.warnings,
-                            "waypoint_order": route.waypoint_order,
-                            "zIndex": data.routes.length - index
-                        },
-                        "id": data.geocoded_waypoints[0].place_id + "-" + index
-                    });
+                    if (m_mode !== 'transit') {
+                        res.features.push({
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "LineString",
+                                "coordinates": m_coord
+                            },
+                            "properties": {
+                                "color": ROUTE_COLORS[index],
+                                "summary": '<h3>' + route.summary + '</h3><ul>' + m_descr + '</ul>',
+                                "warnings": route.warnings,
+                                "waypoint_order": route.waypoint_order,
+                                "zIndex": data.routes.length - index
+                            },
+                            "id": "route-" + id + "-" + index
+                        });
+                    }
                     if (route.bounds) {
                         bounds.extend(new google.maps.LatLng(route.bounds.northeast.lat, route.bounds.northeast.lng));
                         bounds.extend(new google.maps.LatLng(route.bounds.southwest.lat, route.bounds.southwest.lng));
                     }
+                    m_radio_content += "<paper-radio-button name='route-" + id + "-" + index +"' class='route" + index + "'>Route " +  (index + 1) + "</paper-radio-button>";
                 });
                 res.bounds = bounds;
+                if (m_radio_content) {
+                    $("#radiogrp-" + id).html("<paper-radio-group id='route-" + id +"' allow-empty-selection>" + m_radio_content + "</paper-radio-group>");
+                }
             }
         }
-        if (data.geocoded_waypoints && _.isArray(data.geocoded_waypoints) && data.geocoded_waypoints.length) {
+        if (data.geocoded_waypoints && _.isArray(data.geocoded_waypoints) && data.geocoded_waypoints.length && m_mode !== 'transit') {
             var count = 0;
             _.each(data.geocoded_waypoints, function (wp, index) {
                 placesServices.getDetails({
@@ -1083,54 +1273,199 @@
         },
         bounds = new google.maps.LatLngBounds(),
         xmlDoc = m_getXMLDoc($.trim(data));
+        var m_mode_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("mode");
+        var m_mode = m_mode_arr.length ? m_mode_arr[0] : "driving";
         if (data && xmlDoc) {
-            var m_status = $(xmlDoc).find("status").text();
+            //console.log(xmlDoc);
+            var m_status = $(xmlDoc).find("DirectionsResponse > status").text();
             if(m_status === "OK") {
-                $(xmlDoc).find("route").each(function (index, elem) {
+                var m_radio_content = "";
+                $(xmlDoc).find("DirectionsResponse > route").each(function (index, elem) {
                     var m_coord = [];
                     var m_descr = "";
-                    if ($(this).find("leg").length) {
-                        $(this).find("leg").each(function (legind, legelem) {
-                            m_descr += "<li><b>" + $(this).find(" > start_address").text() + " - " + $(this).find(" > end_address").text() + "</b><br/>" +
-                                "Distance: " + $(this).find(" > distance > text").text() + '<br/>' +
-                                "Duration: " + $(this).find(" > duration > text").text() +
-                                ($(this).find(" > duration_in_traffic > text").length ? "<br/>Duration in traffic: " + $(this).find(" > duration_in_traffic > text").text() : "") + "</li>";
-                            if ($(this).find("step").length) {
-                                $(this).find("step").each(function (stepind, stepelem) {
-                                    var arr_s =  google.maps.geometry.encoding.decodePath($(this).find("polyline > points").text());
-                                    arr_s.forEach(function (p) {
-                                        m_coord.push([p.lng(), p.lat()]);
-                                    });
+                    if ($(this).find(" > leg").length) {
+                        $(this).find(" > leg").each(function (legind, legelem) {
+                            if (m_mode !== 'transit') {
+                                m_descr += "<li><b>" + $(this).find(" > start_address").text() + " - " + $(this).find(" > end_address").text() + "</b><br/>" +
+                                    "Distance: " + $(this).find(" > distance > text").text() + '<br/>' +
+                                    "Duration: " + $(this).find(" > duration > text").text() +
+                                    ($(this).find(" > duration_in_traffic > text").length ? "<br/>Duration in traffic: " + $(this).find(" > duration_in_traffic > text").text() : "") + "</li>";
+                            }
+                            if ($(this).find(" > step").length) {
+                                var m_steps_length = $(this).find(" > step").length;
+                                $(this).find(" > step").each(function (stepind, stepelem) {
+                                    var arr_s =  google.maps.geometry.encoding.decodePath($(this).find(" > polyline > points").text());
+                                    if (m_mode !== 'transit') {
+                                        arr_s.forEach(function (p) {
+                                            m_coord.push([p.lng(), p.lat()]);
+                                        });
+                                    } else {
+                                        //Transit stuff
+                                        var m_coord_trans = [];
+                                        var m_summary_trans = $(this).find(" > html_instructions").length ? '<h3>' + $(this).find(" > html_instructions").text() + '</h3>' : '';
+                                        if ($(this).find(" > distance").length || $(this).find(" > duration").length) {
+                                            m_summary_trans += '<ul>';
+                                            if ($(this).find(" > travel_mode").text() === 'TRANSIT' && $(this).find(" > transit_details").length) {
+                                                m_summary_trans += "<li><b>" +
+                                                 ($(this).find(" > transit_details > line > vehicle").length ? "<img src='" + $(this).find(" > transit_details > line > vehicle > icon").text() + "' title='" + $(this).find(" > transit_details > line > vehicle > name").text() +"' width='16' height='16' />&nbsp;&nbsp;" : "") +
+                                                 $(this).find(" > transit_details > departure_stop > name").text() + " - " + $(this).find(" > transit_details > arrival_stop > name").text() + "</b></li>";
+                                                 m_summary_trans += "<li><b>Departure:</b> " + $(this).find(" > transit_details > departure_time > text").text() + " (" + $(this).find(" > transit_details > departure_time > time_zone").text() + ")</li>";
+                                                 m_summary_trans += "<li><b>Arrival:</b> " + $(this).find(" > transit_details > arrival_time > text").text() + " (" + $(this).find(" > transit_details > arrival_time > time_zone").text() + ")</li>";
+                                             }
+                                             m_summary_trans += "<li><b>Distance:</b> " + ($(this).find(" > distance > text").length ? $(this).find(" > distance > text").text() : 'unknown') + '</li>';
+                                             m_summary_trans += "<li><b>Duration:</b> " + ($(this).find(" > duration > text").length ? $(this).find(" > duration > text").text() : 'unknown') + "</li>";
+                                             if ($(this).find(" > travel_mode").text() === 'TRANSIT' && $(this).find(" > transit_details > line").length) {
+                                                 var agency_link = $(this).find(" > transit_details > line > short_name").length ? $(this).find(" > transit_details > line > short_name").text() : "";
+                                                 if ($(this).find(" > transit_details > line > url").length) {
+                                                     agency_link = "<a href='" + $(this).find(" > transit_details > line >  url").text() + "' title='" + agency_link + "' target='_blank'>" + agency_link + "</a>";
+                                                 }
+                                                 if ($(this).find(" > transit_details > line > name").length) {
+                                                    m_summary_trans += "<li><b>Line:</b> " + $(this).find(" > transit_details > line > name").text() + "</li>";
+                                                 }
+                                                 if (agency_link) {
+                                                    m_summary_trans += "<li><b>Agency:</b> " + agency_link + "</li>";
+                                                 }
+                                             }
+                                             m_summary_trans += '</ul>';
+                                         }
+                                         arr_s.forEach(function (p) {
+                                              m_coord_trans.push([p.lng(), p.lat()]);
+                                         });
+                                         res.features.push({
+                                            "type": "Feature",
+                                            "geometry": {
+                                                "type": "LineString",
+                                                "coordinates": m_coord_trans
+                                            },
+                                            "properties": {
+                                                "color": ROUTE_COLORS[index],
+                                                "summary": m_summary_trans,
+                                                "warnings": [],
+                                                "waypoint_order": [],
+                                                "zIndex": $(xmlDoc).find(" > route").length - index
+                                            },
+                                            "id": "route-" + id + "-" + index + "-" +
+                                                    legind + "-" + stepind
+                                        });
+                                        if ($(this).find(" > start_location").length && $(this).find(" > travel_mode").text() === 'TRANSIT') {
+                                            var m_address_1 = $(this).find(" > transit_details > departure_stop > name").length ? $(this).find(" > transit_details > departure_stop > name").text() : '';
+                                            res.features.push({
+                                                "type": "Feature",
+                                                "geometry": {
+                                                    "type": "Point",
+                                                    "coordinates": [parseFloat($(this).find(" > start_location > lng").text()), parseFloat($(this).find(" > start_location > lat").text())]
+                                                },
+                                                "properties": {
+                                                    "address": m_address_1,
+                                                    "types": "transit_station",
+                                                    "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                            (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                    "content": '<div id="infowindow" class="infowindow"><h3>' + m_address_1 + '</h3></div>',
+                                                    "zIndex": $(xmlDoc).find(" > route").length - index
+                                                },
+                                                "id": "route-" + id + "-" + index + "-" +
+                                                    legind + "-" + stepind + "-start"
+                                            });
+                                        }
+                                        if ($(this).find(" > start_location").length && $(this).find(" > travel_mode").text() === 'WALKING' && stepind === 0) {
+                                                var m_arr_0 = com.xomena.mapRenderer.instances[id].model.getParameterValue("origin");
+                                                var m_a_0 = m_arr_0.length ? m_arr_0[0] : "";
+                                                res.features.push({
+                                                    "type": "Feature",
+                                                    "geometry": {
+                                                        "type": "Point",
+                                                        "coordinates": [parseFloat($(this).find(" > start_location > lng").text()), parseFloat($(this).find(" > start_location > lat").text())]
+                                                    },
+                                                    "properties": {
+                                                        "address": m_a_0,
+                                                        "types": "transit_station",
+                                                        "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                        "content": '<div id="infowindow" class="infowindow"><h3>' + m_a_0 + '</h3></div>',
+                                                        "zIndex": $(xmlDoc).find(" > route").length - index
+                                                    },
+                                                    "id": "route-" + id + "-" + index + "-" +
+                                                        legind + "-" + stepind + "-start"
+                                                });
+                                        }
+                                        if ($(this).find(" > end_location").length && $(this).find(" > travel_mode").text() === 'TRANSIT') {
+                                            var m_address_2 = $(this).find(" > transit_details > arrival_stop > name").length ? $(this).find(" > transit_details > arrival_stop > name").text() : '';
+                                            res.features.push({
+                                                "type": "Feature",
+                                                "geometry": {
+                                                    "type": "Point",
+                                                    "coordinates": [parseFloat($(this).find(" > end_location > lng").text()), parseFloat($(this).find(" > end_location > lat").text())]
+                                                },
+                                                "properties": {
+                                                    "address": m_address_2,
+                                                    "types": "transit_station",
+                                                    "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                            (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                    "content": '<div id="infowindow" class="infowindow"><h3>' + m_address_2 + '</h3></div>',
+                                                    "zIndex": $(xmlDoc).find(" > route").length - index
+                                                },
+                                                "id": "route-" + id + "-" + index + "-" +
+                                                    legind + "-" + stepind + "-end"
+                                            });
+                                        }
+                                        if ($(this).find(" > end_location").length && $(this).find(" > travel_mode").text() === 'WALKING' && stepind === m_steps_length -1) {
+                                                var m_arr_1 = com.xomena.mapRenderer.instances[id].model.getParameterValue("destination");
+                                                var m_a_1 = m_arr_1.length ? m_arr_1[0] : "";
+                                                res.features.push({
+                                                    "type": "Feature",
+                                                    "geometry": {
+                                                        "type": "Point",
+                                                        "coordinates": [parseFloat($(this).find(" > end_location > lng").text()), parseFloat($(this).find(" > end_location > lat").text())]
+                                                    },
+                                                    "properties": {
+                                                        "address": m_a_1,
+                                                        "types": "transit_station",
+                                                        "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                (index < ICON_LABELS.length ? ICON_LABELS.charAt(index) : "blu-blank") + ".png",
+                                                        "content": '<div id="infowindow" class="infowindow"><h3>' + m_a_1 + '</h3></div>',
+                                                        "zIndex": $(xmlDoc).find(" > route").length - index
+                                                    },
+                                                    "id": "route-" + id + "-" + index + "-" +
+                                                        legind + "-" + stepind + "-end"
+                                                });
+                                         }
+                                     }
                                 });
                             }
                         });
                     } else {
-                        var arr1 = google.maps.geometry.encoding.decodePath($(this).find("overview_polyline > points").text());
+                        var arr1 = google.maps.geometry.encoding.decodePath($(this).find(" > overview_polyline > points").text());
                         _.each(arr1, function (p, ind1) {
                             m_coord.push([p.lng(), p.lat()]);
                         });
                     }
-                    res.features.push({
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "LineString",
-                            "coordinates": m_coord
-                        },
-                        "properties": {
-                            "color": ROUTE_COLORS[index],
-                            "summary": '<h3>' + $(this).find(" > summary").text() + '</h3><ul>' + m_descr + '</ul>',
-                            "zIndex": $(xmlDoc).find("route").length - index
-                        },
-                        "id": $(xmlDoc).find("geocoded_waypoint > place_id").text() + "-" + index
-                    });
+                    if (m_mode !== 'transit') {
+                        res.features.push({
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "LineString",
+                                "coordinates": m_coord
+                            },
+                            "properties": {
+                                "color": ROUTE_COLORS[index],
+                                "summary": '<h3>' + $(this).find(" > summary").text() + '</h3><ul>' + m_descr + '</ul>',
+                                "zIndex": $(xmlDoc).find(" > route").length - index
+                            },
+                            "id": "route-" + id + "-" + index
+                        });
+                    }
                     if ($(xmlDoc).find("bounds").length) {
                         bounds.extend(new google.maps.LatLng(parseFloat($(xmlDoc).find("bounds > northeast > lat").text()), parseFloat($(xmlDoc).find("bounds > northeast > lng").text())));
                         bounds.extend(new google.maps.LatLng(parseFloat($(xmlDoc).find("bounds > southwest > lat").text()), parseFloat($(xmlDoc).find("bounds > southwest > lng").text())));
                     }
+                    m_radio_content += "<paper-radio-button name='route-" + id + "-" + index +"' class='route" + index + "'>Route " +  (index + 1) + "</paper-radio-button>";
                 });
                 res.bounds = bounds;
+                if (m_radio_content) {
+                    $("#radiogrp-" + id).html("<paper-radio-group id='route-" + id +"' allow-empty-selection>" + m_radio_content + "</paper-radio-group>");
+                }
             }
-            if ($(xmlDoc).find("geocoded_waypoint").length) {
+            if ($(xmlDoc).find("geocoded_waypoint").length && m_mode !== 'transit') {
                 var count = 0;
                 $(xmlDoc).find("geocoded_waypoint").each(function (index, wp) {
                     placesServices.getDetails({

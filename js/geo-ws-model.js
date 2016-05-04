@@ -1180,6 +1180,9 @@
                      } else {
                          $("#ws-param-"+p.get("id")).hide();
                          $("#parameter-"+p.get("id")).val("");
+                         $("#ws-param-"+p.get("id")).find("[id^='parameter-" + p.get("id") + "-']").each(function() {
+                            $(this).val("");
+                         });
                      }
                  }
              }
@@ -1194,11 +1197,14 @@
          parameters.forEach(function(p){
              var m = p.get("model");
              if(m.get("m4wOnly")){
-                 if(self.model.get("version")==="work"){
+                 if(self.model.get("version")==="work" || self.model.get("version")==="premium-key" || self.model.get("version")==="premium-client" || self.model.get("version")==="automotive"){
                      $("#ws-param-"+p.get("id")).show();
                  } else {
                      $("#ws-param-"+p.get("id")).hide();
                      $("#parameter-"+p.get("id")).val("");
+                     $("#ws-param-"+p.get("id")).find("[id^='parameter-" + p.get("id") + "-']").each(function() {
+                            $(this).val("");
+                     });
                  }
              }
          });

@@ -56,6 +56,8 @@
     "paper-item": "PolymerElements/paper-item#~1.0.5",
     "paper-menu": "PolymerElements/paper-menu#~1.1.1",
     "paper-progress": "PolymerElements/paper-progress#~1.0.7",
+    "paper-radio-button": "PolymerElements/paper-radio-button#~1.1.2",
+    "paper-radio-group": "PolymerElements/paper-radio-group#~1.0.9",
     "paper-styles": "PolymerElements/paper-styles#~1.1.4",
     "paper-tabs": "PolymerElements/paper-tabs#~1.0.4",
     "paper-toast": "PolymerElements/paper-toast#~1.0.0",

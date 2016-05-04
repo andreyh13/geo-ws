@@ -50,6 +50,8 @@
     <link rel="import" href="bower_components/paper-input/paper-input.html">
     <link rel="import" href="bower_components/paper-toast/paper-toast.html">
     <link rel="import" href="bower_components/paper-tooltip/paper-tooltip.html">
+    <link rel="import" href="bower_components/paper-radio-button/paper-radio-button.html">
+    <link rel="import" href="bower_components/paper-radio-group/paper-radio-group.html">
 
     <style is="custom-style">
       paper-header-panel {
@@ -160,6 +162,38 @@
         --iron-icon-height: 18px;
         --iron-icon-width: 18px;
         color: grey;
+      }
+
+      paper-radio-button.route0 {
+        --paper-radio-button-checked-color: #C53929;
+        --paper-radio-button-checked-ink-color: #C53929;
+        --paper-radio-button-unchecked-color: #C53929;
+        --paper-radio-button-unchecked-ink-color: #C53929;
+        --paper-radio-button-label-color: #C53929;
+      }
+
+      paper-radio-button.route1 {
+        --paper-radio-button-checked-color: #0B8043;
+        --paper-radio-button-checked-ink-color: #0B8043;
+        --paper-radio-button-unchecked-color: #0B8043;
+        --paper-radio-button-unchecked-ink-color: #0B8043;
+        --paper-radio-button-label-color: #0B8043;
+      }
+
+      paper-radio-button.route2 {
+        --paper-radio-button-checked-color: #3367D6;
+        --paper-radio-button-checked-ink-color: #3367D6;
+        --paper-radio-button-unchecked-color: #3367D6;
+        --paper-radio-button-unchecked-ink-color: #3367D6;
+        --paper-radio-button-label-color: #3367D6;
+      }
+
+      paper-radio-button.route3 {
+        --paper-radio-button-checked-color: #455A64;
+        --paper-radio-button-checked-ink-color: #455A64;
+        --paper-radio-button-unchecked-color: #455A64;
+        --paper-radio-button-unchecked-ink-color: #455A64;
+        --paper-radio-button-label-color: #455A64;
       }
     </style>
     
@@ -390,6 +424,8 @@
                                     <google-map api-key="AIzaSyAe7JGPA_miJHu6DCw1JvJT6jrNElRnwSs" latitude="37.77493" longitude="-122.41942" <%= typeof InstallTrigger === 'undefined' ? 'signed-in="true"' : '' %> version="3" libraries="places,geometry" map="{{map}}">
                                     </google-map>
                                     <paper-progress id="progress-<%= id %>"></paper-progress>
+                                    <div id="radiogrp-<%= id %>">
+                                    </div>
                                 </div>
                             </iron-pages>
                             </template>
