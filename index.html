@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="bower_components/highlight/src/styles/googlecode.css">
     <link rel="stylesheet" href="bower_components/highlight/src/styles/github.css">
     <link rel="stylesheet" href="bower_components/datetimepicker/jquery.datetimepicker.css">
+    <link rel="stylesheet" href="bower_components/jquery.json-view/dist/jquery.json-view.min.css">
     <link rel="stylesheet" href="http://yui.yahooapis.com/combo?pure/0.5.0/base-min.css&pure/0.5.0/grids-responsive-min.css&pure/0.5.0/forms-min.css">
     <link rel="stylesheet" href="css/geo-ws.css">
 
@@ -345,6 +346,8 @@
     <script src="bower_components/crypto-js/build/components/sha1.js"></script>
     <script src="bower_components/crypto-js/build/components/hmac.js"></script>
     <script src="bower_components/crypto-js/build/components/enc-base64.js"></script>
+    <script src="bower_components/abdmob/x2js/xml2json.min.js"></script>
+    <script src="bower_components/jquery.json-view/dist/jquery.json-view.js"></script>
     
     <!-- external template -->
     <script id="instanceTemplate" type="text/template">
@@ -414,6 +417,7 @@
                             <paper-tabs selected="{{selected}}">
                                 <paper-tab>Results</paper-tab>
                                 <paper-tab>Map</paper-tab>
+                                <paper-tab>Object View</paper-tab>
                             </paper-tabs>
                             <iron-pages selected="{{selected}}">
                                 <div id="rtabs-<%= id %>-1">
@@ -425,6 +429,10 @@
                                     </google-map>
                                     <paper-progress id="progress-<%= id %>"></paper-progress>
                                     <div id="radiogrp-<%= id %>">
+                                    </div>
+                                </div>
+                                <div id="rtabs-<%= id %>-3">
+                                    <div id="treeview-<%= id %>" class="ws-treeview">
                                     </div>
                                 </div>
                             </iron-pages>

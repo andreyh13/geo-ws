@@ -43,7 +43,7 @@
     min-height: 40px;
 }
 
-.ws-result {
+.ws-result, .ws-treeview {
     max-height: 560px;
     max-width: 100%;
     overflow-y: auto;

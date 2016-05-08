@@ -27,6 +27,7 @@
     "tests"
   ],
   "dependencies": {
+    "abdmob/x2js": "x2js#~1.2.0",
     "backbone": "~1.2.3",
     "backbone.localStorage": "^1.1.16",
     "backbone.validation": "backbone-validation#^0.11.0",
@@ -43,6 +44,7 @@
     "jem.js": "sedran/jem.js#~1.1.0",
     "jquery": "^2.0.0",
     "jquery-ui": "jqueryui#^1.11.0",
+    "jquery.json-view": "*",
     "paper-button": "PolymerElements/paper-button#~1.0.8",
     "paper-card": "PolymerElements/paper-card#~1.0.6",
     "paper-checkbox": "PolymerElements/paper-checkbox#~1.0.13",
