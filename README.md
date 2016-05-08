@@ -65,7 +65,7 @@ Output formats may be _JSON_ or _XML_. Please do not forget to set corresponding
  
 ### List of parameters 
  
- Once selected the web service for the request instance you will see a list of available parameters. You can play with parameters and see how they affect the response of corresponding web service. Each parameter has a short description. You can see the description of parameter when you hover it.
+ Once selected the web service for the request instance you will see a list of available parameters. You can play with parameters and see how they affect the response of corresponding web service. Each parameter has a short description. You can see the description of parameter when you hover the question mark icon.
  
  ![Parameters Tooltips](/image/docs/geo-ws-params-tooltips.png?raw=true "Maps WS Builder Parameters and Tooltips")
  
