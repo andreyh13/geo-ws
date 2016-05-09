@@ -284,6 +284,24 @@
           }
 
           return arr1.join("\n");
+      },
+      /**
+      * Retrieves an XML doc from the string value
+      * @param   {String} txt The XML string
+      * @returns {Object} xmlDoc object
+      */
+      getXMLDoc: function (txt) {
+            var xmlDoc = null, parser;
+            if (window.DOMParser) {
+                parser=new DOMParser();
+                xmlDoc=parser.parseFromString(txt,"text/xml");
+            } else {
+                // Internet Explorer
+                xmlDoc=new ActiveXObject("Microsoft.XMLDOM");
+                xmlDoc.async=false;
+                xmlDoc.loadXML(txt);
+            }
+            return xmlDoc;
       }
     };
 
@@ -928,6 +946,7 @@
         console.log("Start execution for instance #"+this.model.get("id"));
         var self = this;
         document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = "Preparing request please wait...";
+        this.$("#treeview-" + this.model.get("id")).html("");
         this.syncParameters();
         this.model.set("version", this.$("input[name='ws-version-val-"+this.model.get("id")+"']:checked").val());
         this.model.set("output", this.$("input[name='output-"+this.model.get("id")+"']:checked").val());
@@ -958,10 +977,22 @@
                         },
                         success: function(data) {
                             if($.type(data)=="string"){
-                                self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='xml'>"+$.trim(data).replace(/</ig,"&lt;").replace(/>/ig,"&gt;")+"</code></pre>");
+                                self.$("#ws-result-" + self.model.get("id")).html("<pre><code class='xml'>" + $.trim(data).replace(/</ig,"&lt;").replace(/>/ig,"&gt;") + "</code></pre>");
+                                var x2js = new X2JS();
+                                var xmldoc = window.com.xomena.geo.getXMLDoc($.trim(data));
+                                if (xmldoc) {
+                                    var jsonObj = x2js.xml2json(xmldoc);
+                                    self.$("#treeview-" + self.model.get("id")).jsonView(jsonObj, {collapsed: true});
+                                } else {
+                                    self.$("#treeview-" + self.model.get("id")).jsonView({});
+                                }
                             } else {
-                                self.$("#ws-result-"+self.model.get("id")).html("<pre><code class='json'>"+window.com.xomena.geo.formatJSON(data)+"</code></pre>");
+                                self.$("#ws-result-" + self.model.get("id")).html("<pre><code class='json'>" + window.com.xomena.geo.formatJSON(data) + "</code></pre>");
+                                self.$("#treeview-" + self.model.get("id")).jsonView(data, {collapsed: true});
                             }
+                            self.$("#treeview-" + self.model.get("id")).css("max-width", function() {
+                               return $(this).parents(".pure-g").width();
+                            });
                             hljs.highlightBlock(self.$("#ws-result-"+self.model.get("id")).get(0));
                             self.renderMap(data);
                             self.addToolsLinks();
@@ -976,11 +1007,13 @@
                         },
                         error: function(jqXHR, textStatus, errorThrown){
                             console.log("Server side error: "+textStatus+" - "+ errorThrown);
+                            self.$("#treeview-" + self.model.get("id")).jsonView({});
                         }
                     });
                 } else {
                     this.$("#ws-result-" + this.model.get("id")).html("");
                     this.$("#ws-tools-links-" + this.model.get("id")).html("");
+                    this.$("#treeview-" + this.model.get("id")).jsonView({});
                 }
             } else {
                 var m_img_content = "";
@@ -988,6 +1021,7 @@
                     m_img_content = '<img src="' + m_url + '" title="" alt="" />';
                 }
                 this.$("#ws-result-" + this.model.get("id")).html(m_img_content);
+                this.$("#treeview-" + this.model.get("id")).jsonView({});
                 this.addToolsLinks();
                 this.renderMap({isImageryAPI: true});
                 this.$("#clone-instance-" + this.model.get("id")).removeAttr("disabled");
@@ -1001,6 +1035,7 @@
             }
         } else {
             document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = "Please set valid parameters";
+            this.$("#treeview-" + this.model.get("id")).jsonView({});
         }
         return false;
       },

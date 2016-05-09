@@ -1,0 +1,31 @@
+{
+  "name": "jquery.json-view",
+  "homepage": "http://github.com/bazh/jquery.json-view",
+  "description": "Collapsible JSON Viewer",
+  "main": [
+    "dist/jquery.json-view.js",
+    "dist/jquery.json-view.css"
+  ],
+  "authors": [
+    "bazh <interesno@gmail.com>"
+  ],
+  "keywords": [
+    "jquery",
+    "plugin",
+    "json",
+    "view",
+    "json-view",
+    "json-viewer"
+  ],
+  "license": "MIT",
+  "_release": "1911e5253c",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "1911e5253ce93945125b290aa8335bc987bf8727"
+  },
+  "_source": "https://github.com/bazh/jquery.json-view.git",
+  "_target": "*",
+  "_originalSource": "jquery.json-view",
+  "_direct": true
+}
