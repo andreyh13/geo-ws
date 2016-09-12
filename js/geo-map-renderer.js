@@ -2565,6 +2565,26 @@
                                 });
                             }
                             break;
+                        case "Nearest Roads":
+                            var m_latlng = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("points");
+                            if($.isArray(m_latlng) && m_latlng.length) {
+                                _.each(m_latlng, function(p, ind) {
+                                    if (p) {
+                                        var m_arr = p.split(",");
+                                        var m_loc = new google.maps.LatLng(parseFloat(m_arr[0]), parseFloat(m_arr[1]));
+                                        map.data.add(new google.maps.Data.Feature({
+                                            geometry: m_loc,
+                                            id: "point-" +ind + "-" +id,
+                                            "properties": {
+                                                "address": p,
+                                                "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                                (ind < ICON_LABELS.length ? ICON_LABELS.charAt(ind) : "blu-blank") + ".png"
+                                            }
+                                        }));
+                                    }
+                                });
+                            }
+                            break;
                         default:
                             break;
                     }
