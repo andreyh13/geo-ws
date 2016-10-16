@@ -216,7 +216,7 @@
         weight: 400
       });
 
-      observer.check().then(function () {
+      observer.load().then(function () {
         console.log('Roboto font is available');
         document.documentElement.classList.add('webfont-loaded');
       }, function () {

@@ -1,12 +1,19 @@
 {
   "name": "fontfaceobserver",
-  "version": "1.5.5",
+  "version": "2.0.5",
   "description": "Detect if web fonts are available",
   "directories": {
     "test": "test"
   },
-  "repository": "https://github.com/bramstein/fontfaceobserver.git",
-  "main": "fontfaceobserver.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bramstein/fontfaceobserver.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bramstein/fontfaceobserver/issues"
+  },
+  "homepage": "https://fontfaceobserver.com/",
+  "main": "fontfaceobserver.standalone.js",
   "keywords": [
     "fontloader",
     "fonts",
@@ -16,24 +23,30 @@
     "font load",
     "font events"
   ],
+  "files": [
+    "fontfaceobserver.js",
+    "fontfaceobserver.standalone.js",
+    "src/*.js",
+    "externs.js"
+  ],
   "author": "Bram Stein <b.l.stein@gmail.com> (http://www.bramstein.com/)",
-  "license": "BSD",
-  "dependencies": {
-    "promis": "=1.1.2",
-    "closure-dom": "=0.1.1"
-  },
+  "license": "BSD-3-Clause",
+  "dependencies": {},
   "devDependencies": {
-    "extend": "^2.0.0",
+    "closure-dom": "=0.2.6",
+    "extend": "^3.0.0",
     "grunt": "^0.4.5",
     "grunt-closurecompiler": "^0.9.9",
-    "grunt-contrib-clean": "=0.6.0",
-    "grunt-contrib-concat": "^0.5.1",
-    "grunt-contrib-jshint": "^0.11.1",
-    "grunt-exec": "~0.4.6",
-    "mocha": "=2.2.1",
-    "mocha-phantomjs-core": "^1.0.1",
-    "sinon": "=1.14.1",
-    "unexpected": "^6.4.0"
+    "grunt-contrib-clean": "^1.0.0",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-jshint": "^1.0.0",
+    "grunt-exec": "~1.0.0",
+    "mocha": "^2.5.3",
+    "mocha-phantomjs-core": "^2.0.0",
+    "phantomjs-prebuilt": "^2.1.7",
+    "promis": "=1.1.4",
+    "sinon": "^1.17.4",
+    "unexpected": "^10.14.2"
   },
   "scripts": {
     "test": "grunt test"

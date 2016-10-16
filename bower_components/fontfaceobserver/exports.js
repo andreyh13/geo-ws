@@ -5,5 +5,9 @@ goog.require('fontface.Observer');
  */
 var DEBUG = true;
 
-window['FontFaceObserver'] = fontface.Observer;
-window['FontFaceObserver']['prototype']['check'] = fontface.Observer.prototype.check;
+if (typeof module !== 'undefined') {
+  module.exports = fontface.Observer;
+} else {
+  window['FontFaceObserver'] = fontface.Observer;
+  window['FontFaceObserver']['prototype']['load'] = fontface.Observer.prototype.load;
+}
