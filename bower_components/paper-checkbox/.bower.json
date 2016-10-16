@@ -1,6 +1,6 @@
 {
   "name": "paper-checkbox",
-  "version": "1.0.16",
+  "version": "1.4.1",
   "description": "A material design checkbox",
   "authors": [
     "The Polymer Authors"
@@ -21,15 +21,15 @@
   "homepage": "https://github.com/PolymerElements/paper-checkbox",
   "ignore": [],
   "dependencies": {
-    "polymer": "Polymer/polymer#^1.1.0",
+    "polymer": "Polymer/polymer#^1.6.0",
     "iron-checked-element-behavior": "PolymerElements/iron-checked-element-behavior#^1.0.0",
     "paper-behaviors": "PolymerElements/paper-behaviors#^1.0.0",
     "paper-ripple": "PolymerElements/paper-ripple#^1.0.0",
-    "paper-styles": "PolymerElements/paper-styles#^1.0.0"
+    "paper-styles": "PolymerElements/paper-styles#^1.1.0"
   },
   "devDependencies": {
     "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
-    "web-component-tester": "polymer/web-component-tester#^3.4.0",
+    "web-component-tester": "^4.0.0",
     "test-fixture": "PolymerElements/test-fixture#^1.0.0",
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
     "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
@@ -37,13 +37,13 @@
     "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.0.0"
   },
   "main": "paper-checkbox.html",
-  "_release": "1.0.16",
+  "_release": "1.4.1",
   "_resolution": {
     "type": "version",
-    "tag": "v1.0.16",
-    "commit": "5bfe12e9a096664c3f199d654c890d2a8d2def31"
+    "tag": "v1.4.1",
+    "commit": "1b543dc276264998a22c25e154fb3c9e9565fda3"
   },
   "_source": "git://github.com/PolymerElements/paper-checkbox.git",
-  "_target": "~1.0.13",
+  "_target": "~1.4.1",
   "_originalSource": "PolymerElements/paper-checkbox"
 }

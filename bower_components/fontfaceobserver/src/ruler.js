@@ -8,11 +8,13 @@ goog.scope(function () {
    * @param {string} text
    */
   fontface.Ruler = function (text) {
-    var style = 'display:inline-block;' +
+    var style = 'max-width:none;' +
+                'display:inline-block;' +
                 'position:absolute;' +
                 'height:100%;' +
                 'width:100%;' +
-                'overflow:scroll;font-size:16px;';
+                'overflow:scroll;' +
+                'font-size:16px;';
 
     this.element = dom.createElement('div');
     this.element.setAttribute('aria-hidden', 'true');
@@ -29,7 +31,7 @@ goog.scope(function () {
     dom.style(this.collapsible, style);
     dom.style(this.expandable, style);
     dom.style(this.expandableInner, style);
-    dom.style(this.collapsibleInner, 'display:inline-block;width:200%;height:200%;font-size:16px;');
+    dom.style(this.collapsibleInner, 'display:inline-block;width:200%;height:200%;font-size:16px;max-width:none;');
 
     dom.append(this.collapsible, this.collapsibleInner);
     dom.append(this.expandable, this.expandableInner);
@@ -48,11 +50,11 @@ goog.scope(function () {
   };
 
   /**
-   * @param {string} family
-   * @param {string} description
+   * @param {string} font
    */
-  Ruler.prototype.setFont = function (family, description) {
-    dom.style(this.element, 'min-width:20px;' +
+  Ruler.prototype.setFont = function (font) {
+    dom.style(this.element, 'max-width:none;' +
+                            'min-width:20px;' +
                             'min-height:20px;' +
                             'display:inline-block;' +
                             'overflow:hidden;' +
@@ -63,9 +65,7 @@ goog.scope(function () {
                             'top:-999px;' +
                             'left:-999px;' +
                             'white-space:nowrap;' +
-                            'font-size:100px;' +
-                            'font-family:' + family + ';' +
-                            description);
+                            'font:' + font + ';');
   };
 
   /**
@@ -119,12 +119,12 @@ goog.scope(function () {
   Ruler.prototype.onResize = function (callback) {
     var that = this;
 
-    this.collapsible.addEventListener('scroll', function () {
+    function onScroll() {
       that.onScroll(callback);
-    }, false);
-    this.expandable.addEventListener('scroll', function () {
-      that.onScroll(callback);
-    }, false);
+    }
+
+    dom.addListener(this.collapsible, 'scroll', onScroll);
+    dom.addListener(this.expandable, 'scroll', onScroll);
     this.reset();
   };
 });
