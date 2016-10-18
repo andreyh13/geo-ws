@@ -195,7 +195,8 @@
                         automotive: data[i][12],
                         isExperiment: data[i][13],
                         svWizardTool: data[i][14],
-                        apiaryKeyPremium: data[i][15]
+                        apiaryKeyPremium: data[i][15],
+                        directionsTool: data[i][16]
                     });
                     if(data[i][2]){
                         //Init parameters

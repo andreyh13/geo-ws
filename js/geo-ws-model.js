@@ -20,7 +20,8 @@
         },
         tools: {
             geocoder: "https://google-developers.appspot.com/maps/documentation/utils/geocoder/#",
-            svwizard: "http://mcorcuera.github.io/sv-wizard/#"
+            svwizard: "http://mcorcuera.github.io/sv-wizard/#",
+            directions: "https://directionsdebug.firebaseapp.com/?"
         },
         getFormElement: function (id, name, model, triggers, listeners, parentInstance) {
             var output = [],
@@ -325,7 +326,8 @@
             automotive: false,
             isExperiment: true,
             svWizardTool: false,
-            apiaryKeyPremium: 'API_KEY_PREMIUM'
+            apiaryKeyPremium: 'API_KEY_PREMIUM',
+            directionsTool: false
         }
     });
 
@@ -759,6 +761,7 @@
                 if ($.isArray(service) && service.length) {
                     var m_geocoder = service[0].get("geocoderTool");
                     var m_svwizard = service[0].get("svWizardTool");
+                    var m_directions = service[0].get("directionsTool");
                     if (m_geocoder) {
                         var pars = this.get("parameters");
                         var aa = "";
@@ -846,6 +849,32 @@
                         }
                         m_links.push('<a href="' + window.com.xomena.geo.tools.svwizard + encodeURIComponent(res.join('')) +
                                      '" title="Street View Wizard" target="_blank">Open in Street View Wizard</a>&nbsp;☝️');
+                    }
+                    if (m_directions) {
+                        var pars = this.get("parameters");
+                        var aa = "";
+                        var res = [];
+                        if (pars) {
+                            pars.forEach(function (p) {
+                                var n = p.get("name");
+                                var v = p.get("value");
+                                switch (n) {
+                                    case "origin":
+                                    case "destination":
+                                        if ($.isArray(v) && v.length) {
+                                            res.push(aa);
+                                            res.push(n);
+                                            res.push("=");
+                                            res.push(encodeURIComponent(v[0]));
+                                            aa = "&";
+                                        }
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            });
+                        }
+                        m_links.push('<a href="' + window.com.xomena.geo.tools.directions + res.join('') + '" title="Directions Calculator" target="_blank">Open in Directions Calculator</a>&nbsp;☝️');
                     }
                 }
             }
