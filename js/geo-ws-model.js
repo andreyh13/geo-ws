@@ -869,6 +869,58 @@
                                             aa = "&";
                                         }
                                         break;
+                                    case "mode":
+                                        res.push(aa);
+                                        res.push("travelMode=");
+                                        if ($.isArray(v) && v.length) {
+                                            res.push(v[0].toUpperCase());
+                                        } else {
+                                            res.push("DRIVING");
+                                        }
+                                        aa = "&";
+                                        break;
+                                    case "alternatives":
+                                        res.push(aa);
+                                        res.push("provideRouteAlternatives=");
+                                        if ($.isArray(v) && v.length) {
+                                            res.push(v[0]);
+                                        } else {
+                                            res.push("false");
+                                        }
+                                        aa = "&";
+                                        break;
+                                    case "avoid":
+                                        var tobj = {
+                                            "tolls": {
+                                                key: "avoidTolls",
+                                                value: "false"
+                                            },
+                                            "highways": {
+                                                key: "avoidHighways",
+                                                value: "false"
+                                            },
+                                            "ferries": {
+                                                key: "avoidFerries",
+                                                value: "false"
+                                            },
+                                            "indoor": {
+                                                key: "avoidIndoor",
+                                                value: "false"
+                                            }
+                                        };
+                                        if ($.isArray(v) && v.length) {
+                                            v.forEach(function (item) {
+                                                tobj[item].value = "true"; 
+                                            });
+                                        }
+                                        for (var key in tobj) {
+                                            res.push(aa);
+                                            res.push(tobj[key].key);
+                                            res.push("=");
+                                            res.push(tobj[key].value);
+                                            aa = "&";
+                                        }
+                                        break;
                                     default:
                                         break;
                                 }
