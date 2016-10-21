@@ -851,6 +851,23 @@
                                      '" title="Street View Wizard" target="_blank">Open in Street View Wizard</a>&nbsp;☝️');
                     }
                     if (m_directions) {
+                        var mapNames = {
+                            "origin": "origin",
+                            "destination": "destination",
+                            "language": "language",
+                            "mode": "travelMode",
+                            "alternatives": "provideRouteAlternatives",
+                            "units": "unitSystem",
+                            "region": "region"
+                        };
+                        var mapNamesDefs = {
+                            "mode": "DRIVING",
+                            "alternatives": "false"
+                        };
+                        var mapValues = {
+                            "metric": "0",
+                            "imperial": "1"
+                        };
                         var pars = this.get("parameters");
                         var aa = "";
                         var res = [];
@@ -859,36 +876,6 @@
                                 var n = p.get("name");
                                 var v = p.get("value");
                                 switch (n) {
-                                    case "origin":
-                                    case "destination":
-                                        if ($.isArray(v) && v.length) {
-                                            res.push(aa);
-                                            res.push(n);
-                                            res.push("=");
-                                            res.push(encodeURIComponent(v[0]));
-                                            aa = "&";
-                                        }
-                                        break;
-                                    case "mode":
-                                        res.push(aa);
-                                        res.push("travelMode=");
-                                        if ($.isArray(v) && v.length) {
-                                            res.push(v[0].toUpperCase());
-                                        } else {
-                                            res.push("DRIVING");
-                                        }
-                                        aa = "&";
-                                        break;
-                                    case "alternatives":
-                                        res.push(aa);
-                                        res.push("provideRouteAlternatives=");
-                                        if ($.isArray(v) && v.length) {
-                                            res.push(v[0]);
-                                        } else {
-                                            res.push("false");
-                                        }
-                                        aa = "&";
-                                        break;
                                     case "avoid":
                                         var tobj = {
                                             "tolls": {
@@ -922,6 +909,13 @@
                                         }
                                         break;
                                     default:
+                                        if (($.isArray(v) && v.length) || mapNamesDefs[n]) {
+                                            res.push(aa);
+                                            res.push(mapNames[n]);
+                                            res.push("=");
+                                            res.push(encodeURIComponent(($.isArray(v) && v.length) ? (n==="mode"?v[0].toUpperCase():(mapValues[v[0]] ? mapValues[v[0]] : v[0])) : mapNamesDefs[n]));
+                                            aa = "&";
+                                        }
                                         break;
                                 }
                             });
