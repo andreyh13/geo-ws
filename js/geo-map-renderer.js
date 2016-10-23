@@ -444,7 +444,8 @@
             case "xml":
                 return this.m_getGeoJSON_XML(data, map, id);
             case "image":
-        }       return this.m_getGeoJSON_Image(data, map, id);
+                return this.m_getGeoJSON_Image(data, map, id);
+        }
     };
 
     /**
@@ -632,6 +633,7 @@
         bounds = new google.maps.LatLngBounds();
         var m_mode_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("mode");
         var m_mode = m_mode_arr.length ? m_mode_arr[0] : "driving";
+        var addedStartFinish = false;
         if (_.isObject(data) && data.status && data.status === "OK") {
             if (data.routes && _.isArray(data.routes) && data.routes.length) {
                 var m_radio_content = "";
@@ -812,6 +814,39 @@
                             },
                             "id": "route-" + id + "-" + index
                         });
+                        if (route.legs && _.isArray(route.legs) && route.legs.length) {
+                            res.features.push({
+                                "type": "Feature",
+                                "geometry": {
+                                    "type": "Point",
+                                    "coordinates": [route.legs[0].start_location.lng, route.legs[0].start_location.lat]
+                                },
+                                "properties": {
+                                    "icon": "image/icons/start-race-2.png",
+                                    "iconSize": ICON_SIZE_32,
+                                    "address": route.legs[0].start_address,
+                                    "zIndex": 4,
+                                    "content": '<div id="infowindow" class="infowindow"><h2>' + route.legs[0].start_address+"</h2><ul>" + ((data.geocoded_waypoints && _.isArray(data.geocoded_waypoints) && data.geocoded_waypoints.length) ? "<li><b>Types:</b>&nbsp;" + data.geocoded_waypoints[0].types.join(", ") + "</li><li><b>Place ID:</b>&nbsp;" + data.geocoded_waypoints[0].place_id + "</li>" : "") + "<li><b>Location:</b>&nbsp;" + route.legs[0].start_location.lat + "," + route.legs[0].start_location.lng + "</li></ul></div>"
+                                },
+                                "id": "route-" + id + "-" + index + "-start-point"
+                            });
+                            res.features.push({
+                                "type": "Feature",
+                                "geometry": {
+                                    "type": "Point",
+                                    "coordinates": [route.legs[route.legs.length-1].end_location.lng, route.legs[route.legs.length-1].end_location.lat]
+                                },
+                                "properties": {
+                                    "icon": "image/icons/finish2.png",
+                                    "iconSize": ICON_SIZE_32,
+                                    "address": route.legs[route.legs.length-1].end_address,
+                                    "zIndex": 4,
+                                    "content": '<div id="infowindow" class="infowindow"><h2>' + route.legs[route.legs.length-1].end_address+"</h2><ul>" + ((data.geocoded_waypoints && _.isArray(data.geocoded_waypoints) && data.geocoded_waypoints.length) ? "<li><b>Types:</b>&nbsp;" + data.geocoded_waypoints[data.geocoded_waypoints.length - 1].types.join(", ") + "</li><li><b>Place ID:</b>&nbsp;" + data.geocoded_waypoints[data.geocoded_waypoints.length - 1].place_id + "</li>" : "") + "<li><b>Location:</b>&nbsp;" + route.legs[route.legs.length-1].end_location.lat + "," + route.legs[route.legs.length-1].end_location.lng + "</li></ul></div>"
+                                },
+                                "id": "route-" + id + "-" + index + "-end-point"
+                            });
+                            addedStartFinish = true;
+                        }
                     }
                     if (route.bounds) {
                         bounds.extend(new google.maps.LatLng(route.bounds.northeast.lat, route.bounds.northeast.lng));
@@ -828,17 +863,19 @@
         if (data.geocoded_waypoints && _.isArray(data.geocoded_waypoints) && data.geocoded_waypoints.length && m_mode !== 'transit') {
             var count = 0;
             _.each(data.geocoded_waypoints, function (wp, index) {
-                placesServices.getDetails({
-                    placeId: wp.place_id
-                }, function(place_res, status){
-                    count++;
-                    if (status === google.maps.places.PlacesServiceStatus.OK) {
-                       m_add_place_to_map (place_res, map, true);
-                    }
-                    if (count === data.geocoded_waypoints.length && data.status !== "OK") {
-                        m_adjust_bounds(map);
-                    }
-                });
+                if((addedStartFinish && (index>0 && index<data.geocoded_waypoints.length-1)) || !addedStartFinish) {
+                    placesServices.getDetails({
+                        placeId: wp.place_id
+                    }, function(place_res, status){
+                        count++;
+                        if (status === google.maps.places.PlacesServiceStatus.OK) {
+                           m_add_place_to_map (place_res, map, true);
+                        }
+                        if (count === data.geocoded_waypoints.length && data.status !== "OK") {
+                            m_adjust_bounds(map);
+                        }
+                    });
+                }
             });
         }
         return res;
@@ -1275,6 +1312,7 @@
         xmlDoc = m_getXMLDoc($.trim(data));
         var m_mode_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("mode");
         var m_mode = m_mode_arr.length ? m_mode_arr[0] : "driving";
+        var addedStartFinish = false;
         if (data && xmlDoc) {
             //console.log(xmlDoc);
             var m_status = $(xmlDoc).find("DirectionsResponse > status").text();
@@ -1453,6 +1491,43 @@
                             },
                             "id": "route-" + id + "-" + index
                         });
+                        if ($(this).find(" > leg").length) {
+                            res.features.push({
+                                "type": "Feature",
+                                "geometry": {
+                                    "type": "Point",
+                                    "coordinates": [parseFloat($(this).find(" > leg > start_location > lng")[0].textContent), parseFloat($(this).find(" > leg > start_location > lat")[0].textContent)]
+                                },
+                                "properties": {
+                                    "icon": "image/icons/start-race-2.png",
+                                    "iconSize": ICON_SIZE_32,
+                                    "address": $(this).find(" > leg > start_address")[0].textContent,
+                                    "zIndex": 4,
+                                    "content": '<div id="infowindow" class="infowindow"><h2>' + $(this).find(" > leg > start_address")[0].textContent+"</h2><ul>" + ($(xmlDoc).find("geocoded_waypoint").length ? "<li><b>Types:</b>&nbsp;" + [].reduce.call($($(xmlDoc).find("geocoded_waypoint")[0]).find(" > type"), function(a,b){
+                                        return a + (a!=="" ? ", " : "") + b.textContent;
+                                    }, "") + "</li><li><b>Place ID:</b>&nbsp;" + $(xmlDoc).find("geocoded_waypoint > place_id")[0].textContent + "</li>"  : "") + "<li><b>Location:</b>&nbsp;" + $(this).find(" > leg > start_location > lat")[0].textContent + "," + $(this).find(" > leg > start_location > lng")[0].textContent + "</li></ul></div>"
+                                },
+                                "id": "route-" + id + "-" + index + "-start-point"
+                            });
+                            res.features.push({
+                                "type": "Feature",
+                                "geometry": {
+                                    "type": "Point",
+                                    "coordinates": [parseFloat($(this).find(" > leg > end_location > lng")[$(this).find(" > leg").length-1].textContent), parseFloat($(this).find(" > leg > end_location > lat")[$(this).find(" > leg").length-1].textContent)]
+                                },
+                                "properties": { 
+                                    "icon": "image/icons/finish2.png",
+                                    "iconSize": ICON_SIZE_32,
+                                    "address": $(this).find(" > leg > end_address")[$(this).find(" > leg").length-1].textContent,
+                                    "zIndex": 4,
+                                    "content": '<div id="infowindow" class="infowindow"><h2>' + $(this).find(" > leg > end_address")[$(this).find(" > leg").length-1].textContent+"</h2><ul>" + ($(xmlDoc).find("geocoded_waypoint").length ? "<li><b>Types:</b>&nbsp;" + [].reduce.call($($(xmlDoc).find("geocoded_waypoint")[$(xmlDoc).find("geocoded_waypoint").length - 1]).find(" > type"), function(a,b){
+                                        return a + (a!=="" ? ", " : "") + b.textContent;
+                                    }, "") + "</li><li><b>Place ID:</b>&nbsp;" + $(xmlDoc).find("geocoded_waypoint > place_id")[$(xmlDoc).find("geocoded_waypoint").length - 1].textContent + "</li>"  : "") + "<li><b>Location:</b>&nbsp;" + $(this).find(" > leg > end_location > lat")[$(this).find(" > leg").length-1].textContent + "," + $(this).find(" > leg > end_location > lng")[$(this).find(" > leg").length-1].textContent + "</li></ul></div>"
+                                },
+                                "id": "route-" + id + "-" + index + "-end-point"
+                            });
+                            addedStartFinish = true;
+                        }
                     }
                     if ($(xmlDoc).find("bounds").length) {
                         bounds.extend(new google.maps.LatLng(parseFloat($(xmlDoc).find("bounds > northeast > lat").text()), parseFloat($(xmlDoc).find("bounds > northeast > lng").text())));
@@ -1468,17 +1543,19 @@
             if ($(xmlDoc).find("geocoded_waypoint").length && m_mode !== 'transit') {
                 var count = 0;
                 $(xmlDoc).find("geocoded_waypoint").each(function (index, wp) {
-                    placesServices.getDetails({
-                        placeId: $(wp).find("place_id").text()
-                    }, function(place_res, status){
-                        count++;
-                        if (status === google.maps.places.PlacesServiceStatus.OK) {
-                            m_add_place_to_map (place_res, map, true);
-                        }
-                        if (count === $(xmlDoc).find("geocoded_waypoint").length && m_status !== "OK") {
-                            m_adjust_bounds(map);
-                        }
-                    });
+                    if((addedStartFinish && (index > 0 && index < $(xmlDoc).find("geocoded_waypoint").length - 1)) || !addedStartFinish) {
+                        placesServices.getDetails({
+                            placeId: $(wp).find("place_id").text()
+                        }, function(place_res, status){
+                            count++;
+                            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                                m_add_place_to_map (place_res, map, true);
+                            }
+                            if (count === $(xmlDoc).find("geocoded_waypoint").length && m_status !== "OK") {
+                                m_adjust_bounds(map);
+                            }
+                        });
+                    }
                 });
             }
         }

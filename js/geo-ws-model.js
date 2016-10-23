@@ -858,9 +858,7 @@
                             "mode": "travelMode",
                             "alternatives": "provideRouteAlternatives",
                             "units": "unitSystem",
-                            "region": "region",
-                            "departure_time": "drivingOptions%5BdepartureTime%5D",
-                            "traffic_model": "drivingOptions%5BtrafficModel%5D"
+                            "region": "region"
                         };
                         var mapNamesDefs = {
                             "mode": "DRIVING",
