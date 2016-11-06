@@ -13,6 +13,7 @@
         "/home/andriy/geoworkspace/geo-ws/bower_components/fontfaceobserver/src/descriptors.js",
         "/home/andriy/geoworkspace/geo-ws/bower_components/jquery/src/selector.js",
         "/home/andriy/geoworkspace/geo-ws/bower_components/highlight/src/highlight.js",
-        "/home/andriy/geoworkspace/geo-ws/bower_components/abdmob/x2js/xml2json.min.js"
+        "/home/andriy/geoworkspace/geo-ws/bower_components/abdmob/x2js/xml2json.min.js",
+        "/home/andriy/geoworkspace/geo-ws/bower_components/jquery-ui/ui/focusable.js"
     ]
 }
