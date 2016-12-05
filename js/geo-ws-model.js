@@ -816,6 +816,15 @@
                                             hasOptions = true;
                                         }
                                         break;
+                                    case "new_forward_geocoder":
+                                        if (v && $.isArray(v) && v.length) {
+                                            res.push(aa);
+                                            res.push("nfw");
+                                            res.push("=");
+                                            res.push(v[0]==="true" ? "1" : "0");
+                                            aa = "&";
+                                        }
+                                        break;
                                     default:
                                         break;
                                 }
