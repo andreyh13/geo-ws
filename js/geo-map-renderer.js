@@ -891,14 +891,25 @@
     function m_parseDistanceMatrixJSON (data, map, id) {
         var total = 0;
         var respCount = 0;
+        
+        var m_origins = [];
+        var m_destinations = [];
+        
+        function m_show_routes () {
+            if (m_origins.length && m_destinations.length) {
+                //TODO: implement routes
+            }
+        }
       
         function m_callback_o (results, status) {
           respCount++;
           if (status === google.maps.GeocoderStatus.OK) {
             m_add_address_to_map(results[0], map, ICON_URL);
+            m_origins.push(results[0]);  
           }
           if (respCount === total) {
-            m_adjust_bounds(map);            
+            m_adjust_bounds(map);
+            m_show_routes();  
           }
         }
         
@@ -906,9 +917,11 @@
           respCount++;
           if (status === google.maps.GeocoderStatus.OK) {
             m_add_address_to_map(results[0], map, ICON_URL_PINK);
+            m_destinations.push(results[0]);  
           }
           if (respCount === total) {
-            m_adjust_bounds(map);            
+            m_adjust_bounds(map);
+            m_show_routes();  
           }
         }
       
@@ -917,6 +930,11 @@
             var counter = 0;
             if (data.origin_addresses && _.isArray(data.origin_addresses) && data.origin_addresses.length) {
                 total += data.origin_addresses.length;
+            }
+            if (data.destination_addresses && _.isArray(data.destination_addresses) && data.destination_addresses.length) {
+                total += data.destination_addresses.length;
+            }
+            if (data.origin_addresses && _.isArray(data.origin_addresses) && data.origin_addresses.length) {
                 _.each(data.origin_addresses, function (addr, index) {
                     var m_req = {
                       address: addr
@@ -932,7 +950,6 @@
                 });
             }
             if (data.destination_addresses && _.isArray(data.destination_addresses) && data.destination_addresses.length) {
-                total += data.destination_addresses.length;
                 _.each(data.destination_addresses, function (addr, index) {
                     var m_req = {
                       address: addr
@@ -2750,7 +2767,7 @@
     function m_add_snappedpoint_to_map (point, map) {
         map.data.add(new google.maps.Data.Feature({
             geometry: point.location,
-            id: point.placeId,
+            id: point.placeId + (point.originalIndex!==null ? "--"+(point.originalIndex+1) : ""),
             "properties": {
                 "address": "Snapped point"+(point.originalIndex!==null ? " ("+(point.originalIndex+1)+")" : ""),
                 "name": "Snapped point"+(point.originalIndex!==null ? " ("+(point.originalIndex+1)+")" : ""),
