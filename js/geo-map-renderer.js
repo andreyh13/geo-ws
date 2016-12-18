@@ -10,6 +10,7 @@
         infoWindow = null,
         placesServices = null,
         geocoder = null,
+        directions = null,
         ICON_SIZE_32 = null,
         ICON_SIZE_24 = null,
         ICON_SIZE_16 = null,
@@ -49,6 +50,9 @@
             }
             if (!geocoder) {
                 geocoder = new google.maps.Geocoder();
+            }
+            if (!directions) {
+                directions = new google.maps.DirectionsService();
             }
             if (!ICON_SIZE_8) {
                 ICON_SIZE_8 = new google.maps.Size(8, 8);
@@ -895,10 +899,78 @@
         var m_origins = [];
         var m_destinations = [];
         
+        var delayFactor = 0;
+        
+        function m_get_directions_route (request, index, descr, origIndex) {
+            directions.route(request, function(result, status) {
+                if (status === google.maps.DirectionsStatus.OK) {
+                    if ($.isArray(result.routes) && result.routes.length) {
+                        var route = result.routes[0];
+                        m_draw_route_from_result (route, map, descr, id, index, origIndex)
+                    }
+                } else if (status === google.maps.DirectionsStatus.OVER_QUERY_LIMIT) {
+                    delayFactor++;
+                    setTimeout(function () {
+                        m_get_directions_route(request, index, descr, origIndex);
+                    }, delayFactor * 1200);
+                } else {
+                    console.log("Distance matrix route: " + status);
+                    console.log(request);
+                }
+            });
+        }
+        
         function m_show_routes () {
             if (m_origins.length && m_destinations.length) {
-                //TODO: implement routes
-            }
+                var m_avoid_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("avoid");
+                var m_avoid = m_avoid_arr.length ? m_avoid_arr[0] : null;
+                
+                var m_radio_content = "";
+                
+                m_origins.forEach(function(orig, origIndex) {
+                    m_destinations.forEach(function(dest, destIndex) {
+                        var req = {
+                            origin: {
+                              placeId: orig.place_id  
+                            },
+                            destination: {
+                              placeId: dest.place_id  
+                            },
+                            travelMode: m_getTravelMode(id),
+                            avoidFerries: m_avoid === "ferries",
+                            avoidHighways: m_avoid === "highways",
+                            avoidTolls: m_avoid === "tolls",
+                            provideRouteAlternatives: false,
+                            unitSystem: m_getUnitSystem(id),
+                            drivingOptions: m_getDrivingOptions(id),
+                            transitOptions: m_getTransitOptions(id)
+                        };
+                        var m_descr = "<h3>"+orig.formatted_address+ " - " + dest.formatted_address + "</h3><ul>";
+                        if (data.rows && $.isArray(data.rows) && data.rows.length) {
+                            var m_row = data.rows[origIndex];
+                            if (m_row) {
+                                if (m_row.elements && $.isArray(m_row.elements) && m_row.elements.length) {
+                                    var m_element = m_row.elements[destIndex];
+                                    if (m_element && m_element.status === "OK") {
+                                        m_descr += "<li><b>Distance:</b>&nbsp;" + m_element.distance.text + "</li><li><b>Duration:</b>&nbsp;" + m_element.duration.text + "</li>"; 
+                                    }
+                                }
+                            }
+                        }
+                        m_descr += "</ul>";
+                        
+                        var m_index = destIndex + origIndex * m_destinations.length;
+                        
+                        m_radio_content += "<paper-radio-button name='distance-matrix-route-" + id + "-" + m_index + "' class='route" + (origIndex % 4) + "'> " +  orig.formatted_address+ " - " + dest.formatted_address + "</paper-radio-button>";
+                        
+                        m_get_directions_route(req, m_index, m_descr, origIndex);
+                    });
+                });
+                
+                if (m_radio_content) {
+                    $("#radiogrp-" + id).html("<paper-radio-group id='distance-matrix-route-" + id +"' allow-empty-selection>" + m_radio_content + "</paper-radio-group>");
+                }
+            } 
         }
       
         function m_callback_o (results, status) {
@@ -2847,6 +2919,199 @@
                 "iconSize": speedlimit.place.icon===ICON_PLACE ? ICON_SIZE_32 : ICON_SIZE_16,
                 "content": m_info_window_content_speedlimit(speedlimit),
                 "zIndex": 6
+            }
+        }));
+    }
+    
+    /**
+     * Returns Travel mode for given instance of distance matrix / directions
+     * @param   {String} id Id of the instance
+     * @returns {google.maps.TravelMode} Travel mode
+     */
+    function m_getTravelMode(id) {
+        var m_mode_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("mode");
+        var m_mode = m_mode_arr.length ? m_mode_arr[0] : "driving";
+        switch(m_mode) {
+            case "driving":
+                return google.maps.TravelMode.DRIVING;
+            case "walking":
+                return google.maps.TravelMode.WALKING;
+            case "bicycling":
+                return google.maps.TravelMode.BICYCLING;
+            case "transit":
+                return google.maps.TravelMode.TRANSIT;
+            default:
+                return google.maps.TravelMode.DRIVING;
+        }
+    }
+            
+    /**
+     * Returns Unit system for given instance of distance matrix / directions
+     * @param   {String} id Id of the instance
+     * @returns {google.maps.UnitSystem} Unit system
+     */
+    function m_getUnitSystem(id) {
+        var m_units_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("units");
+        var m_units = m_units_arr.length ? m_units_arr[0] : "metric"; 
+        switch(m_units) {
+            case "metric":
+                return google.maps.UnitSystem.METRIC;
+            case "imperial":
+                return google.maps.UnitSystem.IMPERIAL;
+            default:
+                return google.maps.UnitSystem.METRIC;
+        }
+    }
+            
+    /**
+     * Returns Driving options for given instance of distance matrix / directions
+     * @param   {String} id Id of the instance
+     * @returns {google.maps.DrivingOptions} Driving options
+     */
+    function m_getDrivingOptions(id) {
+        var m_mode_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("mode");
+        var m_mode = m_mode_arr.length ? m_mode_arr[0] : "driving";
+        if (m_mode === "driving") {
+            var m_departure_time_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("departure_time");
+            var m_departure_time = m_departure_time_arr.length ? m_departure_time_arr[0] : null;
+            return {
+                departureTime: (m_departure_time === null || m_departure_time === "now") ? new Date() : new Date(parseInt(m_departure_time)*1000),
+                trafficModel: m_getTrafficModel(id)
+            };    
+        } else {
+            return null;
+        }
+    }    
+            
+    /**
+     * Returns Traffic model for given instance of distance matrix / directions
+     * @param   {String} id Id of the instance
+     * @returns {google.maps.TrafficModel} Traffic model
+     */
+    function m_getTrafficModel(id) {
+        var m_traffic_model_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("traffic_model");
+        var m_traffic_model = m_traffic_model_arr.length ? m_traffic_model_arr[0] : null;
+        switch(m_traffic_model) {
+            case "best_guess":
+                return google.maps.TrafficModel.BEST_GUESS;
+            case "pessimistic":
+                return google.maps.TrafficModel.PESSIMISTIC;
+            case "optimistic":
+                return google.maps.TrafficModel.OPTIMISTIC;
+            default:
+                return google.maps.TrafficModel.BEST_GUESS;
+        }
+    }
+            
+    /**
+     * Returns Transit options for given instance of distance matrix / directions
+     * @param   {String} id Id of the instance
+     * @returns {google.maps.TransitOptions} Transit options
+     */
+    function m_getTransitOptions(id) {
+        var m_mode_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("mode");
+        var m_mode = m_mode_arr.length ? m_mode_arr[0] : "driving";
+        if (m_mode === "transit") {
+            var m_departure_time_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("departure_time");
+            var m_departure_time = m_departure_time_arr.length ? m_departure_time_arr[0] : null;
+            var m_arrival_time_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("arrival_time");
+            var m_arrival_time = m_arrival_time_arr.length ? m_arrival_time_arr[0] : null;
+            return {
+                arrivalTime: m_arrival_time !== null ? new Date(parseInt(m_arrival_time)*1000) : null,
+                departureTime: m_departure_time !== null ? (m_departure_time === "now" ? new Date() : new Date(parseInt(m_departure_time)*1000)) : null,
+                modes: m_getTransitModes(id),
+                routingPreference: m_getTransitRoutePreference(id)
+            };    
+        } else {
+            return null;
+        }
+    } 
+            
+    /**
+     * Returns Transit modes for given instance of distance matrix / directions
+     * @param   {String} id Id of the instance
+     * @returns {Array<google.maps.TransitMode>} Transit modes
+     */
+    function m_getTransitModes(id) {
+        var m_transit_mode_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("transit_mode");
+        var res = [];
+        if ($.isArray(m_transit_mode_arr) && m_transit_mode_arr.length) {
+            m_transit_mode_arr.forEach(function (m_transit_mode) {
+                switch(m_transit_mode) {
+                    case "bus":
+                        res.push(google.maps.TransitMode.BUS);
+                        break;
+                    case "subway":
+                        res.push(google.maps.TransitMode.SUBWAY);
+                        break;
+                    case "train":
+                        res.push(google.maps.TransitMode.TRAIN);
+                        break;
+                    case "tram":
+                        res.push(google.maps.TransitMode.TRAM);
+                        break;
+                    case "rail":
+                        res.push(google.maps.TransitMode.RAIL);
+                        break;
+                    default:
+                        break;
+                }        
+            });
+        }
+        return res;
+    }
+        
+    /**
+     * Returns Routing preference for given instance of distance matrix / directions
+     * @param   {String} id Id of the instance
+     * @returns {google.maps.TransitRoutePreference} Transit routing preference
+     */
+    function m_getTransitRoutePreference(id) {
+        var m_transit_routing_preference_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("transit_routing_preference");
+        var m_transit_routing_preference = m_transit_routing_preference_arr.length ? m_transit_routing_preference_arr[0] : null;
+        switch(m_transit_routing_preference) {
+            case "less_walking":
+                return google.maps.TransitRoutePreference.LESS_WALKING;
+            case "fewer_transfers":
+                return google.maps.TransitRoutePreference.FEWER_TRANSFERS;
+            default:
+                return null;
+        }
+    } 
+    
+    /**
+     * Draws route for distance matrix visualization 
+     * @param {google.maps.DirectionsRoute} route Route obtained from the DirectionsResult
+     * @param {google.maps.Map} The instance of map
+     * @param {String} Description of the route
+     * @param {String} Id of the web service request instance
+     * @param {Number} Index of route
+     * @param {Number} Index of origin                      
+     */
+    function m_draw_route_from_result (route, map, descr, id, index, origIndex) {
+        var m_coord = [];
+        if (route.legs && _.isArray(route.legs) && route.legs.length) {
+            route.legs.forEach(function (leg, indleg) {
+                if (leg.steps && _.isArray(leg.steps) && leg.steps.length) {
+                    leg.steps.forEach(function (step, indstep) {
+                        if (step.path && step.path.length) {
+                            step.path.forEach(function (p) {
+                                m_coord.push(p);
+                            });
+                        }
+                    });
+                }
+            });
+        } 
+        map.data.add(new google.maps.Data.Feature({
+            geometry: new google.maps.Data.LineString(m_coord),
+            id: "distance-matrix-route-" + id + "-" + index,
+            "properties": {
+                "color": ROUTE_COLORS[origIndex % 4],
+                "summary": descr,
+                "warnings": route.warnings,
+                "waypoint_order": route.waypoint_order,
+                "zIndex": 4
             }
         }));
     }
