@@ -1661,13 +1661,92 @@
     function m_parseDistanceMatrixXML (data, map, id) {
         var total = 0, respCount = 0, xmlDoc = m_getXMLDoc($.trim(data));
         
+        var m_origins = [];
+        var m_destinations = [];
+        
+        var delayFactor = 0;
+        
+        function m_get_directions_route (request, index, descr, origIndex) {
+            directions.route(request, function(result, status) {
+                if (status === google.maps.DirectionsStatus.OK) {
+                    if ($.isArray(result.routes) && result.routes.length) {
+                        var route = result.routes[0];
+                        m_draw_route_from_result (route, map, descr, id, index, origIndex)
+                    }
+                } else if (status === google.maps.DirectionsStatus.OVER_QUERY_LIMIT) {
+                    delayFactor++;
+                    setTimeout(function () {
+                        m_get_directions_route(request, index, descr, origIndex);
+                    }, delayFactor * 1200);
+                } else {
+                    console.log("Distance matrix route: " + status);
+                    console.log(request);
+                }
+            });
+        }
+        
+        function m_show_routes () {
+            if (m_origins.length && m_destinations.length) {
+                var m_avoid_arr = com.xomena.mapRenderer.instances[id].model.getParameterValue("avoid");
+                var m_avoid = m_avoid_arr.length ? m_avoid_arr[0] : null;
+                
+                var m_radio_content = "";
+                
+                m_origins.forEach(function(orig, origIndex) {
+                    m_destinations.forEach(function(dest, destIndex) {
+                        var req = {
+                            origin: {
+                              placeId: orig.place_id  
+                            },
+                            destination: {
+                              placeId: dest.place_id  
+                            },
+                            travelMode: m_getTravelMode(id),
+                            avoidFerries: m_avoid === "ferries",
+                            avoidHighways: m_avoid === "highways",
+                            avoidTolls: m_avoid === "tolls",
+                            provideRouteAlternatives: false,
+                            unitSystem: m_getUnitSystem(id),
+                            drivingOptions: m_getDrivingOptions(id),
+                            transitOptions: m_getTransitOptions(id)
+                        };
+                        var m_descr = "<h3>"+orig.formatted_address+ " - " + dest.formatted_address + "</h3><ul>";
+                        if (data.rows && $.isArray(data.rows) && data.rows.length) {
+                            var m_row = data.rows[origIndex];
+                            if (m_row) {
+                                if (m_row.elements && $.isArray(m_row.elements) && m_row.elements.length) {
+                                    var m_element = m_row.elements[destIndex];
+                                    if (m_element && m_element.status === "OK") {
+                                        m_descr += "<li><b>Distance:</b>&nbsp;" + m_element.distance.text + "</li><li><b>Duration:</b>&nbsp;" + m_element.duration.text + "</li>"; 
+                                    }
+                                }
+                            }
+                        }
+                        m_descr += "</ul>";
+                        
+                        var m_index = destIndex + origIndex * m_destinations.length;
+                        
+                        m_radio_content += "<paper-radio-button name='distance-matrix-route-" + id + "-" + m_index + "' class='route" + (origIndex % 4) + "'> " +  orig.formatted_address+ " - " + dest.formatted_address + "</paper-radio-button>";
+                        
+                        m_get_directions_route(req, m_index, m_descr, origIndex);
+                    });
+                });
+                
+                if (m_radio_content) {
+                    $("#radiogrp-" + id).html("<paper-radio-group id='distance-matrix-route-" + id +"' allow-empty-selection>" + m_radio_content + "</paper-radio-group>");
+                }
+            } 
+        }
+        
         function m_callback_o (results, status) {
           respCount++;
           if (status === google.maps.GeocoderStatus.OK) {
             m_add_address_to_map(results[0], map, ICON_URL);
+            m_origins.push(results[0]);  
           }
           if (respCount === total) {
-            m_adjust_bounds(map);            
+            m_adjust_bounds(map);
+            m_show_routes();  
           }
         }
         
@@ -1675,9 +1754,11 @@
           respCount++;
           if (status === google.maps.GeocoderStatus.OK) {
             m_add_address_to_map(results[0], map, ICON_URL_PINK);
+            m_destinations.push(results[0]);
           }
           if (respCount === total) {
-            m_adjust_bounds(map);            
+            m_adjust_bounds(map);
+            m_show_routes();  
           }
         }
 
