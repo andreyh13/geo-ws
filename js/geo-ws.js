@@ -115,7 +115,9 @@
                         condRequiredOr: data[i][12],
                         deprecated: data[i][13],
                         urlEncoded: data[i][14],
-                        omitLabel: data[i][15]
+                        omitLabel: data[i][15],
+                        separator: data[i][16] ? data[i][16] : '|',
+                        maxValues: data[i][17] ? parseInt(data[i][17]) : null
                     });
                     partscol.add(part);
                 }
@@ -151,7 +153,8 @@
                         separator: data[i][14] ? data[i][14] : '|',
                         deprecated: data[i][15],
                         excludedGroup: data[i][16],
-                        includedGroup: data[i][17]
+                        includedGroup: data[i][17],
+                        maxValues: data[i][18] ? parseInt(data[i][18]) : null
                     });
                     if(data[i][4]){
                         //Init parameter parts
@@ -473,7 +476,16 @@
                         });
                         output.push('</ul>');
                         $(output.join("")).appendTo("#multiple-container-"+m_id);
-                        $("#multiple-container-"+m_id+" ul.parts-container.multiple:last").find(".chosen-select").chosen();
+                        $("#multiple-container-"+m_id+" ul.parts-container.multiple:last").find(".chosen-select").each(function(){
+                            var max_v = $(this).attr("data-max-vals");
+                            var chosen_opt = {
+                                allow_single_deselect: true  
+                            };  
+                            if (max_v) {
+                                chosen_opt["max_selected_options"] = parseInt(max_v);
+                            }  
+                            $(this).chosen(chosen_opt);
+                        });
                         if (index + 1 > 1) {
                             $("#remove-parts-" + m_id).removeAttr("disabled");
                         }

@@ -33,6 +33,7 @@
                 d = model.get("description"),
                 m = model.get("multiple"),
                 o = model.get("options"),
+                max_v = model.get("maxValues"),
                 t_vis = triggers && triggers.visibility,
                 l_vis = listeners && listeners.visibility,
                 t_req = triggers && triggers.required,
@@ -93,9 +94,16 @@
                         window.com.xomena.geo.storedValues[parentInstance][m_ws][nn] && window.com.xomena.geo.storedValues[parentInstance][m_ws][nn][ind]) {
                             _.each(window.com.xomena.geo.storedValues[parentInstance][m_ws][nn][ind], function (m1) {
                                 if ((new RegExp(pp + ":")).test(m1)) {
-                                   var m2 = $.trim(m1.replace(new RegExp(pp + ":"), ""));
+                                   var m2 = $.trim(m1.replace(new RegExp(pp + ":", "g"), ""));
                                    if (m2) {
-                                       sv.push(m2);
+                                       if (m2.indexOf("|") !== -1) {
+                                          var m_vv = m2.split("|");
+                                          m_vv.forEach(function (vv) {
+                                            sv.push(vv);    
+                                          });   
+                                       } else {
+                                          sv.push(m2);    
+                                       }
                                    }
                                 }
                             });
@@ -129,7 +137,7 @@
                     break;
                 case 'list':
                     var ao = o.split(";");
-                    var m_options = '<option value="">--Select value--</option>';
+                    var m_options = '<option value=""></option>';
                     _.each(ao, function(opt){
                         var a1 = opt.split("|");
                         var v = a1[0];
@@ -137,9 +145,9 @@
                         m_options = [m_options, '<option value="', v, '"', (_.indexOf(sv, v)!==-1?' selected':''), '>',
                                      l, '</option>'].join("");
                     });
-                    output.push('<select id="parameter-' + id + '" name="' + name + '" class="pure-input-2-3 chosen-select' +
+                    output.push('<select id="parameter-' + id + '" data-placeholder="--Select value--" name="' + name + '" class="pure-input-2-3 chosen-select' +
                         m_classes + '"' + (m ? ' multiple' : '') + (r ? ' required' : '') +
-                        ' title="' + m_title + '">' + m_options + '</select>' +
+                        ' title="' + m_title + '"'+ (max_v ? ' data-max-vals="' + max_v + '"' : '') + '>' + m_options + '</select>' +
                         get_tooltip_element('parameter-'+ id , d));
                     break;
                 case 'checkboxes':
@@ -351,7 +359,8 @@
             condRequiredOr: '',
             deprecated: false,
             excludedGroup: null,
-            includedGroup: null
+            includedGroup: null,
+            maxValues: null
         }
     });
 
@@ -392,7 +401,9 @@
             condRequiredOr: '',
             deprecated: false,
             urlEncoded: false,
-            omitLabel: false
+            omitLabel: false,
+            separator: '|',
+            maxValues: null
         }
     });
 
@@ -615,8 +626,10 @@
                                 if (m_encval) {
                                     res.push(aa);
                                     res.push(n);
-                                    res.push("=");
-                                    res.push(m_encval);
+                                    if (m_encval !== "omitvalue") {
+                                        res.push("=");
+                                        res.push(m_encval);
+                                    }
                                 }
                                 aa = "&";
                             }
@@ -1273,7 +1286,16 @@
             var paramsView = new window.com.xomena.geo.Views.ParametersView({collection: parinstance_col});
             paramsView.render();
             this.$(".ws-parameters").html(paramsView.el);
-            this.$(".chosen-select").chosen();
+            this.$(".chosen-select").each(function(){
+                var max_v = $(this).attr("data-max-vals");
+                var chosen_opt = {
+                    allow_single_deselect: true  
+                };  
+                if (max_v) {
+                    chosen_opt["max_selected_options"] = parseInt(max_v);
+                }  
+                $(this).chosen(chosen_opt);
+            });  
             this.$("#exec-instance-"+this.model.get("id")).removeAttr("disabled");
             this.$("#clone-instance-"+this.model.get("id")).attr("disabled","disabled");
             this.setParametersVisibility();
@@ -1545,6 +1567,7 @@
                         }
                     }
                 } else if (t === 'parts') {
+                    var prts = m.get("parts");
                     var m_n = $(this).attr("name");
                     var m_id = $(this).attr("id");
                     var prefix = m_n.split(":")[1];
@@ -1554,7 +1577,15 @@
                         v[index] = [];
                     }
                     if ($.isArray(val)) {
-                        v[index].push(prefix + ":" + val.join("|"));
+                        var m_sep = "|";
+                        if (prts && prts.length) {
+                            prts.forEach(function (pp) {
+                                if (pp.get("name") === prefix) {
+                                    m_sep = pp.get("separator");
+                                }
+                            });
+                        }
+                        v[index].push(prefix + ":" + val.join(m_sep));
                     } else {
                         if (val) {
                             v[index].push(prefix + ":" + val);
