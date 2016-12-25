@@ -19,6 +19,7 @@ APIs:
  - [Roads API]
  - [Static Maps API]
  - [Street View Image API]
+ - [Street View Image Metadata]
 
 ### Settings
 
@@ -120,3 +121,4 @@ This application works with the following browsers
 [Roads API]: https://developers.google.com/maps/documentation/roads
 [Static Maps API]: https://developers.google.com/maps/documentation/static-maps/intro
 [Street View Image API]: https://developers.google.com/maps/documentation/streetview/intro
+[Street View Image Metadata]: https://developers.google.com/maps/documentation/streetview/metadata
