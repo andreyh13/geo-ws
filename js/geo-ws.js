@@ -199,7 +199,8 @@
                         isExperiment: data[i][13],
                         svWizardTool: data[i][14],
                         apiaryKeyPremium: data[i][15],
-                        directionsTool: data[i][16]
+                        directionsTool: data[i][16],
+                        isEmbed: data[i][17]
                     });
                     if(data[i][2]){
                         //Init parameters
@@ -637,6 +638,7 @@
                             for (var key in m_obj) {
                               var inst = null;
                               var isImagery = false;
+                              var isEmbed = false;    
                               try {
                                 inst = JSON.parse(m_obj[key]);
                                 if (inst.webservice && inst.services && $.isArray(inst.services)) {
@@ -645,12 +647,13 @@
                                     });
                                     if ($.isArray(_ss) && _ss.length) {
                                         isImagery = _ss[0].isImagery;
+                                        isEmbed = _ss[0].isEmbed;
                                     }
                                 }
                               } catch (m_err) {
                                 console.log("Cannot parse JSON data for instance.");
                               }  
-                              if(inst && inst.id && ("webservice" in inst) && ("output" in inst || isImagery) && ("version" in inst) && ("parameters" in inst)) {
+                              if(inst && inst.id && ("webservice" in inst) && ("output" in inst || (isImagery || isEmbed)) && ("version" in inst) && ("parameters" in inst)) {
                                 var m_id = guid();
                                 var m_instance = new window.com.xomena.geo.Models.Instance({id: m_id, services: window.com.xomena.geo.services});
                                 //restore parameters

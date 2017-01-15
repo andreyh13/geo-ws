@@ -335,7 +335,8 @@
             isExperiment: true,
             svWizardTool: false,
             apiaryKeyPremium: 'API_KEY_PREMIUM',
-            directionsTool: false
+            directionsTool: false,
+            isEmbed: false
         }
     });
 
@@ -1037,6 +1038,18 @@
                 }
             }
             return m_res;
+        },
+        isEmbedInstance: function () {
+            var m_res = false;
+            var m_service = this.get("webservice");
+            if (m_service) {
+                var m_services = this.get("services");
+                var service = m_services.filterById(parseInt(m_service));
+                if ($.isArray(service) && service.length) {
+                    m_res = service[0].get("isEmbed");
+                }
+            }
+            return m_res;
         }
     });
 
@@ -1129,7 +1142,7 @@
             instance: this.model
         });
         var isValid;
-        if (this.model.isImageryInstance()) {
+        if (this.model.isImageryInstance() || this.model.isEmbedInstance()) {
             isValid = this.model.isValid("version") && this.model.isValid("parameters");
         } else {
             isValid = this.model.isValid("version") && this.model.isValid("output") && this.model.isValid("parameters");
@@ -1137,7 +1150,7 @@
         if (isValid) {
             var m_url = this.model.getURL();
             document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = m_url;
-            if (!this.model.isImageryInstance()) {
+            if (!this.model.isImageryInstance() && !this.model.isEmbedInstance()) {
                 if(m_url && window.com.xomena.geo.config.get("SERVER_URL")){
                     $.ajax({
                         url: window.com.xomena.geo.config.get("SERVER_URL"),
@@ -1191,21 +1204,40 @@
                     this.$("#treeview-" + this.model.get("id")).jsonView({});
                 }
             } else {
-                var m_img_content = "";
-                if (m_url) {
-                    m_img_content = '<img src="' + m_url + '" title="" alt="" />';
-                }
-                this.$("#ws-result-" + this.model.get("id")).html(m_img_content);
-                this.$("#treeview-" + this.model.get("id")).jsonView({});
-                this.addToolsLinks();
-                this.renderMap({isImageryAPI: true});
-                this.$("#clone-instance-" + this.model.get("id")).removeAttr("disabled");
-                //Talk to external part
-                if (window.com.xomena.geo.port) {
-                    window.com.xomena.geo.port.postMessage({
-                      type: "ws-exec",
-                      model: this.model.get("id")
-                    });
+                if (this.model.isImageryInstance()) {
+                    var m_img_content = "";
+                    if (m_url) {
+                        m_img_content = '<img src="' + m_url + '" title="" alt="" />';
+                    }
+                    this.$("#ws-result-" + this.model.get("id")).html(m_img_content);
+                    this.$("#treeview-" + this.model.get("id")).jsonView({});
+                    this.addToolsLinks();
+                    this.renderMap({isImageryAPI: true});
+                    this.$("#clone-instance-" + this.model.get("id")).removeAttr("disabled");
+                    //Talk to external part
+                    if (window.com.xomena.geo.port) {
+                        window.com.xomena.geo.port.postMessage({
+                          type: "ws-exec",
+                          model: this.model.get("id")
+                        });
+                    }   
+                } else if (this.model.isEmbedInstance()) {
+                    var m_iframe_content = "";
+                    if (m_url) {
+                        m_iframe_content = '<iframe width="100%" height="540" frameborder="0" style="border:0" src="' + m_url + '" allowfullscreen></iframe>';
+                    }
+                    this.$("#ws-result-" + this.model.get("id")).html(m_iframe_content);
+                    this.$("#treeview-" + this.model.get("id")).jsonView({});
+                    this.addToolsLinks();
+                    this.renderMap({isEmbed: true});
+                    this.$("#clone-instance-" + this.model.get("id")).removeAttr("disabled");
+                    //Talk to external part
+                    if (window.com.xomena.geo.port) {
+                        window.com.xomena.geo.port.postMessage({
+                          type: "ws-exec",
+                          model: this.model.get("id")
+                        });
+                    } 
                 }
             }
         } else {
