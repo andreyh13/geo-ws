@@ -4,7 +4,7 @@ Google Maps Web Services and Image APIs Requests Builder
 ![WS Builder](/image/docs/geo-ws.png?raw=true "Maps WS Builder")
 
 ## Description
-This application allows to construct and test Google Maps Web Service, Static Maps API and Street View Image API HTTP requests. 
+This application allows to construct and test Google Maps Web Service, Static Maps API, Street View Image API HTTP requests and Google Maps Embed API. 
 You can access it at [andreyh13.github.io/geo-ws](http://andreyh13.github.io/geo-ws/).
 
 **Google Maps Web Services and Image APIs Requests Builder** is available for the following Google Maps 
@@ -20,6 +20,7 @@ APIs:
  - [Static Maps API]
  - [Street View Image API]
  - [Street View Image Metadata]
+ - [Embed API]
 
 ### Settings
 
@@ -122,3 +123,4 @@ This application works with the following browsers
 [Static Maps API]: https://developers.google.com/maps/documentation/static-maps/intro
 [Street View Image API]: https://developers.google.com/maps/documentation/streetview/intro
 [Street View Image Metadata]: https://developers.google.com/maps/documentation/streetview/metadata
+[Embed API]: https://developers.google.com/maps/documentation/embed/guide
