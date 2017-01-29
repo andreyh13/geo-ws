@@ -2783,6 +2783,32 @@
     }
 
     function m_add_original_points_for_snap (id, map) {
+        var m_counter = 0;
+        
+        var m_process_path_value = function (p) {
+            if (p) {
+                var m_points = p.split("|");
+                if($.isArray(m_points) && m_points.length){
+                    m_points.forEach(function(pp) {
+                        if (reLatLng.test(pp)) {
+                            var m_arr = pp.split(",");
+                            var m_loc = new google.maps.LatLng(parseFloat(m_arr[0]), parseFloat(m_arr[1]));
+                            map.data.add(new google.maps.Data.Feature({
+                                geometry: m_loc,
+                                id: "point-" +m_counter + "-" +id,
+                                "properties": {
+                                    "address": pp,
+                                    "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
+                                                (m_counter < ICON_LABELS.length ? ICON_LABELS.charAt(m_counter) : "blu-blank") + ".png"
+                                }
+                            }));
+                            m_counter++;
+                        }    
+                    });
+                }
+            }
+        };
+        
         if (window.com.xomena.mapRenderer.instances[id] &&
             window.com.xomena.mapRenderer.instances[id].model) {
             var m_service = window.com.xomena.mapRenderer.instances[id].model.get("webservice");
@@ -2790,50 +2816,22 @@
                 var m_services = window.com.xomena.mapRenderer.instances[id].model.get("services");
                 var service = m_services.filterById(parseInt(m_service));
                 if($.isArray(service) && service.length){
+                    var m_latlng = null;
                     switch(service[0].get("name")){
                         case "Snap to Road":
                         case "Speed Limits":  
-                            var m_latlng = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("path");
-                            if($.isArray(m_latlng) && m_latlng.length) {
-                                _.each(m_latlng, function(p, ind) {
-                                    if (p) {
-                                        var m_arr = p.split(",");
-                                        var m_loc = new google.maps.LatLng(parseFloat(m_arr[0]), parseFloat(m_arr[1]));
-                                        map.data.add(new google.maps.Data.Feature({
-                                            geometry: m_loc,
-                                            id: "point-" +ind + "-" +id,
-                                            "properties": {
-                                                "address": p,
-                                                "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
-                                                (ind < ICON_LABELS.length ? ICON_LABELS.charAt(ind) : "blu-blank") + ".png"
-                                            }
-                                        }));
-                                    }
-                                });
-                            }
+                            m_latlng = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("path");
                             break;
                         case "Nearest Roads":
-                            var m_latlng = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("points");
-                            if($.isArray(m_latlng) && m_latlng.length) {
-                                _.each(m_latlng, function(p, ind) {
-                                    if (p) {
-                                        var m_arr = p.split(",");
-                                        var m_loc = new google.maps.LatLng(parseFloat(m_arr[0]), parseFloat(m_arr[1]));
-                                        map.data.add(new google.maps.Data.Feature({
-                                            geometry: m_loc,
-                                            id: "point-" +ind + "-" +id,
-                                            "properties": {
-                                                "address": p,
-                                                "icon": "http://maps.google.com/mapfiles/kml/paddle/" +
-                                                (ind < ICON_LABELS.length ? ICON_LABELS.charAt(ind) : "blu-blank") + ".png"
-                                            }
-                                        }));
-                                    }
-                                });
-                            }
+                            m_latlng = window.com.xomena.mapRenderer.instances[id].model.getParameterValue("points");
                             break;
                         default:
                             break;
+                    }
+                    if($.isArray(m_latlng) && m_latlng.length) {
+                        _.each(m_latlng, function(p, ind) {
+                            m_process_path_value(p, ind);
+                        });
                     }
                 }
             }
