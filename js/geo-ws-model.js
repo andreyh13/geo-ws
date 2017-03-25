@@ -874,150 +874,20 @@
                                      '" title="Street View Wizard" target="_blank">Open in Street View Wizard</a>&nbsp;☝️');
                     }
                     if (m_directions) {
-                        var mapNames = {
-                            "origin": "origin",
-                            "destination": "destination",
-                            "language": "language",
-                            "mode": "travelMode",
-                            "alternatives": "provideRouteAlternatives",
-                            "units": "unitSystem",
-                            "region": "region"
-                        };
-                        var mapNamesDefs = {
-                            "mode": "DRIVING",
-                            "alternatives": "false"
-                        };
-                        var mapValues = {
-                            "metric": "0",
-                            "imperial": "1",
-                            "best_guess": "bestguess",
-                            "pessimistic": "pessimistic",
-                            "optimistic": "optimistic"
-                        };
+                        //It looks like now Directions calculator accepts the same parameters as web service
                         var pars = this.get("parameters");
                         var aa = "";
                         var res = [];
                         if (pars) {
-                            var m_mode;
                             pars.forEach(function (p) {
                                 var n = p.get("name");
                                 var v = p.get("value");
-                                if (n === "mode") {
-                                    m_mode = ($.isArray(v) && v.length) ? v[0] : "driving";
-                                }
-                                switch (n) {
-                                    case "avoid":
-                                        var tobj = {
-                                            "tolls": {
-                                                key: "avoidTolls",
-                                                value: "false"
-                                            },
-                                            "highways": {
-                                                key: "avoidHighways",
-                                                value: "false"
-                                            },
-                                            "ferries": {
-                                                key: "avoidFerries",
-                                                value: "false"
-                                            },
-                                            "indoor": {
-                                                key: "avoidIndoor",
-                                                value: "false"
-                                            }
-                                        };
-                                        if ($.isArray(v) && v.length) {
-                                            v.forEach(function (item) {
-                                                tobj[item].value = "true"; 
-                                            });
-                                        }
-                                        for (var key in tobj) {
-                                            res.push(aa);
-                                            res.push(tobj[key].key);
-                                            res.push("=");
-                                            res.push(tobj[key].value);
-                                            aa = "&";
-                                        }
-                                        break;
-                                    case "departure_time":
-                                        if ($.isArray(v) && v.length) {
-                                            if(v[0] !== "now") {
-                                                res.push(aa);
-                                                res.push(m_mode+"Options%5BdepartureTime%5D=");
-                                                res.push(encodeURIComponent((new Date(parseInt(v[0])*1000)).toString()));
-                                                aa = "&";
-                                            }
-                                        }
-                                        break;
-                                    case "traffic_model":
-                                        if ($.isArray(v) && v.length) {
-                                            res.push(aa);
-                                            res.push(m_mode+"Options%5BtrafficModel%5D=");
-                                            res.push(mapValues[v[0]]);
-                                            aa = "&";
-                                        }
-                                        break;
-                                    case "arrival_time":
-                                        if ($.isArray(v) && v.length) {
-                                            if(v[0] !== "now") {
-                                                res.push(aa);
-                                                res.push(m_mode+"Options%5BarrivalTime%5D=");
-                                                res.push(encodeURIComponent((new Date(parseInt(v[0])*1000)).toString()));
-                                                aa = "&";
-                                            }
-                                        }
-                                        break;
-                                    case "transit_mode":
-                                        if ($.isArray(v) && v.length) {
-                                            v.forEach(function(vv) {
-                                                res.push(aa);
-                                                res.push(m_mode+"Options%5Bmodes%5D%5B%5D=");
-                                                res.push(vv.toUpperCase());
-                                                aa = "&";
-                                            });
-                                        }
-                                        break;
-                                    case "transit_routing_preference":
-                                        if ($.isArray(v) && v.length) {
-                                            res.push(aa);
-                                            res.push(m_mode+"Options%5BroutingPreference%5D=");
-                                            res.push(v[0].toUpperCase());
-                                            aa = "&";
-                                        }
-                                        break;
-                                    case "waypoints":
-                                        if ($.isArray(v) && v.length) {
-                                            var cc = 0;
-                                            v.forEach(function(vv) {
-                                                if(vv === "optimize:true") {
-                                                    res.push(aa);
-                                                    res.push("optimizeWaypoints=true");
-                                                    aa = "&";
-                                                } else {
-                                                    res.push(aa);
-                                                    res.push("waypoints%5B"+cc+"%5D%5Blocation%5D=");
-                                                    var stopover = true;
-                                                    if (vv.startsWith("via:")) {
-                                                        stopover = false;
-                                                        res.push(encodeURIComponent(vv.replace(/^via\:/i, "")));
-                                                    } else {
-                                                        res.push(encodeURIComponent(vv));
-                                                    }
-                                                    res.push("&waypoints%5B"+cc+"%5D%5Bstopover%5D="+stopover);
-                                                    aa = "&";
-                                                    cc++;
-                                                }
-                                            });
-                                        }
-                                        break;
-                                    default:
-                                        if (($.isArray(v) && v.length) || mapNamesDefs[n]) {
-                                            res.push(aa);
-                                            res.push(mapNames[n]);
-                                            res.push("=");
-                                            res.push(encodeURIComponent(($.isArray(v) && v.length) ? (n==="mode"?v[0].toUpperCase():(mapValues[v[0]] ? mapValues[v[0]] : v[0])) : mapNamesDefs[n]));
-                                            aa = "&";
-                                        }
-                                        break;
+                                if ($.isArray(v) && v.length) {
+                                    res.push(aa);
+                                    res.push(n);
+                                    res.push("=");
+                                    res.push(encodeURIComponent(v.join('|')));
+                                    aa = "&";
                                 }
                             });
                         }
