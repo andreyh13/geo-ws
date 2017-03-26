@@ -792,7 +792,8 @@
                                             res.push(aa);
                                             res.push("q");
                                             res.push("=");
-                                            res.push(encodeURIComponent(v[0]));
+                                            //Geocoder tool relies on deprecated escape() here
+                                            res.push(escape(v[0]));
                                             aa = "&";
                                         }
                                         break;
@@ -813,7 +814,8 @@
                                                     res.push(aa);
                                                     res.push("in_" + m_arr[0]);
                                                     res.push("=");
-                                                    res.push(encodeURIComponent(m_arr[1]));
+                                                    //Geocoder tool relies on deprecated escape() here
+                                                    res.push(escape(m_arr[1]));
                                                     aa = "&";
                                                 });
                                                 hasOptions = true;
