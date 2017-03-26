@@ -2,6 +2,7 @@
     'use strict';
     var WS_DS_URI = "https://script.google.com/macros/s/AKfycbwPrEGcNZfsQEWmKm_XC-IXdEPdIQdIE1Na8pL4uBprm2YIT8E/exec?jsonp=?",
         URL_SERVER_DEF = "http://aux.xomena.elementfx.com/geows.php",
+        URL_BUG_REPORT = "https://github.com/andreyh13/geo-ws/issues",
 	    instance_col = new window.com.xomena.geo.Collections.InstanceCollection(),
         instancesView = null,
         isIE = /*@cc_on!@*/false,
@@ -553,6 +554,12 @@
                 dialog.open();
             }
             return false;
+        });
+        
+        //Report the issue
+        $( "body" ).on("click", "#app-menu-report-issue", function(ev) {
+            var win = window.open(URL_BUG_REPORT, '_blank');
+            win.focus();
         });
 
         $( "body" ).on("click", "#export-instances paper-icon-item paper-checkbox", function (ev) {
