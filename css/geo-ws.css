@@ -176,6 +176,15 @@ button.remove-parts {
     margin: 0;
 }
 
+html /deep/ paper-item[separator] {
+    height: 1px;
+    min-height: 1px;
+    margin: 4px 0;
+    background: #ABABAB;
+    border-bottom: 1px solid #CECECE;
+    pointer-events: none;
+}
+
 @media screen and (min-width: 568px){
     #instances-container li.ws-instance {
         width:90%;
