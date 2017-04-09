@@ -419,7 +419,8 @@
                             <div class="ws-url">
                                 <iron-autogrow-textarea id="ws-url-<%= id %>" rows="3" readonly></iron-autogrow-textarea>
                             </div>
-                            <div class="ws-url hidden">
+                            <a href="#" id="toggle-share-ws-url-<%= id %>" class="toggle-share-ws-url hidden" onclick="return false;">Show shareable URL</a>
+                            <div class="ws-url ws-url-share hidden">
                                 <iron-autogrow-textarea id="share-ws-url-<%= id %>" rows="3" readonly></iron-autogrow-textarea>
                             </div>
                         </fieldset>

@@ -23,6 +23,8 @@
             svwizard: "http://mcorcuera.github.io/sv-wizard/#",
             directions: "https://directionsdebug.firebaseapp.com/?"
         },
+        restrictedKey: "AIzaSyC-g9nviI45ie10GPcWTKhUfHsymj02NG8",
+        appURL: "http://local.geows.com/",
         getFormElement: function (id, name, model, triggers, listeners, parentInstance) {
             var output = [],
                 t = model.get("type"),
@@ -542,7 +544,7 @@
                 }
             }
         },
-        getURL: function(){
+        getURL: function(shareable) {
             var res = [];
             var m_service = this.get("webservice");
             var ver = this.get("version");
@@ -637,41 +639,31 @@
                         });
                     }
 
-                    if(ver === "free"){
-                        if(window.com.xomena.geo.config.get(service[0].get("apiaryKeyFree"))){
-                            res.push(aa);
-                            res.push("key=");
-                            res.push(window.com.xomena.geo.config.get(service[0].get("apiaryKeyFree")));
-                        } else {
-                            //Requests without API key are deprecated
-                            $("#validation-dialog").find("p.validation-content").html("Please configure the Standard API key").end().get(0).open();
-                            return "";
-                        }
-                    } else if (ver === "automotive") {
-                        var autoClientID = $("#ws-version-automotive-" + this.get("id")).attr("data-clientid");
-                        var autoAPIKey = $("#ws-version-automotive-" + this.get("id")).attr("data-apikey");
-                        if (autoClientID) {
-                            res.push(aa);
-                            res.push("client=");
-                            res.push(autoClientID);
-                        }
-                        if (autoAPIKey) {
-                            res.push(aa);
-                            res.push("key=");
-                            res.push(autoAPIKey);
-                        }
-                    } else if (ver === "premium-key") {
-                        if(window.com.xomena.geo.config.get(service[0].get("apiaryKeyPremium"))){
-                            res.push(aa);
-                            res.push("key=");
-                            res.push(window.com.xomena.geo.config.get(service[0].get("apiaryKeyPremium")));
-                        } else {
-                            //Requests without API key are deprecated
-                            $("#validation-dialog").find("p.validation-content").html("Please configure the Premium API key").end().get(0).open();
-                            return "";
-                        }
-                    } else if (ver === "premium-client") {
-                        if(m_isApiary){
+                    if (!shareable) {
+                        if(ver === "free"){
+                            if(window.com.xomena.geo.config.get(service[0].get("apiaryKeyFree"))){
+                                res.push(aa);
+                                res.push("key=");
+                                res.push(window.com.xomena.geo.config.get(service[0].get("apiaryKeyFree")));
+                            } else {
+                                //Requests without API key are deprecated
+                                $("#validation-dialog").find("p.validation-content").html("Please configure the Standard API key").end().get(0).open();
+                                return "";
+                            }
+                        } else if (ver === "automotive") {
+                            var autoClientID = $("#ws-version-automotive-" + this.get("id")).attr("data-clientid");
+                            var autoAPIKey = $("#ws-version-automotive-" + this.get("id")).attr("data-apikey");
+                            if (autoClientID) {
+                                res.push(aa);
+                                res.push("client=");
+                                res.push(autoClientID);
+                            }
+                            if (autoAPIKey) {
+                                res.push(aa);
+                                res.push("key=");
+                                res.push(autoAPIKey);
+                            }
+                        } else if (ver === "premium-key") {
                             if(window.com.xomena.geo.config.get(service[0].get("apiaryKeyPremium"))){
                                 res.push(aa);
                                 res.push("key=");
@@ -681,42 +673,54 @@
                                 $("#validation-dialog").find("p.validation-content").html("Please configure the Premium API key").end().get(0).open();
                                 return "";
                             }
-                        } else {
-                            if(window.com.xomena.geo.config.get("CLIENT_ID_PREMIUM")){
-                                res.push(aa);
-                                res.push("client=");
-                                res.push(window.com.xomena.geo.config.get("CLIENT_ID_PREMIUM"));
+                        } else if (ver === "premium-client") {
+                            if(m_isApiary){
+                                if(window.com.xomena.geo.config.get(service[0].get("apiaryKeyPremium"))){
+                                    res.push(aa);
+                                    res.push("key=");
+                                    res.push(window.com.xomena.geo.config.get(service[0].get("apiaryKeyPremium")));
+                                } else {
+                                    //Requests without API key are deprecated
+                                    $("#validation-dialog").find("p.validation-content").html("Please configure the Premium API key").end().get(0).open();
+                                    return "";
+                                }
                             } else {
-                                $("#validation-dialog").find("p.validation-content").html("Please configure the Premium Client ID").end().get(0).open();
-                                return "";
+                                if(window.com.xomena.geo.config.get("CLIENT_ID_PREMIUM")){
+                                    res.push(aa);
+                                    res.push("client=");
+                                    res.push(window.com.xomena.geo.config.get("CLIENT_ID_PREMIUM"));
+                                } else {
+                                    $("#validation-dialog").find("p.validation-content").html("Please configure the Premium Client ID").end().get(0).open();
+                                    return "";
+                                }
                             }
-                        }
-                    } else {
-                        if(m_isApiary){
-                            if(window.com.xomena.geo.config.get(service[0].get("apiaryKeyM4W"))){
-                                res.push(aa);
-                                res.push("key=");
-                                res.push(window.com.xomena.geo.config.get(service[0].get("apiaryKeyM4W")));
-                            } else {
-                                //Requests without API key are deprecated
-                                $("#validation-dialog").find("p.validation-content").html("Please configure Maps for Work API key").end().get(0).open();
-                                return "";
-                            }
                         } else {
-                            if(window.com.xomena.geo.config.get("CLIENT_ID")){
-                                res.push(aa);
-                                res.push("client=");
-                                res.push(window.com.xomena.geo.config.get("CLIENT_ID"));
+                            if(m_isApiary){
+                                if(window.com.xomena.geo.config.get(service[0].get("apiaryKeyM4W"))){
+                                    res.push(aa);
+                                    res.push("key=");
+                                    res.push(window.com.xomena.geo.config.get(service[0].get("apiaryKeyM4W")));
+                                } else {
+                                    //Requests without API key are deprecated
+                                    $("#validation-dialog").find("p.validation-content").html("Please configure Maps for Work API key").end().get(0).open();
+                                    return "";
+                                }
                             } else {
-                                $("#validation-dialog").find("p.validation-content").html("Please configure Maps for Work Client ID").end().get(0).open();
-                                return "";
+                                if(window.com.xomena.geo.config.get("CLIENT_ID")){
+                                    res.push(aa);
+                                    res.push("client=");
+                                    res.push(window.com.xomena.geo.config.get("CLIENT_ID"));
+                                } else {
+                                    $("#validation-dialog").find("p.validation-content").html("Please configure Maps for Work Client ID").end().get(0).open();
+                                    return "";
+                                }
                             }
                         }
                     }
                 }
             }
             var m_join = res.join("");
-            if (!m_isApiary && m_join) {
+            if (!m_isApiary && m_join && !shareable) {
                 var cr_key;
                 switch(ver) {
                     case "work":
@@ -747,10 +751,16 @@
                 }
             }
 
-            if (m_join.length > 2048) {
-                $("#validation-dialog").find("p.validation-content").html("URL is longer than 2048 symbols").end().get(0).open();
+            if (m_join.length > 8192 && !shareable) {
+                $("#validation-dialog").find("p.validation-content").html("URL is longer than 8192 symbols").end().get(0).open();
             }
             return m_join;
+        },
+        
+        getShareURL: function () {
+            var m_url = this.getURL(true);
+            m_url = com.xomena.geo.appURL + "#instance:" + this.get("id")+ "=" + encodeURIComponent(m_url);
+            return m_url;
         },
 
         getParameterValue: function (pname) {
@@ -1006,6 +1016,7 @@
         console.log("Start execution for instance #"+this.model.get("id"));
         var self = this;
         document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = "Preparing request please wait...";
+        document.querySelector("#share-ws-url-"+this.model.get("id")).textarea.value = "Preparing request please wait...";  
         this.$("#treeview-" + this.model.get("id")).html("");
         this.syncParameters();
         this.model.set("version", this.$("input[name='ws-version-val-"+this.model.get("id")+"']:checked").val());
@@ -1022,6 +1033,8 @@
         if (isValid) {
             var m_url = this.model.getURL();
             document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = m_url;
+            var m_share_url = this.model.getShareURL();
+            document.querySelector("#share-ws-url-"+this.model.get("id")).textarea.value = m_share_url;
             if (!this.model.isImageryInstance() && !this.model.isEmbedInstance()) {
                 if(m_url && window.com.xomena.geo.config.get("SERVER_URL")){
                     $.ajax({
@@ -1114,6 +1127,7 @@
             }
         } else {
             document.querySelector("#ws-url-"+this.model.get("id")).textarea.value = "Please set valid parameters";
+            document.querySelector("#share-ws-url-"+this.model.get("id")).textarea.value = "Please set valid parameters";
             this.$("#treeview-" + this.model.get("id")).jsonView({});
         }
         return false;
@@ -1244,13 +1258,23 @@
               this.$(".two-cols").addClass("hidden");
           }
       },
+      toggleShareURL: function () {
+          if(this.$(".ws-url-share").hasClass("hidden")){
+              this.$(".ws-url-share").removeClass("hidden");
+              this.$(".toggle-share-ws-url").html("Hide shareable URL");
+          } else {
+              this.$(".ws-url-share").addClass("hidden");
+              this.$(".toggle-share-ws-url").html("Show shareable URL");
+          }
+      },    
       events: {
         'click .exec':   'execInstance',
         'click .delete': 'deleteInstance',
         'click .clone':   'cloneInstance',
         'change .ws-choose': 'chooseWebService',
         'click .ws-toggle': 'toggleWs',
-        'click .ws-version-fs [type="radio"]': 'toggleVersion'
+        'click .ws-version-fs [type="radio"]': 'toggleVersion',
+        'click .toggle-share-ws-url': 'toggleShareURL'  
       },
       newTemplate: _.template($('#instanceTemplate').html()), // external template
       exportTemplate: _.template($('#instanceExportTemplate').html()),
