@@ -1044,11 +1044,11 @@
                             type: "POST",
                             crossDomain: true,
                             async: true,
-                            data: {
+                            data: JSON.stringify({
                                 uri: m_url,
                                 version: self.model.get("version"),
                                 output: self.model.get("output")
-                            },
+                            }),
                             success: function (data) {
                                 if ($.type(data) == "string") {
                                     self.$("#ws-result-" + self.model.get("id")).html("<pre><code class='xml'>" + $.trim(data).replace(/</ig, "&lt;").replace(/>/ig, "&gt;") + "</code></pre>");
