@@ -1,7 +1,7 @@
 (function ($, _, Backbone, jem) {
     'use strict';
     const WS_DS_URI = "https://api.storyblok.com/v2/cdn/stories/webservices?cv=1658182302&token=IbScMtF2LpeaCYjWp7XvNAtt&version=published";
-    const URL_SERVER_DEF = "http://aux.xomena.elementfx.com/geows.php";
+    const URL_SERVER_DEF = "https://linen-wirehaired-aphid.glitch.me/geows";
     const URL_BUG_REPORT = "https://github.com/andreyh13/geo-ws/issues";
     const instance_col = new window.com.xomena.geo.Collections.InstanceCollection();
     let instancesView = null;
